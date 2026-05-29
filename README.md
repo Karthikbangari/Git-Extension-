@@ -34,13 +34,13 @@ The sidebar appears automatically on GitHub PR and GitLab MR pages that contain 
 
 All commands run from the repo root (`/Terraf`).
 
-| Command | What it does |
-|---|---|
-| `npm run build:ext` | Full production build → `tf-diff-explainer/dist/` |
-| `npm run test:ext` | Run Vitest unit + integration tests |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier (write) |
-| `npm run format:check` | Prettier (check only) |
+| Command                | What it does                                      |
+| ---------------------- | ------------------------------------------------- |
+| `npm run build:ext`    | Full production build → `tf-diff-explainer/dist/` |
+| `npm run test:ext`     | Run Vitest unit + integration tests               |
+| `npm run lint`         | ESLint                                            |
+| `npm run format`       | Prettier (write)                                  |
+| `npm run format:check` | Prettier (check only)                             |
 
 ## Project structure
 
@@ -76,12 +76,12 @@ tf-diff-explainer/
 
 ## Roadmap
 
-| Phase | Status | Deliverable |
-|---|---|---|
-| 1 — Foundation | ✅ Done | Loadable extension, sidebar shell, popup, page detection |
-| 2 — Core engine | ✅ Done | Local risk classifier, dependency minimap, caching, highlighting |
-| 3 — AI layer | Planned | Claude API: change summary, PR description, rollback checklist |
-| 4 — Polish + ship | Planned | Org policy, onboarding, Chrome Web Store |
+| Phase             | Status  | Deliverable                                                      |
+| ----------------- | ------- | ---------------------------------------------------------------- |
+| 1 — Foundation    | ✅ Done | Loadable extension, sidebar shell, popup, page detection         |
+| 2 — Core engine   | ✅ Done | Local risk classifier, dependency minimap, caching, highlighting |
+| 3 — AI layer      | Planned | Claude API: change summary, PR description, rollback checklist   |
+| 4 — Polish + ship | Planned | Org policy, onboarding, Chrome Web Store                         |
 
 ## Tech
 
