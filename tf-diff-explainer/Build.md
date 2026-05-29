@@ -17,58 +17,101 @@
 
 ## Active Proposal
 
-## BP-003 — Local Risk Classifier & DOM Hunk Parser
+## BP-003 — Diff Hunk Parser + Local Risk Classifier
+
+> **State note (2026-05-30):** `@typescript-eslint` deps are already installed and `package.json`/`package-lock.json` already updated from pre-build cleanup. `src/content/types.ts` already exists (created by Codex, committed). File table reflects actual state.
 
 ### What & Why
 
 - **Phase:** Phase 2 — Core engine
-- **Task group:** Local Risk Classifier
-- **Goal:** Implement the logic to parse Terraform diffs from the DOM and identify high-risk changes (IAM wildcards, destructive actions, and security group openings) without external API calls.
+- **Task group:** Diff extraction + Risk classifier
+- **Goal:** Parse Terraform diffs from the GitHub/GitLab PR DOM and classify each resource change as high / medium / low risk — entirely local, no API calls
 
 ### Files
 
-| Action | File path                                         | Description                                                   |
-| ------ | ------------------------------------------------- | ------------------------------------------------------------- |
-| MODIFY | `package.json`                                    | Add `typescript-eslint` parser/plugin dependencies            |
-| MODIFY | `package-lock.json`                               | Lock `typescript-eslint` dependencies for reproducible CI     |
-| CREATE | `tf-diff-explainer/src/content/types.ts`          | Shared `ResourceChange`, `AttributeChange`, and risk types    |
-| CREATE | `tf-diff-explainer/src/content/hunkParser.ts`     | Logic to scrape `.blob-code` spans and build `ResourceChange` |
-| CREATE | `tf-diff-explainer/src/content/riskClassifier.ts` | Scoring engine for IAM and Networking risks                   |
-| CREATE | `tf-diff-explainer/tests/riskClassifier.test.ts`  | Unit tests for risk scoring and pattern matching              |
-| MODIFY | `tf-diff-explainer/src/content/index.ts`          | Orchestrate parser trigger via `requestIdleCallback`          |
+| Action | File path                         | Description                                                                                                         |
+| ------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| EXISTS | `src/content/types.ts`            | `ResourceChange`, `AttributeChange`, `RiskLevel` — already committed, no changes                                    |
+| EXISTS | `package.json`                    | `@typescript-eslint/eslint-plugin` + `@typescript-eslint/parser` already added + installed                          |
+| EXISTS | `package-lock.json`               | Already updated by `npm install`                                                                                    |
+| MODIFY | `eslint.config.mjs`               | Enable `@typescript-eslint` rules for `.ts` files — packages now installed                                          |
+| CREATE | `src/content/hunkParser.ts`       | DOM scraper: GitHub + GitLab contracts, returns `ResourceChange[]`                                                  |
+| CREATE | `src/content/riskClassifier.ts`   | Rule engine: IAM wildcards, open SG ingress, force_destroy, deletions → score                                       |
+| CREATE | `tests/hunkParser.test.ts`        | Unit tests using static HTML fixtures for GitHub + GitLab diff shapes                                               |
+| CREATE | `tests/riskClassifier.test.ts`    | Unit tests — passing + failing + edge case per rule                                                                 |
+| MODIFY | `src/content/sidebar/index.ts`    | Add `updateSidebar(results: ResourceChange[])` — replaces skeleton with risk cards (createElement/appendChild only) |
+| MODIFY | `src/content/sidebar/sidebar.css` | Add scoped risk-card styles if `updateSidebar` introduces new classes                                               |
+| MODIFY | `src/content/index.ts`            | Wire parser + classifier after `hasTerraformDiff()`, call `updateSidebar(results)` after inject                     |
+
+### Parser Contracts
+
+**GitHub PR:**
+
+- File containers: `.file[data-path$=".tf"]`
+- Added lines: `.blob-code-addition .blob-code-inner`
+- Removed lines: `.blob-code-deletion .blob-code-inner`
+- Fallback: if selectors return empty, return `[]` silently
+
+**GitLab MR:**
+
+- File containers: `.diff-file` where `.file-title-name` text ends with `.tf`
+- Added lines: `.line_holder.new .line_content`
+- Removed lines: `.line_holder.old .line_content`
+- Fallback: if selectors return empty, return `[]` silently
+
+### Risk Rules
+
+| Rule                   | Pattern                                                        | Score  |
+| ---------------------- | -------------------------------------------------------------- | ------ |
+| IAM wildcard action    | `actions\s*=\s*\["\*"\]` or `Action.*"\*"` in added lines      | HIGH   |
+| IAM wildcard principal | `Principal.*"\*"` or `identifiers.*"\*"` in added lines        | HIGH   |
+| Open SG ingress        | `0\.0\.0\.0/0` in added lines within ingress block             | HIGH   |
+| Open SG egress         | `0\.0\.0\.0/0` in added lines within egress block              | MEDIUM |
+| Force destroy          | `force_destroy\s*=\s*true` in added lines                      | HIGH   |
+| Resource deletion      | Resource block in removed lines only (no matching added block) | HIGH   |
+| Default                | No patterns matched                                            | LOW    |
 
 ### Approach
 
-1. **DOM Scraper:** We will use `document.querySelectorAll` on Terraform file containers and parse only visible diff lines. For GitHub, the initial contract is file containers with `data-path`/`.file-header[data-path]` ending in `.tf` and line elements using `.blob-code-addition` / `.blob-code-deletion`. For GitLab, the parser will use `.diff-file` / `.diff-file-changes` containers, file title text ending in `.tf`, and added/deleted diff line classes where present. If a host DOM shape is missing or unknown, the parser returns an empty result and logs nothing to the host page.
-2. **Performance:** To prevent blocking the main thread on large PRs, the parsing of multiple files will be chunked using `requestIdleCallback`.
-3. **Risk Logic:**
-   - **IAM:** Detect `Action: ["*"]` or `Principal: "*"` in IAM policy resources.
-   - **Networking:** Detect `0.0.0.0/0` in `ingress`/`egress` blocks for security groups.
-   - **Destructive:** Detect `force_destroy = true` or resources marked for deletion (only `-` lines without a corresponding `+` for the resource ID).
-4. **Testing:** Unit tests will use static HTML snippets to simulate GitHub and GitLab diff hunks to ensure the parser is resilient to whitespace and formatting. `vitest-chrome` is deferred until a later integration subphase because BP-003 does not need Chrome API mocking.
+- **Performance:** Multiple file hunks chunked via `requestIdleCallback` — no main thread blocking on large PRs
+- **No chrome APIs needed** — pure DOM + regex, no mocking required for unit tests
+- **`vitest-chrome` deferred** — integration tests (with storage mocks) are a later subphase
+- **No `innerHTML`** — sidebar enrichment via `createElement`/`appendChild` only (established in BUG-3 fix)
 
 ### MV3 Compliance Check
 
-- ✅ No `innerHTML` usage; all UI updates (sidebar enrichment) via DOM nodes.
-- ✅ Parsing logic is entirely local/synchronous; no network requests.
-- ✅ No dynamic code execution; logic is bundled as IIFE via Vite.
+- ✅ No remote code — all logic is local regex + DOM reads
+- ✅ No `innerHTML` / `outerHTML` / `insertAdjacentHTML`
+- ✅ No new permissions needed
+- ✅ No `eval()` or dynamic execution
+- ✅ Content script remains IIFE bundle — no module format changes
 
 ### Dependencies / Prerequisites
 
-- `typescript-eslint` for improved type safety in the classifier.
+- `@typescript-eslint/eslint-plugin` + `@typescript-eslint/parser` — already installed
+- No new packages
 
 ### Risk
 
 - **Level:** Medium
-- **Notes:** GitHub and GitLab DOM structures for diffs change occasionally. The parser needs to be resilient and fail gracefully (logging a warning rather than breaking the page).
+- **Notes:** GitHub and GitLab diff DOM selectors can change. Parser returns `[]` on any selector miss — never throws. Risk rules use anchored regex to minimise false positives on comment lines.
+
+### Post-build checks (Codex runs after Claude signs off)
+
+1. `npm run build:ext`
+2. `npm run test:ext` — all new tests must pass
+3. `npm run lint`
+4. `npm run format:check`
+5. `npm ls @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint` — confirm no UNMET
+6. `rg -n "innerHTML|outerHTML|insertAdjacentHTML" tf-diff-explainer/src tf-diff-explainer/public` — must return empty
 
 ### Review
 
-| Reviewer | Input                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Approved? |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| User     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ⬜        |
-| Codex    | Revision addresses my blockers: `src/content/types.ts` and `package-lock.json` are now listed, `eslint` remains on `^10.4.0`, `vitest-chrome` is deferred, and the parser contract separates GitHub from GitLab with a graceful empty-result fallback. Approved with execution checks after build: `npm run build:ext`, `npm run test:ext`, `npm run lint`, `npm run format:check`, `npm ls @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint`, and an unsafe HTML scan for `innerHTML` / `outerHTML` / `insertAdjacentHTML` in `src/` and `public/`. | ✅        |
-| Gemini   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ⬜        |
+| Reviewer | Input                                                                                                                                                                                                                                                                                                                                                                                                                     | Approved? |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     | Scope expanded: add `updateSidebar(results)` to sidebar module now                                                                                                                                                                                                                                                                                                                                                        | ⬜        |
+| Codex    | Re-signed. Expanded sidebar scope is acceptable now that `updateSidebar(results)` is explicitly constrained to DOM APIs only and `sidebar.css` is listed for any risk-card styles. `eslint` remains on `^10.4.0`, `vitest-chrome` is deferred, `types.ts` is committed, and parser fallbacks remain silent/empty. Execution checks after build remain required: build, tests, lint, format, npm ls, and unsafe HTML scan. | ✅        |
+| Gemini   | Final approval granted. Scope expansion to include `updateSidebar(results)` is logical and prevents UI/Logic fragmentation. The commitment to using standard DOM APIs (no `innerHTML`) preserves the security fixes from Phase 1. Ready for implementation.                                                                                                                                                               | ✅        |
 
 ### Outcome
 
