@@ -17,6 +17,66 @@
 
 ## Active Proposal
 
+## BP-003 — Local Risk Classifier & DOM Hunk Parser
+
+### What & Why
+
+- **Phase:** Phase 2 — Core engine
+- **Task group:** Local Risk Classifier
+- **Goal:** Implement the logic to parse Terraform diffs from the DOM and identify high-risk changes (IAM wildcards, destructive actions, and security group openings) without external API calls.
+
+### Files
+
+| Action | File path                                         | Description                                                   |
+| ------ | ------------------------------------------------- | ------------------------------------------------------------- |
+| MODIFY | `package.json`                                    | Add `typescript-eslint` parser/plugin dependencies            |
+| MODIFY | `package-lock.json`                               | Lock `typescript-eslint` dependencies for reproducible CI     |
+| CREATE | `tf-diff-explainer/src/content/types.ts`          | Shared `ResourceChange`, `AttributeChange`, and risk types    |
+| CREATE | `tf-diff-explainer/src/content/hunkParser.ts`     | Logic to scrape `.blob-code` spans and build `ResourceChange` |
+| CREATE | `tf-diff-explainer/src/content/riskClassifier.ts` | Scoring engine for IAM and Networking risks                   |
+| CREATE | `tf-diff-explainer/tests/riskClassifier.test.ts`  | Unit tests for risk scoring and pattern matching              |
+| MODIFY | `tf-diff-explainer/src/content/index.ts`          | Orchestrate parser trigger via `requestIdleCallback`          |
+
+### Approach
+
+1. **DOM Scraper:** We will use `document.querySelectorAll` on Terraform file containers and parse only visible diff lines. For GitHub, the initial contract is file containers with `data-path`/`.file-header[data-path]` ending in `.tf` and line elements using `.blob-code-addition` / `.blob-code-deletion`. For GitLab, the parser will use `.diff-file` / `.diff-file-changes` containers, file title text ending in `.tf`, and added/deleted diff line classes where present. If a host DOM shape is missing or unknown, the parser returns an empty result and logs nothing to the host page.
+2. **Performance:** To prevent blocking the main thread on large PRs, the parsing of multiple files will be chunked using `requestIdleCallback`.
+3. **Risk Logic:**
+   - **IAM:** Detect `Action: ["*"]` or `Principal: "*"` in IAM policy resources.
+   - **Networking:** Detect `0.0.0.0/0` in `ingress`/`egress` blocks for security groups.
+   - **Destructive:** Detect `force_destroy = true` or resources marked for deletion (only `-` lines without a corresponding `+` for the resource ID).
+4. **Testing:** Unit tests will use static HTML snippets to simulate GitHub and GitLab diff hunks to ensure the parser is resilient to whitespace and formatting. `vitest-chrome` is deferred until a later integration subphase because BP-003 does not need Chrome API mocking.
+
+### MV3 Compliance Check
+
+- ✅ No `innerHTML` usage; all UI updates (sidebar enrichment) via DOM nodes.
+- ✅ Parsing logic is entirely local/synchronous; no network requests.
+- ✅ No dynamic code execution; logic is bundled as IIFE via Vite.
+
+### Dependencies / Prerequisites
+
+- `typescript-eslint` for improved type safety in the classifier.
+
+### Risk
+
+- **Level:** Medium
+- **Notes:** GitHub and GitLab DOM structures for diffs change occasionally. The parser needs to be resilient and fail gracefully (logging a warning rather than breaking the page).
+
+### Review
+
+| Reviewer | Input                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Approved? |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ⬜        |
+| Codex    | Revision addresses my blockers: `src/content/types.ts` and `package-lock.json` are now listed, `eslint` remains on `^10.4.0`, `vitest-chrome` is deferred, and the parser contract separates GitHub from GitLab with a graceful empty-result fallback. Approved with execution checks after build: `npm run build:ext`, `npm run test:ext`, `npm run lint`, `npm run format:check`, `npm ls @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint`, and an unsafe HTML scan for `innerHTML` / `outerHTML` / `insertAdjacentHTML` in `src/` and `public/`. | ✅        |
+| Gemini   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ⬜        |
+
+### Outcome
+
+- **Status:** Pending
+- **Built by:** Claude
+- **Result:** —
+- **Test result:** —
+
 ---
 
 ## BP-002 rev.2 — TypeScript + Vite wiring + root toolchain consolidation

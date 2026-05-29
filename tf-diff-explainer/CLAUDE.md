@@ -15,17 +15,17 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                  | Value                                                                     |
-| ---------------------- | ------------------------------------------------------------------------- |
-| Last active session    | 2026-05-29                                                                |
-| Active phase           | Phase 1 — Foundation                                                      |
-| Phase 1 status         | All 16 tasks built and unit tested (9/9 ✅)                               |
-| Waiting on             | Codex + Gemini final E2E test pass before Phase 1 is sealed               |
-| Last build             | BP-002 ✅ — TypeScript + Vite toolchain wired, all source converted to TS |
-| Next action for Claude | Post Phase 2 build proposal (BP-003) once Phase 1 is sealed by user       |
-| Open bugs              | None — BUG-1/2/3 all fixed                                                |
-| Blocked                | No                                                                        |
-| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 9/9 ✅                             |
+| Field                  | Value                                                    |
+| ---------------------- | -------------------------------------------------------- |
+| Last active session    | 2026-05-30                                               |
+| Active phase           | Phase 2 — Core engine                                    |
+| Phase 1 status         | Sealed ✅ (2026-05-30)                                   |
+| Waiting on             | BP-003 (Core Engine: Local Risk Classifier)              |
+| Last build             | BP-002 ✅ (Pre-Phase 2 dependency verification complete) |
+| Next action for Claude | Post Phase 2 build proposal (BP-003)                     |
+| Open bugs              | None — BUG-1/2/3 all fixed                               |
+| Blocked                | No                                                       |
+| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 9/9 ✅            |
 
 ### What was built and confirmed
 
