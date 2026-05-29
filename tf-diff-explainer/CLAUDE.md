@@ -22,10 +22,10 @@ No exceptions.
 | Phase 1 status         | Sealed ✅ (2026-05-30)                                                       |
 | Phase 2 status         | Sealed ✅ (2026-06-02)                                                       |
 | Phase 3 status         | Sealed ✅ (2026-05-29)                                                       |
-| Waiting on             | BUG-11 final fix (GitHub DOM selector) + Codex commit + BP-010 proposal      |
+| Waiting on             | Live verification of BUG-11 fix on GitHub PR + BP-010 proposal               |
 | Last build             | Bug fixes: BUG-6/7/9/10/11 + aiSummary.ts hash redaction (100 tests)         |
-| Next action for Claude | Fix BUG-11 properly (GitHub `.file` has no `data-path`), then propose BP-010 |
-| Open bugs              | BUG-11 partially fixed — see critical note below                             |
+| Next action for Claude | Propose BP-010 (CWS prep)                                                    |
+| Open bugs              | BUG-11 fixed (needs live verification) — see note below                      |
 | Blocked                | No                                                                           |
 | Last clean check       | build ✅ · lint ✅ · format ✅ · tests 100/100 ✅                            |
 
@@ -43,20 +43,20 @@ No exceptions.
 - BP-009: Enterprise org policy — `managed_schema.json` (Chrome policy schema for IT admins); `getApiKey` + `isEnabledForHost` check `chrome.storage.managed` first (Managed → Local fallback); new `isManagedApiKey()` + `isManagedDisabledHosts()`; popup disables API key + site toggle when org policy active. 97 tests (+13 managed storage tests).
 - Bug batch (BUG-6/7/9/10/11 + hash redaction): generation counter in `runAnalysis` (BUG-6); `response.content[0]?.text` guard (BUG-7); empty-changes guard before AI path (BUG-9); `.filter(a => !a.isSensitive)` in `buildPrompt` (BUG-10); `scrapeGitHub()` data-path fallback (BUG-11 — **partially fixed, see critical note**); `generateDiffHash` redacts sensitive attr values with `<sensitive>`. 100 tests.
 
-### ⚠️ Critical: BUG-11 not fully resolved
+### BUG-11 status — needs live verification
 
-`scrapeGitHub()` in `hunkParser.ts` tries `container.getAttribute('data-path')` then `querySelector('[data-path]')` — but **live testing on GitHub shows neither works**: `document.querySelector('.file[data-path$=".tf"]')` returns 0, AND `document.querySelector('.file')?.querySelector('[data-path]')` returns `undefined`.
+`scrapeGitHub()` now uses a four-level fallback chain:
+1. `data-path` on `.file` container
+2. `[data-path]` on any nested element (older GitHub)
+3. `.file-header a[title]` → `title` attribute (modern GitHub; stable across redesigns)
+4. `.file-header .Truncate-text` → `textContent`
 
-GitHub's `.file` elements have NO `data-path` attribute anywhere in the subtree.
-
-**Next session must first run this in the browser console to find the correct selector:**
+Live testing needed to confirm. If still broken, run in the browser console on a GitHub PR `/files` page and paste output:
 
 ```js
 Array.from(document.querySelector('.file').attributes).map((a) => a.name + '=' + a.value);
 document.querySelector('.file-header')?.outerHTML.slice(0, 400);
 ```
-
-Then update `scrapeGitHub()` in `hunkParser.ts` with the correct selector before the sidebar will work on GitHub PRs.
 
 - Git + GitHub: repo at https://github.com/Karthikbangari/Terraf, SSH key configured (port 443), all commits pushed.
 - Codex is currently **out of commission** — Claude is handling git commits and pushes this session.

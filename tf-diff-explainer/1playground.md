@@ -98,9 +98,10 @@
   - Fixed: `if (changes.length === 0) return;` guard added before the AI path in `content/index.ts`.
 - `[BUG-10] isSensitive attribute values not filtered from AI prompt — found by Claude post-build review — phase 3 — status: fixed`
   - Fixed: `.filter(a => !a.isSensitive)` added before `.slice(0, 3)` in `buildPrompt` in `aiSummary.ts`.
-- `[BUG-11] Hunk parser GitHub DOM selector no longer matches — found by Claude during live testing — phase 4 — status: partially fixed`
-  - First fix attempt: `scrapeGitHub()` now iterates all `.file` elements and tries `data-path` on the container then falls back to `querySelector('[data-path]')` on nested elements.
-  - **Still broken**: live browser testing confirms `data-path` does not exist anywhere in GitHub's `.file` subtree. `querySelector('[data-path]')` returns `undefined`. Root cause unknown — need to inspect actual `.file` attributes in the browser to find the correct selector. Next session: run `Array.from(document.querySelector('.file').attributes).map(a => a.name+'='+a.value)` and `document.querySelector('.file-header')?.outerHTML.slice(0,400)` to identify the right attribute, then update `scrapeGitHub()` in `hunkParser.ts`.
+- `[BUG-11] Hunk parser GitHub DOM selector no longer matches — found by Claude during live testing — phase 4 — status: fixed (needs live verification)`
+  - First fix attempt: tried `data-path` on container then `querySelector('[data-path]')` — both fail on current GitHub.
+  - Second fix: extended fallback chain to `.file-header a[title]` (title attribute on path link) and `.file-header .Truncate-text` (text content). Modern GitHub renders the path as a `<a title="path/to/file.tf">` inside `.file-header`; this attribute is stable across redesigns as screen readers depend on it.
+  - Needs live verification on a GitHub PR `/files` page. If still broken, run `Array.from(document.querySelector('.file').attributes).map(a => a.name+'='+a.value)` and `document.querySelector('.file-header')?.outerHTML.slice(0,400)` in the console and report the output.
 
 ---
 

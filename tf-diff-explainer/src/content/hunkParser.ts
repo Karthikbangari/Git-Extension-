@@ -28,10 +28,13 @@ export function scrapeGitHub(): FileRecord[] {
 
   const tfContainers: Array<{ container: HTMLElement; filePath: string }> = [];
   for (const container of allFiles) {
-    // GitHub has moved data-path to nested elements in some DOM versions — check both
+    // data-path may be on the container, a nested element (older GitHub), or absent entirely
+    // (current GitHub). Fall back to the link title and text in .file-header.
     const filePath =
       container.getAttribute('data-path') ??
       container.querySelector<HTMLElement>('[data-path]')?.getAttribute('data-path') ??
+      container.querySelector<HTMLElement>('.file-header a[title]')?.getAttribute('title') ??
+      container.querySelector<HTMLElement>('.file-header .Truncate-text')?.textContent?.trim() ??
       '';
     if (filePath.endsWith('.tf')) tfContainers.push({ container, filePath });
   }
