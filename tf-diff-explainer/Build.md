@@ -103,7 +103,10 @@ Documents the text needed for the CWS dashboard form fields:
 
 ### Outcome
 
-_pending_
+- **Status:** ✅ Done
+- **Built by:** Claude
+- **Result:** `package.json` + `manifest.json` bumped to `1.0.0`. `manifest.json` gains `homepage_url: "https://github.com/Karthikbangari/Terraf"` and `minimum_chrome_version: "120"`. `store/privacy-policy.md` created (covers local-only storage, api.anthropic.com transmission, no analytics). `store/listing.md` created (name, 123-char short description, detailed description, category, screenshot spec, privacy policy URL).
+- **Test result:** 100/100 ✅ · build ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅ · dist/manifest.json version/homepage_url/minimum_chrome_version all verified
 
 ---
 

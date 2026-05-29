@@ -60,14 +60,14 @@
 
 ## Current Focus
 
-| Field        | Value                                             |
-| ------------ | ------------------------------------------------- |
-| Active phase | Phase 4 — Polish + ship                           |
-| Status       | BP-009 built ✅ · 97/97 tests · committed to main |
-| Current task | BP-010 posted — awaiting review                   |
-| Blocker      | None                                              |
-| Claude owns  | Code, tests, build proposals                      |
-| Codex owns   | Git commits, branches, CI config execution        |
+| Field        | Value                                           |
+| ------------ | ----------------------------------------------- |
+| Active phase | Phase 4 — Polish + ship                         |
+| Status       | BP-010 built ✅ · 100/100 tests · version 1.0.0 |
+| Current task | Awaiting Codex/Gemini E2E → Phase 4 seal        |
+| Blocker      | None                                            |
+| Claude owns  | Code, tests, build proposals                    |
+| Codex owns   | Git commits, branches, CI config execution      |
 
 ---
 
@@ -195,8 +195,8 @@
   - [x] `getApiKey` + `isEnabledForHost` managed→local fallback
   - [x] `isManagedApiKey` + `isManagedDisabledHosts` helpers
   - [x] Popup read-only state when managed policy active
-- [ ] **Bug fixes** — BUG-6/7/9/10/11 (scoped into BP-010)
-- [ ] **Chrome Web Store prep** — BP-010
+- [x] **Bug fixes** — BUG-6/7/9/10/11 ✅ (fixed in bug-fix batch + BUG-11 extended in BP-010)
+- [x] **Chrome Web Store prep** — BP-010 ✅
 
 ---
 
