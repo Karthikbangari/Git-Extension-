@@ -17,6 +17,96 @@
 
 ## Active Proposal
 
+## BP-010 — Chrome Web Store prep
+
+### What & Why
+
+- **Phase:** Phase 4 — Polish + ship
+- **Task group:** CWS prep
+- **Goal:** Make the extension submittable to the Chrome Web Store. Three areas: (1) version bump to 1.0.0 for first public release; (2) manifest hardening — `homepage_url`, `minimum_chrome_version`, verify `activeTab` justification; (3) store assets — privacy policy and listing text checked into `store/` so they can be hosted and referenced in the CWS dashboard.
+
+### Files
+
+| Action | File                      | Description                                                                                           |
+| ------ | ------------------------- | ----------------------------------------------------------------------------------------------------- |
+| MODIFY | `package.json`            | Bump version `0.1.0` → `1.0.0`                                                                        |
+| MODIFY | `public/manifest.json`    | Bump version `0.1.0` → `1.0.0`, add `homepage_url`, add `minimum_chrome_version: "120"`               |
+| CREATE | `store/privacy-policy.md` | Privacy policy content (required by CWS for extensions that store user data — API key)                |
+| CREATE | `store/listing.md`        | Store name, short description (132 chars), detailed description, category, keywords, screenshots spec |
+
+### Approach
+
+**Version bump (`package.json` + `manifest.json`):**
+
+`package.json` `version` and `manifest.json` `version` both move from `0.1.0` to `1.0.0`. No other package.json changes. The two files must stay in sync per CLAUDE.md policy.
+
+**Manifest additions (`public/manifest.json`):**
+
+```jsonc
+{
+  // add:
+  "homepage_url": "https://github.com/Karthikbangari/Terraf",
+  "minimum_chrome_version": "120",
+}
+```
+
+- `homepage_url` — links back to repo from CWS listing; CWS shows this as "Website" on the extension page.
+- `minimum_chrome_version: "120"` — Chrome 120 (Dec 2023) is the first stable Chrome with full MV3 + `chrome.storage.session` (added Chrome 102, but 120 ensures a modern baseline and solid service worker lifecycle). Effectively all Chrome users are on 120+ by 2026.
+- `activeTab` is justified: `popup.ts` calls `chrome.tabs.query({ active: true, currentWindow: true })` to read the tab URL for the per-site enable/disable toggle. No change needed.
+
+**Privacy policy (`store/privacy-policy.md`):**
+
+CWS requires a privacy policy URL for any extension that handles user data. The API key stored in `chrome.storage.local` qualifies. The policy content will be hosted at the GitHub repo URL (raw or via GitHub Pages). Minimal, factual — covers: what data is stored (API key only, locally), what is transmitted (diff hash + changes sent to `api.anthropic.com` only when key is set), no analytics, no third-party sharing.
+
+**Store listing (`store/listing.md`):**
+
+Documents the text needed for the CWS dashboard form fields:
+
+- **Name** (45 char max): `TF Diff Explainer`
+- **Short description** (132 char max): explains Terraform diff risk analysis + AI summaries in one line
+- **Detailed description**: multi-paragraph, covers features across all 4 phases
+- **Category**: `Developer Tools`
+- **Screenshots spec**: lists 3 required screenshots with exact viewport/content instructions (1280×800)
+
+### MV3 Compliance Check
+
+- ✅ No new permissions
+- ✅ `minimum_chrome_version` is informational only — no API gating required
+- ✅ `homepage_url` is a manifest meta field, not a CSP-governed connection
+- ✅ Privacy policy content accurately reflects `chrome.storage.local`-only key storage and `api.anthropic.com`-only external connection
+
+### Dependencies / Prerequisites
+
+- All previous BPs shipped (BP-001 through BP-009 + BUG fixes) ✅
+
+### Risk
+
+- **Level:** Low
+- **Notes:** Version bump and two manifest fields are additive. `store/` directory is reference-only — not included in the extension bundle. Privacy policy content is plain text and will need a hosting URL before CWS submission (GitHub raw URL is sufficient).
+
+### Post-build checks
+
+1. `npm run build:ext`
+2. `npm run test:ext` — all 100 tests must still pass
+3. `npm run lint`
+4. `npm run format:check`
+5. Verify `dist/manifest.json` has `version: "1.0.0"`, `homepage_url`, `minimum_chrome_version`
+6. `rg -n "innerHTML|outerHTML|insertAdjacentHTML" tf-diff-explainer/src tf-diff-explainer/public` — must return empty
+
+### Review
+
+| Reviewer | Input | Approved? |
+| -------- | ----- | --------- |
+| User     |       | ⬜        |
+| Codex    |       | ⬜        |
+| Gemini   |       | ⬜        |
+
+### Outcome
+
+_pending_
+
+---
+
 ## BP-008 — Onboarding: First-run badge + popup welcome guide
 
 ### What & Why

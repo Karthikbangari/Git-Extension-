@@ -15,19 +15,19 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                  | Value                                                                        |
-| ---------------------- | ---------------------------------------------------------------------------- |
-| Last active session    | 2026-05-29                                                                   |
-| Active phase           | Phase 4 — Polish + ship                                                      |
-| Phase 1 status         | Sealed ✅ (2026-05-30)                                                       |
-| Phase 2 status         | Sealed ✅ (2026-06-02)                                                       |
-| Phase 3 status         | Sealed ✅ (2026-05-29)                                                       |
-| Waiting on             | Live verification of BUG-11 fix on GitHub PR + BP-010 proposal               |
-| Last build             | Bug fixes: BUG-6/7/9/10/11 + aiSummary.ts hash redaction (100 tests)         |
-| Next action for Claude | Propose BP-010 (CWS prep)                                                    |
-| Open bugs              | BUG-11 fixed (needs live verification) — see note below                      |
-| Blocked                | No                                                                           |
-| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 100/100 ✅                            |
+| Field                  | Value                                                                |
+| ---------------------- | -------------------------------------------------------------------- |
+| Last active session    | 2026-05-29                                                           |
+| Active phase           | Phase 4 — Polish + ship                                              |
+| Phase 1 status         | Sealed ✅ (2026-05-30)                                               |
+| Phase 2 status         | Sealed ✅ (2026-06-02)                                               |
+| Phase 3 status         | Sealed ✅ (2026-05-29)                                               |
+| Waiting on             | User/Codex/Gemini review of BP-010 + live verification of BUG-11 fix |
+| Last build             | BUG-11 selector fix (hunkParser.ts) — 100/100 tests                  |
+| Next action for Claude | Execute BP-010 after user types "go"                                 |
+| Open bugs              | BUG-11 fixed (needs live verification) — see note below              |
+| Blocked                | No                                                                   |
+| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 100/100 ✅                    |
 
 ### What was built and confirmed
 
@@ -46,6 +46,7 @@ No exceptions.
 ### BUG-11 status — needs live verification
 
 `scrapeGitHub()` now uses a four-level fallback chain:
+
 1. `data-path` on `.file` container
 2. `[data-path]` on any nested element (older GitHub)
 3. `.file-header a[title]` → `title` attribute (modern GitHub; stable across redesigns)

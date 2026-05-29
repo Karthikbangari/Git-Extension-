@@ -60,14 +60,14 @@
 
 ## Current Focus
 
-| Field        | Value                                              |
-| ------------ | -------------------------------------------------- |
-| Active phase | Phase 4 — Polish + ship                            |
-| Status       | BP-009 built ✅ · 97/97 tests · committed to main  |
-| Current task | BP-010 proposal — CWS prep + BUG-6/7/9/10/11 fixes |
-| Blocker      | None                                               |
-| Claude owns  | Code, tests, build proposals                       |
-| Codex owns   | Git commits, branches, CI config execution         |
+| Field        | Value                                             |
+| ------------ | ------------------------------------------------- |
+| Active phase | Phase 4 — Polish + ship                           |
+| Status       | BP-009 built ✅ · 97/97 tests · committed to main |
+| Current task | BP-010 posted — awaiting review                   |
+| Blocker      | None                                              |
+| Claude owns  | Code, tests, build proposals                      |
+| Codex owns   | Git commits, branches, CI config execution        |
 
 ---
 
