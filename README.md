@@ -10,6 +10,7 @@ A Chrome extension (Manifest V3) that injects a sidebar into GitHub PR and GitLa
 - **Session caching** — analysis results are cached per URL so re-opening the sidebar is instant
 - **AI Change Summary** _(requires Anthropic API key)_ — plain-English summary of the diff, up to 3 risk bullets, and a 6-step interactive rollback checklist; results are cached per diff hash so each unique diff costs one API call
 - **PR Description generator** _(requires Anthropic API key)_ — generates a copyable markdown PR description (Summary, Changes, Risk Assessment, Pre-merge Checklist sections) with a one-click Copy button
+- **Enterprise org policy** — IT admins can deploy an API key and host restrictions via `chrome.storage.managed`; the popup shows fields as read-only when a managed policy is active
 
 Local analysis runs entirely in the browser. AI features make a single request to `api.anthropic.com` via the extension's background service worker — the API key never touches the page DOM.
 
@@ -33,6 +34,8 @@ Then in Chrome:
 The sidebar appears automatically on GitHub PR and GitLab MR pages that contain `.tf` file changes.
 
 To enable AI features, open the extension popup and paste an Anthropic API key (`sk-ant-…`). The key is stored in `chrome.storage.local` and never leaves the extension.
+
+**Enterprise deployment:** IT admins can push an API key and disabled-host list via `chrome.storage.managed` (Chrome enterprise policy). See `public/managed_schema.json` for the policy schema.
 
 ## Development commands
 
@@ -72,9 +75,11 @@ tf-diff-explainer/
 │   ├── riskClassifier.test.ts
 │   ├── refParser.test.ts
 │   ├── aiSummary.test.ts
+│   ├── storageManaged.test.ts  # managed→local fallback logic
 │   └── integration/caching.test.ts
 ├── public/               # Static assets copied to dist/
 │   ├── manifest.json
+│   ├── managed_schema.json  # Chrome enterprise policy schema
 │   ├── icons/
 │   └── popup/
 └── dist/                 # Built extension — load this in Chrome
@@ -87,11 +92,11 @@ tf-diff-explainer/
 | 1 — Foundation    | ✅ Done | Loadable extension, sidebar shell, popup, page detection                   |
 | 2 — Core engine   | ✅ Done | Local risk classifier, dependency minimap, caching, highlighting           |
 | 3 — AI layer      | ✅ Done | AI change summary, interactive rollback checklist, copyable PR description |
-| 4 — Polish + ship | Planned | Org policy, onboarding, Chrome Web Store                                   |
+| 4 — Polish + ship | 🔄 In progress | Onboarding ✅, enterprise org policy ✅, Chrome Web Store (next)  |
 
 ## Tech
 
-- TypeScript, Vite (three separate IIFE bundles), Vitest (84 tests)
+- TypeScript, Vite (three separate IIFE bundles), Vitest (97 tests)
 - No runtime dependencies — everything ships in the bundle
 - MV3 compliant: no `eval`, no `innerHTML`, no remote code
 - AI calls proxied through the background service worker so the host page's CSP cannot block them
