@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { extractChanges } from '../src/content/hunkParser';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { extractChanges, parseDiff } from '../src/content/hunkParser';
 import type { FileRecord } from '../src/content/hunkParser';
 
 // --- fixtures ---
@@ -96,6 +96,10 @@ const replacedResource: FileRecord[] = [
 ];
 
 // --- tests ---
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('hunkParser.extractChanges', () => {
   describe('new resource (GitHub shape — all lines added)', () => {
@@ -208,5 +212,56 @@ describe('hunkParser.extractChanges', () => {
     it('returns [] for empty records array', () => {
       expect(extractChanges([])).toEqual([]);
     });
+  });
+});
+
+describe('hunkParser.parseDiff', () => {
+  it('processes at least one file per idle callback when timeRemaining is 0', async () => {
+    function makeInner(text: string, kind: 'added' | 'removed' | 'context') {
+      return {
+        textContent: text,
+        closest: (selector: string) => {
+          if (selector === '.blob-code-addition') return kind === 'added' ? {} : null;
+          if (selector === '.blob-code-deletion') return kind === 'removed' ? {} : null;
+          return null;
+        },
+      };
+    }
+
+    function makeRow(text: string, kind: 'added' | 'removed' | 'context') {
+      const inner = makeInner(text, kind);
+      return {
+        querySelector: (selector: string) => (selector === '.blob-code-inner' ? inner : null),
+      };
+    }
+
+    function makeFile(filePath: string) {
+      const rows = [
+        makeRow('resource "aws_s3_bucket" "data" {', 'added'),
+        makeRow('  bucket = "example"', 'added'),
+        makeRow('}', 'added'),
+      ];
+      return {
+        getAttribute: (name: string) => (name === 'data-path' ? filePath : null),
+        querySelector: () => null,
+        querySelectorAll: (selector: string) => (selector === 'tr' ? rows : []),
+      };
+    }
+
+    vi.stubGlobal('location', {
+      href: 'https://github.com/example/repo/pull/1/files',
+    });
+    vi.stubGlobal('document', {
+      querySelectorAll: (selector: string) =>
+        selector === '.file' ? [makeFile('one.tf'), makeFile('two.tf')] : [],
+    });
+    vi.stubGlobal('requestIdleCallback', (callback: IdleRequestCallback) => {
+      callback({ timeRemaining: () => 0 } as IdleDeadline);
+      return 1;
+    });
+
+    const result = await parseDiff();
+    expect(result).toHaveLength(2);
+    expect(result.map((r) => r.filePath)).toEqual(['one.tf', 'two.tf']);
   });
 });

@@ -96,7 +96,7 @@ tf-diff-explainer/
 
 ## Tech
 
-- TypeScript, Vite (three separate IIFE bundles), Vitest (100 tests)
+- TypeScript, Vite (three separate IIFE bundles), Vitest (104 tests)
 - No runtime dependencies — everything ships in the bundle
 - MV3 compliant: no `eval`, no `innerHTML`, no remote code
 - AI calls proxied through the background service worker so the host page's CSP cannot block them

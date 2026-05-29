@@ -219,8 +219,10 @@ export async function parseDiff(): Promise<ResourceChange[]> {
       let idx = 0;
 
       const step: IdleRequestCallback = (deadline) => {
-        while (idx < records.length && deadline.timeRemaining() > 0) {
+        let processed = 0;
+        while (idx < records.length && (processed === 0 || deadline.timeRemaining() > 0)) {
           results.push(...parseFileRecord(records[idx++]));
+          processed++;
         }
         if (idx < records.length) requestIdleCallback(step);
         else resolve(results);

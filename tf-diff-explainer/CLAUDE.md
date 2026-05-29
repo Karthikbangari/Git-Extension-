@@ -15,19 +15,19 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                  | Value                                                         |
-| ---------------------- | ------------------------------------------------------------- |
-| Last active session    | 2026-05-30                                                    |
-| Active phase           | Phase 4 — Polish + ship                                       |
-| Phase 1 status         | Sealed ✅ (2026-05-30)                                        |
-| Phase 2 status         | Sealed ✅ (2026-06-02)                                        |
-| Phase 3 status         | Sealed ✅ (2026-05-29)                                        |
-| Waiting on             | Codex/Gemini E2E verification → Phase 4 seal → CWS submission |
-| Last build             | BP-010 ✅ — version 1.0.0, manifest hardening, store assets   |
-| Next action for Claude | Seal Phase 4 after Codex/Gemini E2E confirms clean            |
-| Open bugs              | BUG-11 fixed (needs live verification) — see note below       |
-| Blocked                | No                                                            |
-| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 100/100 ✅             |
+| Field                  | Value                                                       |
+| ---------------------- | ----------------------------------------------------------- |
+| Last active session    | 2026-05-30                                                  |
+| Active phase           | Phase 4 — Polish + ship                                     |
+| Phase 1 status         | Sealed ✅ (2026-05-30)                                      |
+| Phase 2 status         | Sealed ✅ (2026-06-02)                                      |
+| Phase 3 status         | Sealed ✅ (2026-05-29)                                      |
+| Waiting on             | Push sealed Phase 4 release → CWS dashboard submission      |
+| Last build             | Phase 4 sealed ✅ — version 1.0.0, CWS zip ready            |
+| Next action for Claude | Support CWS dashboard submission if screenshots need polish |
+| Open bugs              | None                                                        |
+| Blocked                | No                                                          |
+| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 104/104 ✅ · E2E ✅  |
 
 ### What was built and confirmed
 
@@ -41,24 +41,12 @@ No exceptions.
 - BP-007: PR Description + Rollback Checklist — `AISummaryResult` extended with `prDescription`, prompt v2 (6 rollback steps + markdown PR description), `max_tokens` 768, `CACHE_VERSION` v2, shape validation, interactive rollback checklist (`<ol>` with checkboxes), PR Description section with Copy button (`navigator.clipboard`). 84 tests.
 - BP-008: Onboarding — install badge `'!'` on extension icon; popup welcome banner (2-step guide + `console.anthropic.com` link) shown when no key set; badge clears + banner hides on key save; sidebar no-key CTA improved to blue action text. 84 tests (unchanged).
 - BP-009: Enterprise org policy — `managed_schema.json` (Chrome policy schema for IT admins); `getApiKey` + `isEnabledForHost` check `chrome.storage.managed` first (Managed → Local fallback); new `isManagedApiKey()` + `isManagedDisabledHosts()`; popup disables API key + site toggle when org policy active. 97 tests (+13 managed storage tests).
-- Bug batch (BUG-6/7/9/10/11 + hash redaction): generation counter in `runAnalysis` (BUG-6); `response.content[0]?.text` guard (BUG-7); empty-changes guard before AI path (BUG-9); `.filter(a => !a.isSensitive)` in `buildPrompt` (BUG-10); `scrapeGitHub()` four-level fallback chain including `.file-header a[title]` (BUG-11); `generateDiffHash` redacts sensitive attr values with `<sensitive>`. 100 tests.
+- Bug batch (BUG-6/7/9/10/11/12 + hash redaction): generation counter in `runAnalysis` (BUG-6); `response.content[0]?.text` guard (BUG-7); empty-changes guard before AI path (BUG-9); `.filter(a => !a.isSensitive)` in `buildPrompt` (BUG-10); `scrapeGitHub()` four-level fallback chain including `.file-header a[title]` (BUG-11); `generateDiffHash` redacts sensitive attr values with `<sensitive>`; `chrome.storage.session` access + fail-open cache helpers prevent stuck skeletons (BUG-12). 104 tests.
 - BP-010: Version bumped to `1.0.0`, `manifest.json` gains `homepage_url` + `minimum_chrome_version: "120"`, `store/privacy-policy.md` + `store/listing.md` created for CWS dashboard.
 
-### BUG-11 status — needs live verification
+### Phase 4 seal status
 
-`scrapeGitHub()` now uses a four-level fallback chain:
-
-1. `data-path` on `.file` container
-2. `[data-path]` on any nested element (older GitHub)
-3. `.file-header a[title]` → `title` attribute (modern GitHub; stable across redesigns)
-4. `.file-header .Truncate-text` → `textContent`
-
-Live testing needed to confirm. If still broken, run in the browser console on a GitHub PR `/files` page and paste output:
-
-```js
-Array.from(document.querySelector('.file').attributes).map((a) => a.name + '=' + a.value);
-document.querySelector('.file-header')?.outerHTML.slice(0, 400);
-```
+Codex final E2E passed on 2026-05-30 using Chrome 148 via `web-ext run` against a live GitHub PR (`terraform-aws-modules/terraform-aws-lambda/pull/577/files`). Observed result: 4 `.tf` paths detected, 4 LOW cards rendered, no loading skeleton, no-key AI CTA shown. Submission package rebuilt at `tf-diff-explainer/web-ext-artifacts/tf_diff_explainer-1.0.0.zip`.
 
 - Git + GitHub: repo at https://github.com/Karthikbangari/Terraf, SSH key configured (port 443), all commits pushed.
 - Codex is currently **out of commission** — Claude is handling git commits and pushes this session.

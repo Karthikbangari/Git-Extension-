@@ -86,6 +86,28 @@ describe('analysis caching', () => {
       expect(cached1!.changes[0].id).toBe('aws_iam_role.api');
       expect(cached2!.changes[0].id).toBe('aws_s3_bucket.data');
     });
+
+    it('returns null when session storage is unavailable', async () => {
+      vi.mocked(chrome.storage.session.get).mockRejectedValueOnce(new Error('No access'));
+
+      const result = await getCachedAnalysis('https://github.com/org/repo/pull/4');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('setCachedAnalysis', () => {
+    it('does not throw when session storage is unavailable', async () => {
+      vi.mocked(chrome.storage.session.set).mockRejectedValueOnce(new Error('No access'));
+
+      await expect(
+        setCachedAnalysis(
+          'https://github.com/org/repo/pull/5',
+          [makeChange('aws_iam_role.api')],
+          new Map()
+        )
+      ).resolves.toBeUndefined();
+    });
   });
 
   describe('clearCachedAnalysis', () => {
@@ -96,6 +118,14 @@ describe('analysis caching', () => {
 
       const result = await getCachedAnalysis(url);
       expect(result).toBeNull();
+    });
+
+    it('does not throw when session storage is unavailable', async () => {
+      vi.mocked(chrome.storage.session.remove).mockRejectedValueOnce(new Error('No access'));
+
+      await expect(
+        clearCachedAnalysis('https://github.com/org/repo/pull/6')
+      ).resolves.toBeUndefined();
     });
   });
 });

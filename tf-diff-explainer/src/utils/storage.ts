@@ -22,10 +22,14 @@ export async function getCachedAnalysis(
   url: string
 ): Promise<{ changes: ResourceChange[]; graph: DependencyGraph } | null> {
   const key = cacheKey(url);
-  const result = await chrome.storage.session.get(key);
-  const entry = result[key] as { changes: ResourceChange[]; graph: SerializedGraph } | undefined;
-  if (!entry) return null;
-  return { changes: entry.changes, graph: deserializeGraph(entry.graph) };
+  try {
+    const result = await chrome.storage.session.get(key);
+    const entry = result[key] as { changes: ResourceChange[]; graph: SerializedGraph } | undefined;
+    if (!entry) return null;
+    return { changes: entry.changes, graph: deserializeGraph(entry.graph) };
+  } catch {
+    return null;
+  }
 }
 
 export async function setCachedAnalysis(
@@ -33,13 +37,21 @@ export async function setCachedAnalysis(
   changes: ResourceChange[],
   graph: DependencyGraph
 ): Promise<void> {
-  await chrome.storage.session.set({
-    [cacheKey(url)]: { changes, graph: serializeGraph(graph) },
-  });
+  try {
+    await chrome.storage.session.set({
+      [cacheKey(url)]: { changes, graph: serializeGraph(graph) },
+    });
+  } catch {
+    // Analysis can still render when the ephemeral cache is unavailable.
+  }
 }
 
 export async function clearCachedAnalysis(url: string): Promise<void> {
-  await chrome.storage.session.remove(cacheKey(url));
+  try {
+    await chrome.storage.session.remove(cacheKey(url));
+  } catch {
+    // Cache cleanup is best-effort.
+  }
 }
 
 export async function getApiKey(): Promise<string | null> {

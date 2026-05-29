@@ -95,18 +95,18 @@ Documents the text needed for the CWS dashboard form fields:
 
 ### Review
 
-| Reviewer | Input | Approved? |
-| -------- | ----- | --------- |
-| User     |       | ⬜        |
-| Codex    |       | ⬜        |
-| Gemini   |       | ⬜        |
+| Reviewer | Input                                                                                                                                                    | Approved? |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     | "Next step is Codex E2E run → Phase 4 seal → push → CWS submission."                                                                                     | ✅        |
+| Codex    | Post-build E2E completed on a live GitHub PR. Found/fixed final session-cache access bug; rerun passed with sidebar cards rendered, no loading skeleton. | ✅        |
+| Gemini   |                                                                                                                                                          | ⬜        |
 
 ### Outcome
 
 - **Status:** ✅ Done
 - **Built by:** Claude
-- **Result:** `package.json` + `manifest.json` bumped to `1.0.0`. `manifest.json` gains `homepage_url: "https://github.com/Karthikbangari/Terraf"` and `minimum_chrome_version: "120"`. `store/privacy-policy.md` created (covers local-only storage, api.anthropic.com transmission, no analytics). `store/listing.md` created (name, 123-char short description, detailed description, category, screenshot spec, privacy policy URL).
-- **Test result:** 100/100 ✅ · build ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅ · dist/manifest.json version/homepage_url/minimum_chrome_version all verified
+- **Result:** `package.json` + `manifest.json` bumped to `1.0.0`. `manifest.json` gains `homepage_url: "https://github.com/Karthikbangari/Terraf"` and `minimum_chrome_version: "120"`. `store/privacy-policy.md` created (covers local-only storage, api.anthropic.com transmission, no analytics). `store/listing.md` created (name, 123-char short description, detailed description, category, screenshot spec, privacy policy URL). Codex E2E found a final Chrome runtime bug where unavailable `chrome.storage.session` could leave the sidebar on the loading skeleton; fixed with session access setup + fail-open cache helpers.
+- **Test result:** 104/104 ✅ · build ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅ · dist/manifest.json version/homepage_url/minimum_chrome_version all verified · live Chrome E2E ✅ · CWS zip ready at `tf-diff-explainer/web-ext-artifacts/tf_diff_explainer-1.0.0.zip`
 
 ---
 

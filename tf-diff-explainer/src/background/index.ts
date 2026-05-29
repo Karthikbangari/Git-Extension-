@@ -1,5 +1,9 @@
 import { getApiKey } from '../utils/storage';
 
+void chrome.storage.session.setAccessLevel({
+  accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS',
+}).catch(() => {});
+
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === 'install') {
     chrome.storage.local.set({
