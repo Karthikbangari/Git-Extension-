@@ -16,7 +16,7 @@ Local analysis runs entirely in the browser. AI features make a single request t
 
 ## Install (development)
 
-**Requirements:** Node 22, Chrome 102+
+**Requirements:** Node 22, Chrome 120+
 
 ```bash
 git clone https://github.com/Karthikbangari/Terraf.git
@@ -87,16 +87,20 @@ tf-diff-explainer/
 
 ## Roadmap
 
-| Phase             | Status         | Deliverable                                                                |
-| ----------------- | -------------- | -------------------------------------------------------------------------- |
-| 1 — Foundation    | ✅ Done        | Loadable extension, sidebar shell, popup, page detection                   |
-| 2 — Core engine   | ✅ Done        | Local risk classifier, dependency minimap, caching, highlighting           |
-| 3 — AI layer      | ✅ Done        | AI change summary, interactive rollback checklist, copyable PR description |
-| 4 — Polish + ship | 🔄 In progress | Onboarding ✅, enterprise org policy ✅, Chrome Web Store (next)           |
+| Phase             | Status  | Deliverable                                                                |
+| ----------------- | ------- | -------------------------------------------------------------------------- |
+| 1 — Foundation    | ✅ Done | Loadable extension, sidebar shell, popup, page detection                   |
+| 2 — Core engine   | ✅ Done | Local risk classifier, dependency minimap, caching, highlighting           |
+| 3 — AI layer      | ✅ Done | AI change summary, interactive rollback checklist, copyable PR description |
+| 4 — Polish + ship | ✅ Done | Onboarding, enterprise org policy, CWS prep (v1.0.0, store assets)         |
 
 ## Tech
 
-- TypeScript, Vite (three separate IIFE bundles), Vitest (97 tests)
+- TypeScript, Vite (three separate IIFE bundles), Vitest (100 tests)
 - No runtime dependencies — everything ships in the bundle
 - MV3 compliant: no `eval`, no `innerHTML`, no remote code
 - AI calls proxied through the background service worker so the host page's CSP cannot block them
+
+## Chrome Web Store
+
+The extension is prepared for CWS submission at version 1.0.0. Store assets (privacy policy, listing description, screenshot spec) are in [`tf-diff-explainer/store/`](tf-diff-explainer/store/).

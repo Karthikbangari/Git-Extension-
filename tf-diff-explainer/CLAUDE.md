@@ -15,19 +15,19 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                  | Value                                                                 |
-| ---------------------- | --------------------------------------------------------------------- |
-| Last active session    | 2026-05-30                                                            |
-| Active phase           | Phase 4 — Polish + ship                                               |
-| Phase 1 status         | Sealed ✅ (2026-05-30)                                                |
-| Phase 2 status         | Sealed ✅ (2026-06-02)                                                |
-| Phase 3 status         | Sealed ✅ (2026-05-29)                                                |
-| Waiting on             | Codex/Gemini E2E + live BUG-11 verify → Phase 4 seal → CWS submission |
-| Last build             | BP-010 ✅ — version 1.0.0, manifest hardening, store assets           |
-| Next action for Claude | Seal Phase 4 after Codex/Gemini E2E confirms clean                    |
-| Open bugs              | BUG-11 fixed (needs live verification) — see note below               |
-| Blocked                | No                                                                    |
-| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 100/100 ✅                     |
+| Field                  | Value                                                         |
+| ---------------------- | ------------------------------------------------------------- |
+| Last active session    | 2026-05-30                                                    |
+| Active phase           | Phase 4 — Polish + ship                                       |
+| Phase 1 status         | Sealed ✅ (2026-05-30)                                        |
+| Phase 2 status         | Sealed ✅ (2026-06-02)                                        |
+| Phase 3 status         | Sealed ✅ (2026-05-29)                                        |
+| Waiting on             | Codex/Gemini E2E verification → Phase 4 seal → CWS submission |
+| Last build             | BP-010 ✅ — version 1.0.0, manifest hardening, store assets   |
+| Next action for Claude | Seal Phase 4 after Codex/Gemini E2E confirms clean            |
+| Open bugs              | BUG-11 fixed (needs live verification) — see note below       |
+| Blocked                | No                                                            |
+| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 100/100 ✅             |
 
 ### What was built and confirmed
 
