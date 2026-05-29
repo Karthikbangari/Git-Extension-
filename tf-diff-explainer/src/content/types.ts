@@ -1,3 +1,6 @@
+/** resource id → set of resource ids that resource references (its dependencies) */
+export type DependencyGraph = Map<string, Set<string>>;
+
 /**
  * The type of action performed on the Terraform resource.
  */
