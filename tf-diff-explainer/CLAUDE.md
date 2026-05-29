@@ -32,9 +32,12 @@ No exceptions.
 
 - BP-001: Full Phase 1 scaffold (manifest, sidebar, popup, page detection, CI)
 - BP-002: Vite build pipeline, TypeScript conversion, single root `package.json`, icon generation, Vitest tests
-- BUG-1 fix: ESLint Node globals override for `scripts/generate-icons.js`
-- BUG-2 fix: Prettier reformatted 11 files — all clean
-- BUG-3 fix: Replaced `innerHTML` in sidebar with DOM construction (`createElement`/`appendChild`)
+- BUG-1/2/3 fixes: ESLint Node globals, Prettier, innerHTML → DOM construction
+- BP-003: Local risk classifier (IAM wildcard, open SG, force_destroy, destructive actions) + hunk parser. 46 tests.
+- BP-004: Dependency minimap — `refParser.ts` (word-boundary regex reference detection), SVG renderer (2-col layout, risk-coloured nodes, arrowhead edges). 57 tests.
+- BP-005: Session cache (`chrome.storage.session`, URL-keyed), cache-first `runAnalysis`, hover relationship highlighting (AbortController delegation, CSS dimming). 62 tests.
+- Git + GitHub: repo at https://github.com/Karthikbangari/Terraf, SSH key configured (port 443), all commits pushed.
+- Codex is currently **out of commission** — Claude is handling git commits and pushes this session.
 
 ### Confirmed decisions (do not re-litigate)
 
