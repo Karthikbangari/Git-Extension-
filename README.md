@@ -54,6 +54,7 @@ All commands run from the repo root (`/Terraf`).
 ```
 tf-diff-explainer/
 ├── src/
+│   ├── master.ts         # ★ All modules in one file — start here for a full read
 │   ├── content/          # Content script (injected into PR pages)
 │   │   ├── index.ts      # Orchestrator: detect → cache → analyse → render → AI
 │   │   ├── hunkParser.ts # DOM scraper: extracts ResourceChange[] from diff
@@ -77,6 +78,9 @@ tf-diff-explainer/
 │   ├── aiSummary.test.ts
 │   ├── storageManaged.test.ts  # managed→local fallback logic
 │   └── integration/caching.test.ts
+├── store/                # Chrome Web Store submission assets
+│   ├── privacy-policy.md # Privacy policy (host at GitHub raw URL for CWS)
+│   └── listing.md        # Store name, descriptions, screenshot spec
 ├── public/               # Static assets copied to dist/
 │   ├── manifest.json
 │   ├── managed_schema.json  # Chrome enterprise policy schema
@@ -84,6 +88,8 @@ tf-diff-explainer/
 │   └── popup/
 └── dist/                 # Built extension — load this in Chrome
 ```
+
+> **New to the codebase?** Open [`src/master.ts`](tf-diff-explainer/src/master.ts) — it has every module concatenated in pipeline order with section headings, so you can read the entire extension in one file.
 
 ## Roadmap
 

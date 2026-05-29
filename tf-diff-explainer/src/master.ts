@@ -71,7 +71,9 @@ function isSupportedPage(url = location.href): boolean {
 }
 
 function hasTerraformDiff(): boolean {
-  const githubFiles = document.querySelectorAll('[data-path$=".tf"], .file-header[data-path$=".tf"]');
+  const githubFiles = document.querySelectorAll(
+    '[data-path$=".tf"], .file-header[data-path$=".tf"]'
+  );
   if (githubFiles.length > 0) return true;
 
   const gitlabFiles = document.querySelectorAll('.diff-file-changes .file-title-name');
@@ -304,8 +306,14 @@ function extractAttributes(lines: LineRecord[]): AttributeChange[] {
       continue;
     }
     const open = BLOCK_OPEN_RE.exec(text);
-    if (open && !RESOURCE_RE.test(text)) { blockStack.push(open[1]); continue; }
-    if (BLOCK_CLOSE_RE.test(text)) { if (blockStack.length > 0) blockStack.pop(); continue; }
+    if (open && !RESOURCE_RE.test(text)) {
+      blockStack.push(open[1]);
+      continue;
+    }
+    if (BLOCK_CLOSE_RE.test(text)) {
+      if (blockStack.length > 0) blockStack.pop();
+      continue;
+    }
 
     const m = ATTR_RE.exec(text);
     if (!m) continue;
@@ -322,7 +330,13 @@ function extractAttributes(lines: LineRecord[]): AttributeChange[] {
 
 function parseFileRecord(record: FileRecord): ResourceChange[] {
   const { filePath, lines } = record;
-  interface Slice { type: string; name: string; headerKind: LineKind; start: number; end: number; }
+  interface Slice {
+    type: string;
+    name: string;
+    headerKind: LineKind;
+    start: number;
+    end: number;
+  }
   const slices: Slice[] = [];
   let depth = 0;
   let current: Omit<Slice, 'end'> | null = null;
@@ -331,12 +345,18 @@ function parseFileRecord(record: FileRecord): ResourceChange[] {
     const { text, kind } = lines[i];
     if (current === null) {
       const m = RESOURCE_RE.exec(text);
-      if (m) { current = { type: m[1], name: m[2], headerKind: kind, start: i }; depth = 1; }
+      if (m) {
+        current = { type: m[1], name: m[2], headerKind: kind, start: i };
+        depth = 1;
+      }
     } else {
       if (BLOCK_OPEN_RE.test(text) && !RESOURCE_RE.test(text)) depth++;
       if (BLOCK_CLOSE_RE.test(text)) {
         depth--;
-        if (depth === 0) { slices.push({ ...current, end: i }); current = null; }
+        if (depth === 0) {
+          slices.push({ ...current, end: i });
+          current = null;
+        }
       }
     }
   }
@@ -344,7 +364,17 @@ function parseFileRecord(record: FileRecord): ResourceChange[] {
   if (slices.length === 0) {
     const hasChanges = lines.some((l) => l.kind !== 'context');
     if (!hasChanges) return [];
-    return [{ id: filePath, type: 'unknown', name: filePath, action: 'unknown', filePath, changes: [], riskProfile: { level: 'low', reasons: [], isDestructive: false } }];
+    return [
+      {
+        id: filePath,
+        type: 'unknown',
+        name: filePath,
+        action: 'unknown',
+        filePath,
+        changes: [],
+        riskProfile: { level: 'low', reasons: [], isDestructive: false },
+      },
+    ];
   }
 
   return slices.map((slice) => {
@@ -354,11 +384,18 @@ function parseFileRecord(record: FileRecord): ResourceChange[] {
     if (slice.headerKind === 'added' && removedLines.length === 0) {
       action = 'create';
     } else if (slice.headerKind === 'removed') {
-      const hasMatchingAdd = slices.some((s) => s !== slice && s.type === slice.type && s.name === slice.name && s.headerKind === 'added');
+      const hasMatchingAdd = slices.some(
+        (s) =>
+          s !== slice && s.type === slice.type && s.name === slice.name && s.headerKind === 'added'
+      );
       action = hasMatchingAdd ? 'replace' : 'delete';
     }
     return {
-      id: `${slice.type}.${slice.name}`, type: slice.type, name: slice.name, action, filePath,
+      id: `${slice.type}.${slice.name}`,
+      type: slice.type,
+      name: slice.name,
+      action,
+      filePath,
       changes: extractAttributes(sliceLines),
       riskProfile: { level: 'low', reasons: [], isDestructive: action === 'delete' },
       domReference: { dataFilePath: filePath },
@@ -416,8 +453,11 @@ const RULES: Rule[] = [
         if (!c.newValue) return false;
         const last = lastPart(c.attribute).toLowerCase();
         return (last === 'actions' || last === 'action') && /"\*"/.test(c.newValue);
-      }) ? 'IAM wildcard action' : null,
-    level: 'high', isDestructive: false,
+      })
+        ? 'IAM wildcard action'
+        : null,
+    level: 'high',
+    isDestructive: false,
   },
   {
     test: (change) =>
@@ -425,36 +465,49 @@ const RULES: Rule[] = [
         if (!c.newValue) return false;
         const last = lastPart(c.attribute).toLowerCase();
         return (last === 'identifiers' || last === 'principal') && /"\*"/.test(c.newValue);
-      }) ? 'IAM wildcard principal' : null,
-    level: 'high', isDestructive: false,
+      })
+        ? 'IAM wildcard principal'
+        : null,
+    level: 'high',
+    isDestructive: false,
   },
   {
     test: (change) =>
       change.changes.some((c) => {
         if (!c.newValue) return false;
         return c.attribute.split('.')[0] === 'ingress' && /0\.0\.0\.0\/0/.test(c.newValue);
-      }) ? 'Open security group ingress (0.0.0.0/0)' : null,
-    level: 'high', isDestructive: false,
+      })
+        ? 'Open security group ingress (0.0.0.0/0)'
+        : null,
+    level: 'high',
+    isDestructive: false,
   },
   {
     test: (change) =>
       change.changes.some((c) => {
         if (!c.newValue) return false;
         return c.attribute.split('.')[0] === 'egress' && /0\.0\.0\.0\/0/.test(c.newValue);
-      }) ? 'Open security group egress (0.0.0.0/0)' : null,
-    level: 'medium', isDestructive: false,
+      })
+        ? 'Open security group egress (0.0.0.0/0)'
+        : null,
+    level: 'medium',
+    isDestructive: false,
   },
   {
     test: (change) =>
       change.changes.some((c) => {
         if (!c.newValue) return false;
         return lastPart(c.attribute) === 'force_destroy' && /^true$/.test(c.newValue.trim());
-      }) ? 'force_destroy enabled' : null,
-    level: 'high', isDestructive: false,
+      })
+        ? 'force_destroy enabled'
+        : null,
+    level: 'high',
+    isDestructive: false,
   },
   {
     test: (change) => (change.action === 'delete' ? 'Resource deletion' : null),
-    level: 'high', isDestructive: true,
+    level: 'high',
+    isDestructive: true,
   },
 ];
 
@@ -521,16 +574,24 @@ async function generateDiffHash(changes: ResourceChange[]): Promise<string> {
   }));
   const msgBuffer = new TextEncoder().encode(JSON.stringify(simplified) + CACHE_VERSION);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  return Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 function buildPrompt(changes: ResourceChange[]): string {
-  const changeList = changes.map((c) => {
-    const risk = c.riskProfile.level.toUpperCase();
-    const reasons = c.riskProfile.reasons.length ? ` (${c.riskProfile.reasons.join(', ')})` : '';
-    const attrs = c.changes.filter((a) => !a.isSensitive).slice(0, 3).map((a) => `${a.attribute}=${a.newValue}`).join(', ');
-    return `- ${c.action.toUpperCase()} ${c.id} [${risk}${reasons}]: ${attrs}`;
-  }).join('\n');
+  const changeList = changes
+    .map((c) => {
+      const risk = c.riskProfile.level.toUpperCase();
+      const reasons = c.riskProfile.reasons.length ? ` (${c.riskProfile.reasons.join(', ')})` : '';
+      const attrs = c.changes
+        .filter((a) => !a.isSensitive)
+        .slice(0, 3)
+        .map((a) => `${a.attribute}=${a.newValue}`)
+        .join(', ');
+      return `- ${c.action.toUpperCase()} ${c.id} [${risk}${reasons}]: ${attrs}`;
+    })
+    .join('\n');
 
   return `You are a Terraform diff reviewer. Analyze these resource changes and respond with valid JSON only.
 
@@ -557,9 +618,15 @@ async function fetchAISummary(changes: ResourceChange[]): Promise<AISummaryResul
       payload: { prompt, model: 'claude-haiku-4-5-20251001' },
     });
     if (!response || response.error) throw new Error(response?.error || 'Empty response');
-    if (!Array.isArray(response.content) || !response.content[0]?.text) throw new Error('Unexpected response format');
+    if (!Array.isArray(response.content) || !response.content[0]?.text)
+      throw new Error('Unexpected response format');
     const parsed = JSON.parse(response.content[0].text);
-    if (typeof parsed.summary !== 'string' || !Array.isArray(parsed.risks) || !Array.isArray(parsed.rollback) || typeof parsed.prDescription !== 'string') {
+    if (
+      typeof parsed.summary !== 'string' ||
+      !Array.isArray(parsed.risks) ||
+      !Array.isArray(parsed.rollback) ||
+      typeof parsed.prDescription !== 'string'
+    ) {
       throw new Error('Invalid AI response shape');
     }
     return parsed as AISummaryResult;
@@ -574,25 +641,43 @@ async function fetchAISummary(changes: ResourceChange[]): Promise<AISummaryResul
 // =============================================================================
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const NODE_W = 120, NODE_H = 24, ROW_H = 32;
-const COL_X_LEFT = 0, COL_X_RIGHT = 160, CANVAS_W = 280, PADDING = 8, ARROW_SIZE = 5;
+const NODE_W = 120,
+  NODE_H = 24,
+  ROW_H = 32;
+const COL_X_LEFT = 0,
+  COL_X_RIGHT = 160,
+  CANVAS_W = 280,
+  PADDING = 8,
+  ARROW_SIZE = 5;
 
 const RISK_CLASS: Record<RiskLevel | 'unknown', string> = {
-  high: 'tfe-node-high', medium: 'tfe-node-medium', low: 'tfe-node-low', unknown: 'tfe-node-unknown',
+  high: 'tfe-node-high',
+  medium: 'tfe-node-medium',
+  low: 'tfe-node-low',
+  unknown: 'tfe-node-unknown',
 };
 
-function svgCreate(tag: string): Element { return document.createElementNS(SVG_NS, tag); }
-function truncate(s: string, max: number): string { return s.length > max ? s.slice(0, max - 1) + '…' : s; }
+function svgCreate(tag: string): Element {
+  return document.createElementNS(SVG_NS, tag);
+}
+function truncate(s: string, max: number): string {
+  return s.length > max ? s.slice(0, max - 1) + '…' : s;
+}
 
 function renderMinimap(changes: ResourceChange[], graph: DependencyGraph): SVGSVGElement {
   const svg = svgCreate('svg');
   svg.setAttribute('xmlns', SVG_NS);
   svg.setAttribute('width', String(CANVAS_W));
 
-  if (changes.length === 0) { svg.setAttribute('height', '0'); return svg as SVGSVGElement; }
+  if (changes.length === 0) {
+    svg.setAttribute('height', '0');
+    return svg as SVGSVGElement;
+  }
 
   const rightIds = new Set<string>();
-  for (const [id, deps] of graph) { if (deps.size > 0) rightIds.add(id); }
+  for (const [id, deps] of graph) {
+    if (deps.size > 0) rightIds.add(id);
+  }
 
   const leftNodes = changes.filter((c) => !rightIds.has(c.id));
   const rightNodes = changes.filter((c) => rightIds.has(c.id));
@@ -618,18 +703,27 @@ function renderMinimap(changes: ResourceChange[], graph: DependencyGraph): SVGSV
       for (const depId of deps) {
         const depPos = positions.get(depId);
         if (!depPos || srcPos.x === depPos.x) continue;
-        const x1 = srcPos.x, y1 = srcPos.y + NODE_H / 2;
-        const x2 = depPos.x + NODE_W, y2 = depPos.y + NODE_H / 2;
+        const x1 = srcPos.x,
+          y1 = srcPos.y + NODE_H / 2;
+        const x2 = depPos.x + NODE_W,
+          y2 = depPos.y + NODE_H / 2;
         const line = svgCreate('line');
         line.setAttribute('class', 'tfe-edge');
-        line.setAttribute('data-from', srcId); line.setAttribute('data-to', depId);
-        line.setAttribute('x1', String(x1)); line.setAttribute('y1', String(y1));
-        line.setAttribute('x2', String(x2)); line.setAttribute('y2', String(y2));
+        line.setAttribute('data-from', srcId);
+        line.setAttribute('data-to', depId);
+        line.setAttribute('x1', String(x1));
+        line.setAttribute('y1', String(y1));
+        line.setAttribute('x2', String(x2));
+        line.setAttribute('y2', String(y2));
         svg.appendChild(line);
         const arrow = svgCreate('polygon');
         arrow.setAttribute('class', 'tfe-edge-arrow');
-        arrow.setAttribute('data-from', srcId); arrow.setAttribute('data-to', depId);
-        arrow.setAttribute('points', `${x2},${y2} ${x2 + ARROW_SIZE},${y2 - ARROW_SIZE / 2} ${x2 + ARROW_SIZE},${y2 + ARROW_SIZE / 2}`);
+        arrow.setAttribute('data-from', srcId);
+        arrow.setAttribute('data-to', depId);
+        arrow.setAttribute(
+          'points',
+          `${x2},${y2} ${x2 + ARROW_SIZE},${y2 - ARROW_SIZE / 2} ${x2 + ARROW_SIZE},${y2 + ARROW_SIZE / 2}`
+        );
         svg.appendChild(arrow);
       }
     }
@@ -641,21 +735,29 @@ function renderMinimap(changes: ResourceChange[], graph: DependencyGraph): SVGSV
     const level = change.riskProfile.level in RISK_CLASS ? change.riskProfile.level : 'unknown';
     const g = svgCreate('g');
     g.setAttribute('data-id', change.id);
-    const title = svgCreate('title'); title.textContent = change.id; g.appendChild(title);
+    const title = svgCreate('title');
+    title.textContent = change.id;
+    g.appendChild(title);
     const rect = svgCreate('rect');
     rect.setAttribute('class', `tfe-node-rect ${RISK_CLASS[level as RiskLevel]}`);
-    rect.setAttribute('x', String(pos.x)); rect.setAttribute('y', String(pos.y));
-    rect.setAttribute('width', String(NODE_W)); rect.setAttribute('height', String(NODE_H));
+    rect.setAttribute('x', String(pos.x));
+    rect.setAttribute('y', String(pos.y));
+    rect.setAttribute('width', String(NODE_W));
+    rect.setAttribute('height', String(NODE_H));
     rect.setAttribute('rx', '4');
     g.appendChild(rect);
     const label = svgCreate('text');
     label.setAttribute('class', 'tfe-node-label');
-    label.setAttribute('x', String(pos.x + 6)); label.setAttribute('y', String(pos.y + 14));
-    label.textContent = truncate(change.name, 15); g.appendChild(label);
+    label.setAttribute('x', String(pos.x + 6));
+    label.setAttribute('y', String(pos.y + 14));
+    label.textContent = truncate(change.name, 15);
+    g.appendChild(label);
     const sub = svgCreate('text');
     sub.setAttribute('class', 'tfe-node-sublabel');
-    sub.setAttribute('x', String(pos.x + 6)); sub.setAttribute('y', String(pos.y + 22));
-    sub.textContent = truncate(change.type, 20); g.appendChild(sub);
+    sub.setAttribute('x', String(pos.x + 6));
+    sub.setAttribute('y', String(pos.y + 22));
+    sub.textContent = truncate(change.type, 20);
+    g.appendChild(sub);
     svg.appendChild(g);
   }
   return svg as SVGSVGElement;
@@ -672,14 +774,25 @@ function getRelated(activeId: string, graph: DependencyGraph): Set<string> {
   const related = new Set<string>();
   const deps = graph.get(activeId);
   if (deps) for (const d of deps) related.add(d);
-  for (const [id, targets] of graph) { if (targets.has(activeId)) related.add(id); }
+  for (const [id, targets] of graph) {
+    if (targets.has(activeId)) related.add(id);
+  }
   return related;
 }
 
 function clearHighlight(sidebar: HTMLElement): void {
   delete sidebar.dataset.activeId;
-  for (const el of sidebar.querySelectorAll('.tfe-active, .tfe-related, .tfe-node-active, .tfe-node-related, .tfe-edge-active, .tfe-arrow-active')) {
-    el.classList.remove('tfe-active', 'tfe-related', 'tfe-node-active', 'tfe-node-related', 'tfe-edge-active', 'tfe-arrow-active');
+  for (const el of sidebar.querySelectorAll(
+    '.tfe-active, .tfe-related, .tfe-node-active, .tfe-node-related, .tfe-edge-active, .tfe-arrow-active'
+  )) {
+    el.classList.remove(
+      'tfe-active',
+      'tfe-related',
+      'tfe-node-active',
+      'tfe-node-related',
+      'tfe-edge-active',
+      'tfe-arrow-active'
+    );
   }
 }
 
@@ -710,13 +823,17 @@ function setupHighlighting(sidebar: HTMLElement, body: HTMLElement, graph: Depen
   highlightController?.abort();
   highlightController = new AbortController();
   const { signal } = highlightController;
-  body.addEventListener('mouseover', (e) => {
-    const card = (e.target as Element).closest<HTMLElement>('.tfe-card[data-resource-id]');
-    if (!card) return;
-    const id = card.dataset.resourceId!;
-    if (sidebar.dataset.activeId === id) return;
-    applyHighlight(sidebar, id, graph);
-  }, { signal });
+  body.addEventListener(
+    'mouseover',
+    (e) => {
+      const card = (e.target as Element).closest<HTMLElement>('.tfe-card[data-resource-id]');
+      if (!card) return;
+      const id = card.dataset.resourceId!;
+      if (sidebar.dataset.activeId === id) return;
+      applyHighlight(sidebar, id, graph);
+    },
+    { signal }
+  );
   sidebar.addEventListener('mouseleave', () => clearHighlight(sidebar), { signal });
 }
 
@@ -724,19 +841,29 @@ function injectSidebar(): void {
   if (document.getElementById(SIDEBAR_ID)) return;
   const sidebar = document.createElement('div');
   sidebar.id = SIDEBAR_ID;
-  const header = document.createElement('div'); header.className = 'tfe-header';
-  const title = document.createElement('span'); title.className = 'tfe-title'; title.textContent = 'TF Diff Explainer';
-  const btn = document.createElement('button'); btn.className = 'tfe-toggle'; btn.setAttribute('aria-label', 'Collapse sidebar'); btn.textContent = '✕';
-  header.appendChild(title); header.appendChild(btn);
-  const body = document.createElement('div'); body.className = 'tfe-body';
-  const skeleton = document.createElement('div'); skeleton.className = 'tfe-skeleton';
+  const header = document.createElement('div');
+  header.className = 'tfe-header';
+  const title = document.createElement('span');
+  title.className = 'tfe-title';
+  title.textContent = 'TF Diff Explainer';
+  const btn = document.createElement('button');
+  btn.className = 'tfe-toggle';
+  btn.setAttribute('aria-label', 'Collapse sidebar');
+  btn.textContent = '✕';
+  header.appendChild(title);
+  header.appendChild(btn);
+  const body = document.createElement('div');
+  body.className = 'tfe-body';
+  const skeleton = document.createElement('div');
+  skeleton.className = 'tfe-skeleton';
   for (const short of [false, true, false, true]) {
     const line = document.createElement('div');
     line.className = short ? 'tfe-skeleton-line short' : 'tfe-skeleton-line';
     skeleton.appendChild(line);
   }
   body.appendChild(skeleton);
-  sidebar.appendChild(header); sidebar.appendChild(body);
+  sidebar.appendChild(header);
+  sidebar.appendChild(body);
   document.body.appendChild(sidebar);
   btn.addEventListener('click', () => {
     sidebar.classList.toggle('tfe-collapsed');
@@ -753,21 +880,34 @@ function updateSidebar(results: ResourceChange[]): void {
   if (!body) return;
   body.textContent = '';
   if (results.length === 0) {
-    const empty = document.createElement('p'); empty.className = 'tfe-empty'; empty.textContent = 'No Terraform changes detected.';
-    body.appendChild(empty); return;
+    const empty = document.createElement('p');
+    empty.className = 'tfe-empty';
+    empty.textContent = 'No Terraform changes detected.';
+    body.appendChild(empty);
+    return;
   }
   for (const change of results) {
     const card = document.createElement('div');
     card.className = `tfe-card tfe-risk-${change.riskProfile.level}`;
     card.dataset.resourceId = change.id;
-    const cardHeader = document.createElement('div'); cardHeader.className = 'tfe-card-header';
-    const cardTitle = document.createElement('span'); cardTitle.className = 'tfe-card-title'; cardTitle.textContent = change.id;
-    const badge = document.createElement('span'); badge.className = `tfe-card-badge tfe-risk-${change.riskProfile.level}`; badge.textContent = change.riskProfile.level.toUpperCase();
-    cardHeader.appendChild(cardTitle); cardHeader.appendChild(badge); card.appendChild(cardHeader);
+    const cardHeader = document.createElement('div');
+    cardHeader.className = 'tfe-card-header';
+    const cardTitle = document.createElement('span');
+    cardTitle.className = 'tfe-card-title';
+    cardTitle.textContent = change.id;
+    const badge = document.createElement('span');
+    badge.className = `tfe-card-badge tfe-risk-${change.riskProfile.level}`;
+    badge.textContent = change.riskProfile.level.toUpperCase();
+    cardHeader.appendChild(cardTitle);
+    cardHeader.appendChild(badge);
+    card.appendChild(cardHeader);
     if (change.riskProfile.reasons.length > 0) {
-      const reasonList = document.createElement('ul'); reasonList.className = 'tfe-card-reasons';
+      const reasonList = document.createElement('ul');
+      reasonList.className = 'tfe-card-reasons';
       for (const reason of change.riskProfile.reasons) {
-        const item = document.createElement('li'); item.className = 'tfe-card-reason'; item.textContent = reason;
+        const item = document.createElement('li');
+        item.className = 'tfe-card-reason';
+        item.textContent = reason;
         reasonList.appendChild(item);
       }
       card.appendChild(reasonList);
@@ -777,12 +917,17 @@ function updateSidebar(results: ResourceChange[]): void {
 }
 
 function updateMinimap(changes: ResourceChange[], graph: DependencyGraph): void {
-  const sidebar = document.getElementById(SIDEBAR_ID); if (!sidebar) return;
-  const body = sidebar.querySelector<HTMLElement>('.tfe-body'); if (!body) return;
+  const sidebar = document.getElementById(SIDEBAR_ID);
+  if (!sidebar) return;
+  const body = sidebar.querySelector<HTMLElement>('.tfe-body');
+  if (!body) return;
   body.querySelector('.tfe-minimap-section')?.remove();
   if (changes.length === 0) return;
-  const section = document.createElement('div'); section.className = 'tfe-minimap-section';
-  const heading = document.createElement('p'); heading.className = 'tfe-minimap-heading'; heading.textContent = 'Resource Graph';
+  const section = document.createElement('div');
+  section.className = 'tfe-minimap-section';
+  const heading = document.createElement('p');
+  heading.className = 'tfe-minimap-heading';
+  heading.textContent = 'Resource Graph';
   section.appendChild(heading);
   const svgNode = renderMinimap(changes, graph);
   if (Number(svgNode.getAttribute('height')) > 0) section.appendChild(svgNode);
@@ -790,55 +935,113 @@ function updateMinimap(changes: ResourceChange[], graph: DependencyGraph): void 
   setupHighlighting(sidebar, body, graph);
 }
 
-function removeSidebar(): void { document.getElementById(SIDEBAR_ID)?.remove(); }
+function removeSidebar(): void {
+  document.getElementById(SIDEBAR_ID)?.remove();
+}
 
 function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 'error'): void {
-  const sidebar = document.getElementById(SIDEBAR_ID); if (!sidebar) return;
-  const body = sidebar.querySelector<HTMLElement>('.tfe-body'); if (!body) return;
+  const sidebar = document.getElementById(SIDEBAR_ID);
+  if (!sidebar) return;
+  const body = sidebar.querySelector<HTMLElement>('.tfe-body');
+  if (!body) return;
   body.querySelector('.tfe-ai-section')?.remove();
   if (state === null) return;
-  const section = document.createElement('div'); section.className = 'tfe-ai-section';
-  const heading = document.createElement('p'); heading.className = 'tfe-ai-heading'; heading.textContent = 'AI Summary';
+  const section = document.createElement('div');
+  section.className = 'tfe-ai-section';
+  const heading = document.createElement('p');
+  heading.className = 'tfe-ai-heading';
+  heading.textContent = 'AI Summary';
   section.appendChild(heading);
   if (state === 'loading') {
-    const skeleton = document.createElement('div'); skeleton.className = 'tfe-skeleton';
+    const skeleton = document.createElement('div');
+    skeleton.className = 'tfe-skeleton';
     for (const short of [false, false, true]) {
-      const line = document.createElement('div'); line.className = short ? 'tfe-skeleton-line short' : 'tfe-skeleton-line'; skeleton.appendChild(line);
+      const line = document.createElement('div');
+      line.className = short ? 'tfe-skeleton-line short' : 'tfe-skeleton-line';
+      skeleton.appendChild(line);
     }
     section.appendChild(skeleton);
   } else if (state === 'no-key') {
-    const msg = document.createElement('p'); msg.className = 'tfe-ai-cta'; msg.textContent = 'Click the extension icon ↗ to set up AI summaries.'; section.appendChild(msg);
+    const msg = document.createElement('p');
+    msg.className = 'tfe-ai-cta';
+    msg.textContent = 'Click the extension icon ↗ to set up AI summaries.';
+    section.appendChild(msg);
   } else if (state === 'error') {
-    const msg = document.createElement('p'); msg.className = 'tfe-ai-error'; msg.textContent = 'AI summary unavailable.'; section.appendChild(msg);
+    const msg = document.createElement('p');
+    msg.className = 'tfe-ai-error';
+    msg.textContent = 'AI summary unavailable.';
+    section.appendChild(msg);
   } else {
-    const summary = document.createElement('p'); summary.className = 'tfe-ai-summary'; summary.textContent = state.summary; section.appendChild(summary);
+    const summary = document.createElement('p');
+    summary.className = 'tfe-ai-summary';
+    summary.textContent = state.summary;
+    section.appendChild(summary);
     if (state.risks.length > 0) {
-      const riskHeading = document.createElement('p'); riskHeading.className = 'tfe-ai-subheading'; riskHeading.textContent = 'Risks'; section.appendChild(riskHeading);
-      const riskList = document.createElement('ul'); riskList.className = 'tfe-ai-list';
-      for (const risk of state.risks) { const item = document.createElement('li'); item.textContent = risk; riskList.appendChild(item); }
+      const riskHeading = document.createElement('p');
+      riskHeading.className = 'tfe-ai-subheading';
+      riskHeading.textContent = 'Risks';
+      section.appendChild(riskHeading);
+      const riskList = document.createElement('ul');
+      riskList.className = 'tfe-ai-list';
+      for (const risk of state.risks) {
+        const item = document.createElement('li');
+        item.textContent = risk;
+        riskList.appendChild(item);
+      }
       section.appendChild(riskList);
     }
     if (state.rollback.length > 0) {
-      const rollbackHeading = document.createElement('p'); rollbackHeading.className = 'tfe-ai-subheading'; rollbackHeading.textContent = 'Rollback Checklist'; section.appendChild(rollbackHeading);
-      const rollbackList = document.createElement('ol'); rollbackList.className = 'tfe-ai-rollback'; rollbackList.setAttribute('aria-label', 'Rollback checklist');
+      const rollbackHeading = document.createElement('p');
+      rollbackHeading.className = 'tfe-ai-subheading';
+      rollbackHeading.textContent = 'Rollback Checklist';
+      section.appendChild(rollbackHeading);
+      const rollbackList = document.createElement('ol');
+      rollbackList.className = 'tfe-ai-rollback';
+      rollbackList.setAttribute('aria-label', 'Rollback checklist');
       for (const step of state.rollback) {
-        const item = document.createElement('li'); item.className = 'tfe-ai-rollback-item';
-        const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.className = 'tfe-ai-rollback-check'; checkbox.setAttribute('aria-label', 'Mark step complete');
-        const text = document.createElement('span'); text.textContent = step;
-        item.appendChild(checkbox); item.appendChild(text); rollbackList.appendChild(item);
+        const item = document.createElement('li');
+        item.className = 'tfe-ai-rollback-item';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'tfe-ai-rollback-check';
+        checkbox.setAttribute('aria-label', 'Mark step complete');
+        const text = document.createElement('span');
+        text.textContent = step;
+        item.appendChild(checkbox);
+        item.appendChild(text);
+        rollbackList.appendChild(item);
       }
       section.appendChild(rollbackList);
     }
     if (state.prDescription) {
-      const prHeading = document.createElement('p'); prHeading.className = 'tfe-ai-subheading'; prHeading.textContent = 'PR Description'; section.appendChild(prHeading);
-      const prHeader = document.createElement('div'); prHeader.className = 'tfe-ai-pr-header';
-      const copyBtn = document.createElement('button'); copyBtn.className = 'tfe-ai-copy-btn'; copyBtn.textContent = 'Copy'; copyBtn.setAttribute('aria-label', 'Copy PR description');
+      const prHeading = document.createElement('p');
+      prHeading.className = 'tfe-ai-subheading';
+      prHeading.textContent = 'PR Description';
+      section.appendChild(prHeading);
+      const prHeader = document.createElement('div');
+      prHeader.className = 'tfe-ai-pr-header';
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'tfe-ai-copy-btn';
+      copyBtn.textContent = 'Copy';
+      copyBtn.setAttribute('aria-label', 'Copy PR description');
       const prDescText = state.prDescription;
       copyBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText(prDescText).then(() => { copyBtn.textContent = 'Copied ✓'; setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500); }).catch(() => {});
+        navigator.clipboard
+          .writeText(prDescText)
+          .then(() => {
+            copyBtn.textContent = 'Copied ✓';
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy';
+            }, 1500);
+          })
+          .catch(() => {});
       });
-      prHeader.appendChild(copyBtn); section.appendChild(prHeader);
-      const prPre = document.createElement('pre'); prPre.className = 'tfe-ai-pr-desc'; prPre.textContent = state.prDescription; section.appendChild(prPre);
+      prHeader.appendChild(copyBtn);
+      section.appendChild(prHeader);
+      const prPre = document.createElement('pre');
+      prPre.className = 'tfe-ai-pr-desc';
+      prPre.textContent = state.prDescription;
+      section.appendChild(prPre);
     }
   }
   body.appendChild(section);
@@ -880,14 +1083,18 @@ function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 
     if (changes.length === 0) return;
 
     const apiKey = await getApiKey();
-    if (!apiKey) { updateAISummary('no-key'); return; }
+    if (!apiKey) {
+      updateAISummary('no-key');
+      return;
+    }
 
     if (gen !== generation) return;
     const hash = await generateDiffHash(changes);
     const cachedAI = await getCachedAISummary(hash);
     if (cachedAI) {
       if (gen !== generation) return;
-      updateAISummary(cachedAI); return;
+      updateAISummary(cachedAI);
+      return;
     }
 
     if (gen !== generation) return;
@@ -896,7 +1103,11 @@ function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 
 
     if (gen !== generation) return;
     if (aiResult) {
-      try { await setCachedAISummary(hash, aiResult); } catch (error) { console.warn('TFE: Failed to cache AI summary', error); }
+      try {
+        await setCachedAISummary(hash, aiResult);
+      } catch (error) {
+        console.warn('TFE: Failed to cache AI summary', error);
+      }
     }
     updateAISummary(aiResult ?? 'error');
   };
@@ -918,7 +1129,10 @@ function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 
       const stillEnabled = await isEnabledForHost(host);
       if (!stillEnabled) return;
       navObserver = new MutationObserver((_, obs) => {
-        if (hasTerraformDiff()) { obs.disconnect(); runAnalysis(); }
+        if (hasTerraformDiff()) {
+          obs.disconnect();
+          runAnalysis();
+        }
       });
       navObserver.observe(document.body, { childList: true, subtree: true });
       setTimeout(() => navObserver?.disconnect(), 5000);
