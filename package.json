@@ -1,6 +1,6 @@
 {
   "name": "terraf",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,10 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "web-ext:run": "web-ext run --source-dir dist"
+    "build:ext": "node tf-diff-explainer/scripts/generate-icons.js && vite build --config tf-diff-explainer/vite.scripts.config.ts && vite build --config tf-diff-explainer/vite.background.config.ts && vite build --config tf-diff-explainer/vite.config.ts",
+    "dev:ext": "web-ext run --source-dir tf-diff-explainer/dist --target=chromium",
+    "test:ext": "vitest run --config tf-diff-explainer/vitest.config.ts",
+    "web-ext:run": "web-ext run --source-dir tf-diff-explainer/dist"
   },
   "keywords": [],
   "author": "",

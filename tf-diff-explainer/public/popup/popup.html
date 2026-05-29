@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TF Diff Explainer</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>TF Diff Explainer</h1>
+    </header>
+
+    <main>
+      <section class="field">
+        <label for="api-key">Anthropic API Key</label>
+        <div class="input-row">
+          <input
+            type="password"
+            id="api-key"
+            placeholder="sk-ant-..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button id="save-key">Save</button>
+        </div>
+        <p class="hint" id="key-status"></p>
+      </section>
+
+      <section class="field">
+        <label class="toggle-label">
+          <span>Enable on this site</span>
+          <input type="checkbox" id="site-toggle" />
+          <span class="toggle-switch"></span>
+        </label>
+        <p class="hint" id="site-hint"></p>
+      </section>
+    </main>
+
+    <script src="./popup.js"></script>
+  </body>
+</html>

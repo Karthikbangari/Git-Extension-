@@ -80,8 +80,12 @@ button#save-key:hover {
   color: #57606a;
 }
 
-.hint.success { color: #1a7f37; }
-.hint.error   { color: #cf222e; }
+.hint.success {
+  color: #1a7f37;
+}
+.hint.error {
+  color: #cf222e;
+}
 
 .toggle-label {
   display: flex;
@@ -120,7 +124,6 @@ button#save-key:hover {
 input[type='checkbox']:checked + .toggle-switch {
   background: #1a7f37;
 }
-
 input[type='checkbox']:checked + .toggle-switch::after {
   left: 16px;
 }
