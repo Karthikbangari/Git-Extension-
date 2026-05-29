@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.tools/
+.claude/
+.DS_Store
+npm-debug.log*
+*.zip
+web-ext-artifacts/
