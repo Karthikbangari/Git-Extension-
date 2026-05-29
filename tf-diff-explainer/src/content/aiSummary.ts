@@ -7,7 +7,9 @@ export async function generateDiffHash(changes: ResourceChange[]): Promise<strin
   const simplified = changes.map((c) => ({
     id: c.id,
     action: c.action,
-    attrs: c.changes.map((a) => `${a.attribute}:${a.newValue ?? ''}`),
+    attrs: c.changes.map((a) =>
+      a.isSensitive ? `${a.attribute}:<sensitive>` : `${a.attribute}:${a.newValue ?? ''}`
+    ),
   }));
 
   const msgBuffer = new TextEncoder().encode(JSON.stringify(simplified) + CACHE_VERSION);
@@ -23,6 +25,7 @@ export function buildPrompt(changes: ResourceChange[]): string {
       const risk = c.riskProfile.level.toUpperCase();
       const reasons = c.riskProfile.reasons.length ? ` (${c.riskProfile.reasons.join(', ')})` : '';
       const attrs = c.changes
+        .filter((a) => !a.isSensitive)
         .slice(0, 3)
         .map((a) => `${a.attribute}=${a.newValue}`)
         .join(', ');
@@ -58,6 +61,9 @@ export async function fetchAISummary(changes: ResourceChange[]): Promise<AISumma
     });
 
     if (!response || response.error) throw new Error(response?.error || 'Empty response');
+    if (!Array.isArray(response.content) || !response.content[0]?.text) {
+      throw new Error('Unexpected response format');
+    }
     const parsed = JSON.parse(response.content[0].text);
     if (
       typeof parsed.summary !== 'string' ||

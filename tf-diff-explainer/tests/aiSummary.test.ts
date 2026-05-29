@@ -53,6 +53,36 @@ describe('aiSummary.generateDiffHash', () => {
     expect(h1).toBe(h2);
     expect(h1).toMatch(/^[0-9a-f]{64}$/);
   });
+
+  it('does not vary by sensitive attribute values', async () => {
+    const h1 = await generateDiffHash([
+      makeChange({
+        changes: [{ attribute: 'password', newValue: '"first-secret"', isSensitive: true }],
+      }),
+    ]);
+    const h2 = await generateDiffHash([
+      makeChange({
+        changes: [{ attribute: 'password', newValue: '"second-secret"', isSensitive: true }],
+      }),
+    ]);
+
+    expect(h1).toBe(h2);
+  });
+
+  it('still varies by non-sensitive attribute values', async () => {
+    const h1 = await generateDiffHash([
+      makeChange({
+        changes: [{ attribute: 'acl', newValue: 'private', isSensitive: false }],
+      }),
+    ]);
+    const h2 = await generateDiffHash([
+      makeChange({
+        changes: [{ attribute: 'acl', newValue: 'public-read', isSensitive: false }],
+      }),
+    ]);
+
+    expect(h1).not.toBe(h2);
+  });
 });
 
 describe('aiSummary.buildPrompt', () => {
@@ -120,6 +150,20 @@ describe('aiSummary.buildPrompt', () => {
     const prompt = buildPrompt([makeChange()]);
     expect(prompt).toContain('prDescription');
     expect(prompt).toContain('Markdown PR description');
+  });
+
+  it('does not include sensitive attribute values', () => {
+    const prompt = buildPrompt([
+      makeChange({
+        changes: [
+          { attribute: 'password', newValue: '"super-secret"', isSensitive: true },
+          { attribute: 'acl', newValue: 'private', isSensitive: false },
+        ],
+      }),
+    ]);
+
+    expect(prompt).not.toContain('super-secret');
+    expect(prompt).toContain('acl=private');
   });
 });
 
