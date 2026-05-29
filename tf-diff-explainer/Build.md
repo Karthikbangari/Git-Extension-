@@ -17,6 +17,134 @@
 
 ## Active Proposal
 
+## BP-006 — AI Change Summary
+
+### What & Why
+
+- **Phase:** Phase 3 — AI layer
+- **Task group:** AI Change Summary
+- **Goal:** Call the Claude API after local analysis to generate a plain-English summary of the diff, a risk narrative, and a rollback checklist — displayed in a new sidebar section. Results are cached per diff so each unique set of changes only costs one API call.
+
+### Files
+
+| Action | File path                         | Description                                                                                                                   |
+| ------ | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| MODIFY | `public/manifest.json`            | Add `content_security_policy` with `connect-src https://api.anthropic.com`                                                    |
+| CREATE | `src/content/aiSummary.ts`        | Prompt builder + `fetchAISummary(changes, apiKey)` — returns `AISummaryResult`                                                |
+| MODIFY | `src/content/index.ts`            | Call `fetchAISummary` after local analysis if API key present; pass result to sidebar                                         |
+| MODIFY | `src/content/sidebar/index.ts`    | Add `updateAISummary(result \| null)` — renders summary section or key-prompt CTA                                             |
+| MODIFY | `src/content/sidebar/sidebar.css` | AI section styles: loading skeleton, summary text, risk bullets, rollback list                                                |
+| MODIFY | `src/utils/storage.ts`            | Add `getCachedAISummary` / `setCachedAISummary` using `chrome.storage.local` (persistent across sessions, keyed by diff hash) |
+| CREATE | `tests/aiSummary.test.ts`         | Unit tests for prompt builder and response parser — no real API calls                                                         |
+
+### Approach
+
+**API call (`aiSummary.ts`):**
+
+`fetchAISummary(changes: ResourceChange[], apiKey: string): Promise<AISummaryResult>`
+
+1. Build a prompt from `ResourceChange[]` — resource id, action, risk level, and top 3 attribute changes per resource. Cap at 1800 tokens of input by truncating the changes list if needed.
+2. POST to `https://api.anthropic.com/v1/messages` with `claude-haiku-4-5-20251001`, `max_tokens: 512`.
+3. Parse the response into a typed `AISummaryResult`:
+   ```ts
+   interface AISummaryResult {
+     summary: string; // 2-4 sentence plain-English summary
+     risks: string[]; // up to 3 bullet points
+     rollback: string[]; // up to 3 bullet points
+   }
+   ```
+4. Ask Claude to respond in JSON so parsing is deterministic. Wrap in try/catch; return `null` on any error.
+
+**Prompt structure (sent as `user` message):**
+
+```
+You are a Terraform diff reviewer. Analyse these resource changes and respond with valid JSON only.
+
+Changes:
+{for each resource: "ACTION aws_type.name [RISK]: attr=value, attr=value"}
+
+Respond with exactly this JSON schema:
+{"summary":"...","risks":["..."],"rollback":["..."]}
+
+Rules: summary = 2-4 sentences. risks = max 3 items. rollback = max 3 items.
+```
+
+**Caching:**
+
+- Cache key: SHA-256 hash of the serialised `ResourceChange[]` ids+actions+changes (not the full objects — stable across re-renders).
+- Stored in `chrome.storage.local` (persists across sessions — no point re-calling for the same diff).
+- `getCachedAISummary(hash)` / `setCachedAISummary(hash, result)`.
+
+**Sidebar rendering (`sidebar/index.ts`):**
+
+- `updateAISummary(result: AISummaryResult | null | 'loading' | 'no-key' | 'error')` appended below the minimap section.
+- `'loading'` → shimmer skeleton (reuses existing `.tfe-skeleton-line`).
+- `'no-key'` → muted CTA: "Add an API key in the extension popup to enable AI summaries."
+- `'error'` → muted error line.
+- `AISummaryResult` → summary paragraph + risks `<ul>` + rollback `<ul>`.
+
+**Orchestration (`content/index.ts`):**
+
+```
+runAnalysis():
+  1. local analysis (unchanged)
+  2. updateSidebar + updateMinimap (unchanged)
+  3. apiKey = await getApiKey()
+  4. if (!apiKey) → updateAISummary('no-key'); return
+  5. hash = diffHash(changes)
+  6. cached = await getCachedAISummary(hash)
+  7. if (cached) → updateAISummary(cached); return
+  8. updateAISummary('loading')
+  9. result = await fetchAISummary(changes, apiKey)
+  10. await setCachedAISummary(hash, result)
+  11. updateAISummary(result ?? 'error')
+```
+
+### MV3 Compliance Check
+
+- ✅ `connect-src https://api.anthropic.com` added to CSP — no other origins
+- ✅ API key read from `chrome.storage.local` at call time — never in DOM, never logged
+- ✅ `fetch()` only — no `XMLHttpRequest`
+- ✅ No `eval()` or dynamic code — JSON parsed with `JSON.parse()`
+- ✅ No `innerHTML` — summary rendered via `textContent` and DOM construction
+- ✅ No new `permissions` entries needed beyond existing `"storage"`
+
+### Dependencies / Prerequisites
+
+- User must enter an Anthropic API key in the extension popup (already wired from BP-001)
+- No new npm packages — `fetch` and `crypto.subtle` (for SHA-256) are browser built-ins
+
+### Risk
+
+- **Level:** Medium
+- **Notes:** JSON parsing of Claude's response could fail if the model doesn't follow the schema — mitigated by explicit schema instruction and `try/catch` returning `null`. Rate limiting and auth errors surface as `'error'` state, not crashes. Token budget capped at 1800 input + 512 output — well within Haiku limits.
+
+### Post-build checks
+
+1. `npm run build:ext`
+2. `npm run test:ext` — all new tests must pass
+3. `npm run lint`
+4. `npm run format:check`
+5. `rg -n "innerHTML|outerHTML|insertAdjacentHTML" tf-diff-explainer/src tf-diff-explainer/public` — must return empty
+6. Verify `dist/manifest.json` contains `content_security_policy` with `connect-src https://api.anthropic.com`
+
+### Review
+
+| Reviewer | Input | Approved? |
+| -------- | ----- | --------- |
+| User     |       | ⬜        |
+| Codex    |       | ⬜        |
+| Gemini   |       | ⬜        |
+
+### Outcome
+
+- **Status:** Pending
+- **Built by:** Claude
+- **Result:** —
+- **Test result:** —
+
+---
+
 ## BP-005 — Integration: Caching & Relationship Highlighting
 
 ### What & Why

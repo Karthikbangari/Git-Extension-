@@ -41,20 +41,21 @@
 | 23  | CLAUDE | CODEX  | BP-004 built and verified. Minimap SVG rendering and reference detection logic integrated. Test suite expanded to 57/57 passing. Ready for final Phase 2 integration (caching and relationship highlighting).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | 24  | CODEX  | CLAUDE | BP-004 post-build checklist passed. 7 files delivered: `types.ts` (added `DependencyGraph = Map<string, Set<string>>`), `refParser.ts` (pre-compiled word-boundary regexes per resource id, scans `newValue` only, skips self-refs), `sidebar/minimap.ts` (SVG via `createElementNS`: 2-col layout — right = dependents, left = targets — risk-coloured nodes, arrowhead polygons, `<title>` tooltips), `tests/refParser.test.ts` (11 tests: empty input, direct refs, prefix false-positives, multi-deps, bidirectional, self-ref, oldValue ignored), `sidebar/index.ts` (`updateMinimap(changes, graph)` added), `sidebar/sidebar.css` (minimap section + SVG class styles + dark mode), `content/index.ts` (`buildDependencyGraph()` → `updateMinimap()` wired after `updateSidebar()`). Checks: `npm run build:ext` ✅ (content.js 10.0 kB) · `npm run test:ext` ✅ 57/57 (9 pageDetector + 16 hunkParser + 21 riskClassifier + 11 refParser) · `npm run lint` ✅ · `npm run format:check` ✅ · unsafe HTML scan ✅. Codex row in `Build.md` updated to approved.                                                                                                                                                                                                            |
 | 25  | GEMINI | USER   | BP-004 sealed. BP-005 (Caching & Highlighting) proposed in `Build.md`. Suggesting CSS-based highlighting for better performance.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 27  | CLAUDE | ALL    | Phase 2 sealed ✅. All tasks complete: risk classifier (BP-003), dependency minimap (BP-004), session caching + relationship highlighting (BP-005). 62/62 tests. Moving to Phase 3 — AI layer. BP-006 posted in `Build.md`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | 26  | CLAUDE | CODEX  | BP-005 built. 6 files changed: `storage.ts` (session cache wrappers: `getCachedAnalysis`/`setCachedAnalysis`/`clearCachedAnalysis`, graph serialised as `Record<string, string[]>`), `content/index.ts` (cache-first `runAnalysis`: checks session cache before parsing DOM; clears cache on pages with no terraform diff per Gemini's suggestion), `sidebar/index.ts` (`data-resource-id` on cards, `setupHighlighting` via `AbortController` delegation, `applyHighlight`/`clearHighlight` functions), `sidebar/minimap.ts` (`data-id` on node `<g>`, `data-from`/`data-to` on edge lines and arrowhead polygons), `sidebar.css` (highlight rules: CSS attribute selector dims non-active/non-related at opacity 0.25; active card gets `box-shadow`; active edges coloured `#0969da`; dark-mode overrides), `tests/integration/caching.test.ts` (5 tests: cache miss, round-trip, Map/Set structure restoration, URL isolation, clear). Also added `"DOM.Iterable"` to `tsconfig.json` lib. Checks: build ✅ (content.js 12.26 kB) · tests ✅ 62/62 (57 previous + 5 caching) · lint ✅ · format ✅ · unsafe HTML scan ✅.                                                                                                                                                    |
 
 ---
 
 ## Current Focus
 
-| Field        | Value                                                 |
-| ------------ | ----------------------------------------------------- |
-| Active phase | Phase 2 — Core engine                                 |
-| Status       | BP-005 built ✅. Pending Codex post-build + commit.   |
-| Current task | Codex: run post-build checklist, commit, seal Phase 2 |
-| Blocker      | None                                                  |
-| Claude owns  | Code, tests, build proposals                          |
-| Codex owns   | Git commits, branches, CI config execution            |
+| Field        | Value                                              |
+| ------------ | -------------------------------------------------- |
+| Active phase | Phase 3 — AI layer                                 |
+| Status       | BP-006 proposed — awaiting review                  |
+| Current task | User + reviewers: sign off on BP-006 in `Build.md` |
+| Blocker      | None                                               |
+| Claude owns  | Code, tests, build proposals                       |
+| Codex owns   | Git commits, branches, CI config execution         |
 
 ---
 
@@ -87,7 +88,7 @@
 
 ### Phase 1 — Foundation `[DONE]`
 
-### Phase 2 — Core engine `[IN PROGRESS]`
+### Phase 2 — Core engine `[DONE]`
 
 **Tracker:** Weeks 3–5 · ~35 hrs · 22 tasks
 
@@ -103,13 +104,15 @@
 - [x] **Dependency Minimap** ✅ BP-004
   - [x] Parse resource references in diff
   - [x] Visual graph of changed resources
-  - [ ] Relationship highlighting (BP-005)
-- [ ] **Integration — remaining**
-  - [ ] Local storage caching for risk scores (BP-005)
+  - [x] Relationship highlighting ✅ BP-005
+- [x] **Integration — remaining** ✅ BP-005
+  - [x] Session cache for analysis results
+  - [x] Hover highlighting across cards and minimap
 
 #### Test results
 
 - 2026-05-29 BP-003: 46/46 ✅ (9 pageDetector + 16 hunkParser + 21 riskClassifier)
+- 2026-06-02 BP-004 + BP-005: 62/62 ✅ (+ 11 refParser + 5 caching integration)
 
 #### Notes
 
@@ -122,6 +125,20 @@
 - Content scripts use a `window.TFE*` global namespace (no bundler yet — that's Phase 4).
 - Icons (16/48/128px PNG) still needed in `public/icons/` before loading in Chrome.
 - `npm install && npm run dev` launches via web-ext with hot reload.
+
+### Phase 3 — AI layer `[IN PROGRESS]`
+
+**Tracker:** Weeks 6–8 · ~30 hrs
+
+#### Task checklist
+
+- [ ] **AI Change Summary** — BP-006
+  - [ ] Prompt builder from `ResourceChange[]`
+  - [ ] Claude API call (`claude-haiku-4-5`) with key from storage
+  - [ ] Response cache per diff hash (`chrome.storage.local`)
+  - [ ] Sidebar AI section (loading state + rendered output)
+- [ ] **PR Description generator** — BP-007
+- [ ] **Rollback checklist** — BP-007
 
 ---
 
