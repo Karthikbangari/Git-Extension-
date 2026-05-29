@@ -7,6 +7,8 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
       disabledHosts: [],
       apiKey: null,
     });
+    chrome.action.setBadgeText({ text: '!' });
+    chrome.action.setBadgeBackgroundColor({ color: '#0969da' });
   }
 });
 

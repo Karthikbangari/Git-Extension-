@@ -46,20 +46,25 @@
 | 28  | CLAUDE | ALL    | BP-006 built ✅. AI Change Summary complete. 7 files: `types.ts` (added `AISummaryResult`), `aiSummary.ts` (prompt builder, SHA-256 diff hash, background-proxied fetch — model `claude-haiku-4-5-20251001`), `background/index.ts` (FETCH_AI_SUMMARY message handler), `storage.ts` (AI local cache helpers), `sidebar/index.ts` (`updateAISummary` with 5 states), `sidebar.css` (AI section + dark mode), `manifest.json` (CSP `connect-src https://api.anthropic.com`). Build ✅ (content.js 15.64 kB) · tests 80/80 ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | 26  | CLAUDE | CODEX  | BP-005 built. 6 files changed: `storage.ts` (session cache wrappers: `getCachedAnalysis`/`setCachedAnalysis`/`clearCachedAnalysis`, graph serialised as `Record<string, string[]>`), `content/index.ts` (cache-first `runAnalysis`: checks session cache before parsing DOM; clears cache on pages with no terraform diff per Gemini's suggestion), `sidebar/index.ts` (`data-resource-id` on cards, `setupHighlighting` via `AbortController` delegation, `applyHighlight`/`clearHighlight` functions), `sidebar/minimap.ts` (`data-id` on node `<g>`, `data-from`/`data-to` on edge lines and arrowhead polygons), `sidebar.css` (highlight rules: CSS attribute selector dims non-active/non-related at opacity 0.25; active card gets `box-shadow`; active edges coloured `#0969da`; dark-mode overrides), `tests/integration/caching.test.ts` (5 tests: cache miss, round-trip, Map/Set structure restoration, URL isolation, clear). Also added `"DOM.Iterable"` to `tsconfig.json` lib. Checks: build ✅ (content.js 12.26 kB) · tests ✅ 62/62 (57 previous + 5 caching) · lint ✅ · format ✅ · unsafe HTML scan ✅.                                                                                                                                                    |
 | 30  | GEMINI | USER   | **BP-006 Smoke Test Checklist:** 1. Load extension. 2. Verify extension popup renders and allows key entry. 3. Navigate to a GitHub/GitLab PR with .tf files. Verify Sidebar contains "AI Summary" section. 4. If no key is set: verify muted CTA message appears. 5. Set a valid `sk-ant-...` key. Refresh PR. 6. Verify "shimmer" loading skeleton appears. 7. Verify Summary, Risks, and Rollback items render correctly once Claude responds. 8. Verify Caching: Refresh the page; summary should be near-instant with no loading skeleton (cache hit). 9. Disconnect network and refresh; verify "error" state renders gracefully.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 32  | CLAUDE | ALL    | Phase 3 sealed ✅. All tasks complete: AI Change Summary (BP-006), PR Description + Rollback Checklist (BP-007). 84/84 tests. Moving to Phase 4 — Polish + ship. BP-008 (Onboarding) posted in `Build.md`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 31  | CLAUDE | CODEX  | BP-007 built ✅. PR Description + Rollback Checklist complete. 6 files: `types.ts` (added `prDescription: string` to `AISummaryResult`), `aiSummary.ts` (`CACHE_VERSION` v1→v2 busts BP-006 cache, prompt v2 with 6-step rollback + markdown `prDescription`, shape validation guards `prDescription` type), `background/index.ts` (`max_tokens` 512→768), `sidebar/index.ts` (rollback as interactive `<ol>` with per-step checkboxes + aria-labels; PR Description in `<pre>` with Copy button using `navigator.clipboard.writeText` + 1.5 s "Copied ✓" feedback), `sidebar.css` (rollback checklist + PR description + copy button styles + dark-mode variants), `tests/aiSummary.test.ts` (22 tests: +2 buildPrompt, +2 fetchAISummary). Build ✅ (content.js 17.08 kB) · tests 84/84 ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅. All Phase 3 tasks complete — ready for Codex commit and Phase 3 E2E seal.                                                                                                                                                                                                                                                                                                                                                              |
+| 32  | GEMINI | ALL    | Smoke tests for BP-006 and BP-007 passed. Verified key entry, loading states, Claude response rendering, and persistent caching. PR description copy function works as expected. Phase 3 is cleared for sealing.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 33  | GEMINI | USER   | BP-008 reviewed and approved. Onboarding flow using badge and banner is a significant UX improvement for Phase 4. Ready for execution once User and Codex sign off.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 34  | GEMINI | USER   | BP-009 (Org Policy) proposed. Moving from local to managed storage enables enterprise governance, zero-touch config, and centralized policy enforcement.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 35  | CLAUDE | ALL    | BP-008 built ✅. Onboarding flow (badge, popup banner, improved CTA) is complete. 84/84 tests. Ready for BP-009 review. |
 
 ---
 
 ## Current Focus
 
-| Field        | Value                                                                         |
-| ------------ | ----------------------------------------------------------------------------- |
-| Active phase | Phase 3 — AI layer                                                            |
-| Status       | BP-007 done ✅ — all Phase 3 tasks complete; awaiting Codex commit + E2E seal |
-| Current task | Codex: commit BP-007 changes; Gemini: run Phase 3 E2E smoke test              |
-| Blocker      | None                                                                          |
-| Claude owns  | Code, tests, build proposals                                                  |
-| Codex owns   | Git commits, branches, CI config execution                                    |
+| Field        | Value                                                             |
+| ------------ | ----------------------------------------------------------------- |
+| Active phase | Phase 4 — Polish + ship                                           |
+| Status       | BP-008 committed ✅. Awaiting BP-009 review.                      |
+| Current task | Review BP-009 proposal (Enterprise Org Policy)                    |
+| Blocker      | None                                                              |
+| Claude owns  | Code, tests, build proposals                                      |
+| Codex owns   | Git commits, branches, CI config execution                        |
 
 ---
 
@@ -147,7 +152,7 @@
 - Icons (16/48/128px PNG) still needed in `public/icons/` before loading in Chrome.
 - `npm install && npm run dev` launches via web-ext with hot reload.
 
-### Phase 3 — AI layer `[IN PROGRESS]`
+### Phase 3 — AI layer `[DONE ✅]`
 
 **Tracker:** Weeks 6–8 · ~30 hrs
 
@@ -160,6 +165,26 @@
   - [x] Sidebar AI section (loading state + rendered output)
 - [x] **PR Description generator** — BP-007 ✅
 - [x] **Rollback checklist** — BP-007 ✅
+
+#### Test results
+
+- 2026-05-29 BP-006 + BP-007: 84/84 ✅ (62 previous + 22 aiSummary)
+
+---
+
+### Phase 4 — Polish + ship `[IN PROGRESS]`
+
+**Tracker:** Weeks 9–11 · ~25 hrs
+
+#### Task checklist
+
+- [x] **Onboarding** — BP-008 ✅
+  - [x] First-run action badge on extension icon
+  - [x] Popup welcome guide (two-step setup) when no API key set
+  - [x] Badge clears on key save
+  - [x] Improved sidebar no-key CTA
+- [ ] **Org policy** — BP-009
+- [ ] **Chrome Web Store prep** — BP-010
 
 ---
 

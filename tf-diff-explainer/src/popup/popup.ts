@@ -9,11 +9,14 @@ async function init(): Promise<void> {
   const { apiKey = '' } = await chrome.storage.local.get('apiKey');
   const keyInput = document.getElementById('api-key') as HTMLInputElement;
   const keyStatus = document.getElementById('key-status') as HTMLParagraphElement;
+  const banner = document.getElementById('onboarding-banner') as HTMLElement;
 
   if (apiKey) {
     keyInput.value = apiKey as string;
     keyStatus.textContent = 'Key saved.';
     keyStatus.className = 'hint success';
+  } else {
+    banner.style.display = 'block';
   }
 
   document.getElementById('save-key')?.addEventListener('click', async () => {
@@ -26,6 +29,8 @@ async function init(): Promise<void> {
     await chrome.storage.local.set({ apiKey: val });
     keyStatus.textContent = 'Key saved.';
     keyStatus.className = 'hint success';
+    banner.style.display = 'none';
+    chrome.action.setBadgeText({ text: '' });
   });
 
   const host = await getCurrentHost();

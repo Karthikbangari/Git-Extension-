@@ -305,7 +305,13 @@
   margin-bottom: 2px;
 }
 
-.tfe-ai-cta,
+.tfe-ai-cta {
+  margin: 0;
+  font-size: 12px;
+  color: #0969da;
+  line-height: 1.5;
+}
+
 .tfe-ai-error {
   margin: 0;
   font-size: 12px;
@@ -510,5 +516,9 @@
     background: #21262d;
     border-color: #30363d;
     color: #e6edf3;
+  }
+
+  .tfe-ai-cta {
+    color: #58a6ff;
   }
 }

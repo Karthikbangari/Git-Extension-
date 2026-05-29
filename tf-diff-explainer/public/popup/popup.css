@@ -127,3 +127,32 @@ input[type='checkbox']:checked + .toggle-switch {
 input[type='checkbox']:checked + .toggle-switch::after {
   left: 16px;
 }
+
+/* ── Onboarding banner ──────────────────────────────────── */
+
+#onboarding-banner {
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.onboarding-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e40af;
+  margin-bottom: 6px;
+}
+
+.onboarding-steps {
+  padding-left: 16px;
+  list-style: decimal;
+  font-size: 11px;
+  color: #1e3a8a;
+  line-height: 1.7;
+}
+
+.onboarding-steps a {
+  color: #1d4ed8;
+  text-decoration: underline;
+}

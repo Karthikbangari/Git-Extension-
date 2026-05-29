@@ -18,12 +18,13 @@ No exceptions.
 | Field                  | Value                                                    |
 | ---------------------- | -------------------------------------------------------- |
 | Last active session    | 2026-05-29                                               |
-| Active phase           | Phase 3 — AI layer                                       |
+| Active phase           | Phase 4 — Polish + ship                                  |
 | Phase 1 status         | Sealed ✅ (2026-05-30)                                   |
 | Phase 2 status         | Sealed ✅ (2026-06-02)                                   |
-| Waiting on             | Codex to commit BP-007; then Phase 3 seal + E2E          |
-| Last build             | BP-007 ✅ (PR Description + Rollback Checklist)          |
-| Next action for Claude | Update 1playground.md checklist; await Codex commit      |
+| Phase 3 status         | Sealed ✅ (2026-05-29)                                   |
+| Waiting on             | User + Codex review of BP-009 proposal (pre-written)     |
+| Last build             | BP-008 ✅ (Onboarding: badge + popup welcome + CTA)      |
+| Next action for Claude | Build BP-009 after user types "go"                       |
 | Open bugs              | BUG-6/7/9/10 open — BUG-4/5/8 fixed (see 1playground.md) |
 | Blocked                | No                                                       |
 | Last clean check       | build ✅ · lint ✅ · format ✅ · tests 84/84 ✅          |
@@ -38,6 +39,7 @@ No exceptions.
 - BP-005: Session cache (`chrome.storage.session`, URL-keyed), cache-first `runAnalysis`, hover relationship highlighting (AbortController delegation, CSS dimming). 62 tests.
 - BP-006: AI Change Summary — `aiSummary.ts` (prompt builder, SHA-256 hash, background-proxied fetch), `background/index.ts` (FETCH_AI_SUMMARY handler fetches `claude-haiku-4-5-20251001`), AI local cache (`chrome.storage.local`, hash-keyed), `updateAISummary` (5 states), AI section CSS, manifest CSP. 80 tests.
 - BP-007: PR Description + Rollback Checklist — `AISummaryResult` extended with `prDescription`, prompt v2 (6 rollback steps + markdown PR description), `max_tokens` 768, `CACHE_VERSION` v2, shape validation, interactive rollback checklist (`<ol>` with checkboxes), PR Description section with Copy button (`navigator.clipboard`). 84 tests.
+- BP-008: Onboarding — install badge `'!'` on extension icon; popup welcome banner (2-step guide + `console.anthropic.com` link) shown when no key set; badge clears + banner hides on key save; sidebar no-key CTA improved to blue action text. 84 tests (unchanged).
 - Git + GitHub: repo at https://github.com/Karthikbangari/Terraf, SSH key configured (port 443), all commits pushed.
 - Codex is currently **out of commission** — Claude is handling git commits and pushes this session.
 

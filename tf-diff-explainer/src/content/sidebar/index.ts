@@ -241,7 +241,7 @@ export function updateAISummary(
   } else if (state === 'no-key') {
     const msg = document.createElement('p');
     msg.className = 'tfe-ai-cta';
-    msg.textContent = 'Add an API key in the extension popup to enable AI summaries.';
+    msg.textContent = 'Click the extension icon ↗ to set up AI summaries.';
     section.appendChild(msg);
   } else if (state === 'error') {
     const msg = document.createElement('p');

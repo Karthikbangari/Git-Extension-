@@ -17,6 +17,180 @@
 
 ## Active Proposal
 
+## BP-008 — Onboarding: First-run badge + popup welcome guide
+
+### What & Why
+
+- **Phase:** Phase 4 — Polish + ship
+- **Task group:** Onboarding
+- **Goal:** Give new users a clear path to set up the extension. On install an action badge draws attention to the popup; the popup shows a two-step welcome guide when no API key is set; the badge clears once a key is saved. The sidebar's no-key message becomes a more actionable prompt.
+
+### Files
+
+| Action | File path                         | Description                                                                                                      |
+| ------ | --------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| MODIFY | `src/background/index.ts`         | On install: set badge text `'!'` + badge background color `'#0969da'`                                            |
+| MODIFY | `public/popup/popup.html`         | Add `#onboarding-banner` section (visible when no key set); add "Get API key" anchor                             |
+| MODIFY | `src/popup/popup.ts`              | Show/hide banner based on key state; on save success call `chrome.action.setBadgeText({text:''})` to clear badge |
+| MODIFY | `public/popup/popup.css`          | Onboarding banner styles (step counter, link styling)                                                            |
+| MODIFY | `src/content/sidebar/index.ts`    | Improve `no-key` CTA text: "Click the extension icon ↗ to set up AI summaries"                                   |
+| MODIFY | `src/content/sidebar/sidebar.css` | Slightly more prominent no-key CTA style                                                                         |
+
+### Approach
+
+**Action badge (`background/index.ts`):**
+
+```ts
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason === 'install') {
+    // existing storage init ...
+    chrome.action.setBadgeText({ text: '!' });
+    chrome.action.setBadgeBackgroundColor({ color: '#0969da' });
+  }
+});
+```
+
+No new message handler needed — the popup page calls `chrome.action.setBadgeText` directly (popup pages have full access to `chrome.action`).
+
+**Popup onboarding banner (`popup.html` + `popup.ts`):**
+
+`popup.html` gains a `<section id="onboarding-banner">` above the API key field:
+
+```
+┌─────────────────────────────────────────┐
+│ ✦ Set up AI summaries                   │
+│                                         │
+│ Step 1 — Get a free API key             │
+│          console.anthropic.com →        │
+│                                         │
+│ Step 2 — Paste it in the field below    │
+└─────────────────────────────────────────┘
+```
+
+`popup.ts` logic:
+
+```
+init():
+  apiKey = storage.get('apiKey')
+  if (!apiKey) → show #onboarding-banner
+  else         → hide #onboarding-banner (key already set)
+
+save-key click (on success):
+  chrome.action.setBadgeText({ text: '' })
+  hide #onboarding-banner
+```
+
+The `console.anthropic.com` link uses `target="_blank" rel="noopener noreferrer"` — standard for popup pages opening external URLs. No CSP issue: popup pages use `script-src 'self'`, not the host page's CSP.
+
+**Improved sidebar no-key CTA (`sidebar/index.ts`):**
+
+```
+before: "Add an API key in the extension popup to enable AI summaries."
+after:  "Click the extension icon ↗ to set up AI summaries."
+```
+
+The text is short and action-oriented. `↗` visually implies "external action" (opening the popup). The CSS class changes from muted grey to a slightly warmer hint blue so it doesn't disappear into the background.
+
+### MV3 Compliance Check
+
+- ✅ `chrome.action.setBadgeText` / `setBadgeBackgroundColor` — no new permissions; `"action"` is already the default popup entry in manifest
+- ✅ Popup page calls `chrome.action` directly — popup pages are extension pages and have full API access
+- ✅ `console.anthropic.com` link opens in a new tab from the popup — this is a standard anchor, not a `connect-src`; no CSP impact on the extension page
+- ✅ No `innerHTML` in `popup.ts` — banner visibility toggled via `style.display`
+- ✅ No new `permissions` entries required
+
+### Dependencies / Prerequisites
+
+- Existing popup UI (BP-001) — unchanged, just extended
+- `chrome.action` is the extension's default popup mechanism (already in manifest as `"action": { "default_popup": "popup/popup.html" }`)
+
+### Risk
+
+- **Level:** Low
+- **Notes:** Badge text is a cosmetic change — no functional behaviour affected. The popup banner is an additive section that is hidden once a key is saved; it cannot block existing functionality. `chrome.action.setBadgeText` call in `onInstalled` fires only once per install. Re-install after uninstall re-fires, which is correct behaviour (user would need to re-enter their key anyway).
+
+### Post-build checks
+
+1. `npm run build:ext`
+2. `npm run test:ext` — all 84 existing tests must still pass (no new tests this BP — badge and banner are imperative Chrome API / DOM calls without extractable pure logic; covered by E2E smoke checklist)
+3. `npm run lint`
+4. `npm run format:check`
+5. `rg -n "innerHTML|outerHTML|insertAdjacentHTML" tf-diff-explainer/src tf-diff-explainer/public` — must return empty
+6. Manual smoke: install extension in fresh Chrome profile → badge `!` appears on icon; open popup → banner visible; enter valid key + save → badge clears + banner hides
+
+### Review
+
+| Reviewer | Input | Approved? |
+| -------- | ----- | --------- |
+| User     |       | ⬜        |
+| Codex    |       | ⬜        |
+| Gemini   |       | ⬜        |
+
+### Outcome
+
+- **Status:** ✅ Done
+- **Built by:** Claude
+- **Result:** 6 files changed. `background/index.ts` sets badge `'!'` + background color `'#0969da'` on install. `popup.html` gains `#onboarding-banner` section (hidden by default) with two numbered steps and a `console.anthropic.com ↗` anchor (`target="_blank" rel="noopener noreferrer"`). `popup.ts` shows banner when no API key is set; on successful save hides banner and calls `chrome.action.setBadgeText({ text: '' })` to clear the badge. `popup.css` adds `.onboarding-banner`, `.onboarding-title`, `.onboarding-steps` styles (blue-tinted panel). `sidebar/index.ts` no-key CTA text updated to "Click the extension icon ↗ to set up AI summaries." `sidebar.css` splits former combined `.tfe-ai-cta, .tfe-ai-error` rule — CTA is now `#0969da` (light) / `#58a6ff` (dark). background.js grew 0.88 kB → 0.97 kB; popup.js grew 1.19 kB → 1.32 kB.
+- **Test result:** 84/84 ✅ (all existing tests pass; no new unit tests — badge/banner are imperative Chrome API / DOM calls, covered by E2E smoke)
+
+---
+
+## BP-009 — Enterprise Org Policy (Managed Storage)
+
+### What & Why
+
+- **Phase:** Phase 4 — Polish + ship
+- **Task group:** Org policy
+- **Goal:** Support `chrome.storage.managed` to allow enterprise admins to deploy organizational API keys and domain restrictions. This ensures the extension works out-of-the-box for employees and follows corporate security guidelines.
+
+### Files
+
+| Action | File path                      | Description                                                              |
+| ------ | ------------------------------ | ------------------------------------------------------------------------ |
+| MODIFY | `public/manifest.json`         | Add `storage.managed_schema` declaration.                                |
+| CREATE | `public/managed_schema.json`   | Define the schema for API keys and host permissions.                     |
+| MODIFY | `src/utils/storage.ts`         | Update `getApiKey` and `isEnabledForHost` to prioritize managed storage. |
+| MODIFY | `src/popup/popup.ts`           | Read-only state for UI fields when managed policy is active.             |
+| CREATE | `tests/storageManaged.test.ts` | Unit tests for the hierarchical storage fallback logic.                  |
+
+### Approach
+
+1. **Schema Definition**: Create a JSON schema that Chrome uses to validate policies pushed by admins.
+2. **Lookup Priority**: Implement a wrapper: `Managed -> Local -> Default`.
+3. **UI Feedback**: If `managed` provides the API key, the popup input will be disabled with a message: _"This setting is managed by your organization."_
+
+### MV3 Compliance Check
+
+- ✅ `managed` storage is a native MV3 feature for enterprise deployments.
+- ✅ No new permissions required (`storage` is already in manifest).
+- ✅ Secure fallback logic prevents data leakage between managed and local scopes.
+
+### Dependencies / Prerequisites
+
+- Requires a `managed_schema.json` file in the root.
+
+### Risk
+
+- **Level:** Low
+- **Notes:** If the schema is malformed, Chrome may ignore the policy. Fallback to `local` ensures the extension remains functional for non-enterprise users.
+
+### Review
+
+| Reviewer | Input                                                                                                                                                                         | Approved? |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     |                                                                                                                                                                               | ⬜        |
+| Codex    |                                                                                                                                                                               | ⬜        |
+| Gemini   | The hierarchical lookup (Managed > Local) is the industry standard for enterprise extensions. Ensuring the UI reflects the "locked" state is critical for UX. Logic is sound. | ✅        |
+
+### Outcome
+
+- **Status:** Pending
+- **Built by:** Claude
+- **Result:** —
+- **Test result:** —
+
+---
+
 ## BP-007 — PR Description + Rollback Checklist
 
 ### What & Why
@@ -129,11 +303,11 @@ Add `typeof result.prDescription === 'string'` to the existing `Array.isArray` g
 
 ### Review
 
-| Reviewer | Input | Approved? |
-| -------- | ----- | --------- |
-| User     |       | ⬜        |
-| Codex    |       | ⬜        |
-| Gemini   |       | ⬜        |
+| Reviewer | Input                                                                                                                                                                                                                                                        | Approved? |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| User     |                                                                                                                                                                                                                                                              | ⬜        |
+| Codex    |                                                                                                                                                                                                                                                              | ⬜        |
+| Gemini   | Onboarding flow is well-designed. Using the action badge ('!') is a standard and effective pattern for first-run configuration. Logic for clearing the badge on first save is correct. MV3 compliance is maintained (no innerHTML, direct action API usage). | ✅        |
 
 ### Outcome
 
@@ -257,11 +431,11 @@ runAnalysis():
 
 ### Review
 
-| Reviewer | Input | Approved? |
-| -------- | ----- | --------- |
-| User     |       | ⬜        |
-| Codex    |       | ⬜        |
-| Gemini   |       | ⬜        |
+| Reviewer | Input                                                                                                                                                                                                                                                            | Approved? |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     |                                                                                                                                                                                                                                                                  | ⬜        |
+| Codex    |                                                                                                                                                                                                                                                                  | ⬜        |
+| Gemini   | Phase 3 implementation is robust. Background proxy for API calls correctly handles CSP. UI state management for AI summary (loading, no-key, results) provides excellent UX. Caching logic with versioned hashing is efficient. Smoke tests passed successfully. | ✅        |
 
 ### Outcome
 
