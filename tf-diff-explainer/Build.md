@@ -17,107 +17,121 @@
 
 ## Active Proposal
 
-## BP-003 — Diff Hunk Parser + Local Risk Classifier
-
-> **State note (2026-05-30):** `@typescript-eslint` deps are already installed and `package.json`/`package-lock.json` already updated from pre-build cleanup. `src/content/types.ts` already exists (created by Codex, committed). File table reflects actual state.
+## BP-004 — Dependency Minimap
 
 ### What & Why
 
 - **Phase:** Phase 2 — Core engine
-- **Task group:** Diff extraction + Risk classifier
-- **Goal:** Parse Terraform diffs from the GitHub/GitLab PR DOM and classify each resource change as high / medium / low risk — entirely local, no API calls
+- **Task group:** Dependency Minimap
+- **Goal:** Parse cross-resource references from the diff and render a compact SVG minimap in the sidebar showing which changed resources depend on each other — entirely local, no API calls
 
 ### Files
 
-| Action | File path                         | Description                                                                                                         |
-| ------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| EXISTS | `src/content/types.ts`            | `ResourceChange`, `AttributeChange`, `RiskLevel` — already committed, no changes                                    |
-| EXISTS | `package.json`                    | `@typescript-eslint/eslint-plugin` + `@typescript-eslint/parser` already added + installed                          |
-| EXISTS | `package-lock.json`               | Already updated by `npm install`                                                                                    |
-| MODIFY | `eslint.config.mjs`               | Enable `@typescript-eslint` rules for `.ts` files — packages now installed                                          |
-| CREATE | `src/content/hunkParser.ts`       | DOM scraper: GitHub + GitLab contracts, returns `ResourceChange[]`                                                  |
-| CREATE | `src/content/riskClassifier.ts`   | Rule engine: IAM wildcards, open SG ingress, force_destroy, deletions → score                                       |
-| CREATE | `tests/hunkParser.test.ts`        | Unit tests using static HTML fixtures for GitHub + GitLab diff shapes                                               |
-| CREATE | `tests/riskClassifier.test.ts`    | Unit tests — passing + failing + edge case per rule                                                                 |
-| MODIFY | `src/content/sidebar/index.ts`    | Add `updateSidebar(results: ResourceChange[])` — replaces skeleton with risk cards (createElement/appendChild only) |
-| MODIFY | `src/content/sidebar/sidebar.css` | Add scoped risk-card styles if `updateSidebar` introduces new classes                                               |
-| MODIFY | `src/content/index.ts`            | Wire parser + classifier after `hasTerraformDiff()`, call `updateSidebar(results)` after inject                     |
+| Action | File path                         | Description                                                                                               |
+| ------ | --------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| MODIFY | `src/content/types.ts`            | Add `DependencyGraph` export: `Map<string, Set<string>>` (resource id → set of ids it references)         |
+| CREATE | `src/content/refParser.ts`        | Pure fn: scans `ResourceChange[]` attribute values for substrings matching other changed resource ids     |
+| CREATE | `src/content/sidebar/minimap.ts`  | SVG renderer: 2-column layout, risk-coloured nodes, straight-line edges, `<title>` tooltips, no innerHTML |
+| MODIFY | `src/content/sidebar/index.ts`    | Add `updateMinimap(changes, graph)` — appends minimap section below risk cards                            |
+| MODIFY | `src/content/sidebar/sidebar.css` | Minimap section header + SVG element styles                                                               |
+| CREATE | `tests/refParser.test.ts`         | Unit tests for reference detection — pure function, no DOM                                                |
+| MODIFY | `src/content/index.ts`            | Call `buildDependencyGraph()` → `updateMinimap()` after `updateSidebar()`                                 |
 
-### Parser Contracts
+### Reference Detection (`refParser.ts`)
 
-**GitHub PR:**
+`buildDependencyGraph(changes: ResourceChange[]): DependencyGraph`
 
-- File containers: `.file[data-path$=".tf"]`
-- Added lines: `.blob-code-addition .blob-code-inner`
-- Removed lines: `.blob-code-deletion .blob-code-inner`
-- Fallback: if selectors return empty, return `[]` silently
+1. Build a lookup set of all resource ids in the current `ResourceChange[]`
+2. For each resource, scan all `AttributeChange.newValue` strings for substrings that exactly match another resource's id followed by a non-identifier character (`.`, `,`, `]`, `)`, `"`, space, or end-of-string)
+3. Return a `Map` where `graph.get(id)` = Set of ids that resource references
 
-**GitLab MR:**
+**Boundary check:** use `/\b{escapedId}\b/` (with dots escaped as `\.`) to avoid false positives when one resource id is a prefix of another (e.g., `aws_s3_bucket.data` vs `aws_s3_bucket.data_backup`).
 
-- File containers: `.diff-file` where `.file-title-name` text ends with `.tf`
-- Added lines: `.line_holder.new .line_content`
-- Removed lines: `.line_holder.old .line_content`
-- Fallback: if selectors return empty, return `[]` silently
+**Scope:** only internal references — both source and target must be in the `ResourceChange[]`. External dependencies (references to unchanged resources) are not tracked in Phase 2.
 
-### Risk Rules
+### SVG Minimap Layout (`minimap.ts`)
 
-| Rule                   | Pattern                                                        | Score  |
-| ---------------------- | -------------------------------------------------------------- | ------ |
-| IAM wildcard action    | `actions\s*=\s*\["\*"\]` or `Action.*"\*"` in added lines      | HIGH   |
-| IAM wildcard principal | `Principal.*"\*"` or `identifiers.*"\*"` in added lines        | HIGH   |
-| Open SG ingress        | `0\.0\.0\.0/0` in added lines within ingress block             | HIGH   |
-| Open SG egress         | `0\.0\.0\.0/0` in added lines within egress block              | MEDIUM |
-| Force destroy          | `force_destroy\s*=\s*true` in added lines                      | HIGH   |
-| Resource deletion      | Resource block in removed lines only (no matching added block) | HIGH   |
-| Default                | No patterns matched                                            | LOW    |
+`renderMinimap(changes: ResourceChange[], graph: DependencyGraph): SVGSVGElement`
 
-### Approach
+**Columns:**
 
-- **Performance:** Multiple file hunks chunked via `requestIdleCallback` — no main thread blocking on large PRs
-- **No chrome APIs needed** — pure DOM + regex, no mocking required for unit tests
-- **`vitest-chrome` deferred** — integration tests (with storage mocks) are a later subphase
-- **No `innerHTML`** — sidebar enrichment via `createElement`/`appendChild` only (established in BUG-3 fix)
+- Left column (x = 0): resources that are **not** referenced by any other changed resource (leaves / dependencies-only)
+- Right column (x = 156): resources that **do** reference at least one other changed resource (dependents)
+- If a resource both references and is referenced: right column
+- If no edges exist at all: single centred column (x = 78)
+
+**Node:**
+
+- 120 × 24 px rounded rect (`rx=4`)
+- Fill/stroke by risk level:
+  - HIGH → `fill:#fff1f0 stroke:#cf222e`
+  - MEDIUM → `fill:#fffbeb stroke:#bf8700`
+  - LOW → `fill:#f0fff4 stroke:#1a7f37`
+  - unknown → `fill:#f6f8fa stroke:#8b949e`
+- Primary label: `change.name` truncated to 13 chars (`…` suffix if truncated)
+- Sub-label: `change.type` at 9px, muted colour
+- `<title>` element inside node group: full `change.id` (browser tooltip on hover)
+
+**Edges:**
+
+- `<line>` from right-centre of source node to left-centre of target node
+- `stroke:#8b949e stroke-width:1`
+- Small triangular arrowhead polygon at the target end
+
+**Canvas:** width = 280 px, height = max(left_count, right_count) × 32 + 24 px
+
+**Zero-resource case:** return empty SVG (0 height). Caller skips append if height is 0.
 
 ### MV3 Compliance Check
 
-- ✅ No remote code — all logic is local regex + DOM reads
-- ✅ No `innerHTML` / `outerHTML` / `insertAdjacentHTML`
+- ✅ No remote code — all logic is local computation + DOM/SVG creation
+- ✅ No `innerHTML` / `outerHTML` / `insertAdjacentHTML` — SVG built via `createElementNS` / `setAttribute`
 - ✅ No new permissions needed
 - ✅ No `eval()` or dynamic execution
-- ✅ Content script remains IIFE bundle — no module format changes
+- ✅ Content script remains IIFE bundle
 
 ### Dependencies / Prerequisites
 
-- `@typescript-eslint/eslint-plugin` + `@typescript-eslint/parser` — already installed
 - No new packages
+- `ResourceChange`, `AttributeChange` from `src/content/types.ts` — already committed
 
 ### Risk
 
-- **Level:** Medium
-- **Notes:** GitHub and GitLab diff DOM selectors can change. Parser returns `[]` on any selector miss — never throws. Risk rules use anchored regex to minimise false positives on comment lines.
+- **Level:** Low–Medium
+- **Notes:** SVG layout degrades gracefully for large resource counts — nodes stack vertically and edges may overlap when many resources reference the same target. Accepted for Phase 2; layout polish is Phase 4 scope. Reference detection uses word-boundary regex which correctly handles dotted ids but could miss references inside complex string interpolations (acceptable false-negative rate for MVP).
 
 ### Post-build checks (Codex runs after Claude signs off)
 
-1. `npm run build:ext`
+1. `npm run build:ext` ✅
 2. `npm run test:ext` — all new tests must pass
-3. `npm run lint`
-4. `npm run format:check`
-5. `npm ls @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint` — confirm no UNMET
-6. `rg -n "innerHTML|outerHTML|insertAdjacentHTML" tf-diff-explainer/src tf-diff-explainer/public` — must return empty
+3. `npm run lint` ✅
+4. `npm run format:check` ✅
+5. `rg -n "innerHTML|outerHTML|insertAdjacentHTML" tf-diff-explainer/src tf-diff-explainer/public` — must return empty
 
 ### Review
 
-| Reviewer | Input                                                                                                                                                                                                                                                                                                                                                                                                                     | Approved? |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| User     | Scope expanded: add `updateSidebar(results)` to sidebar module now                                                                                                                                                                                                                                                                                                                                                        | ⬜        |
-| Codex    | Re-signed. Expanded sidebar scope is acceptable now that `updateSidebar(results)` is explicitly constrained to DOM APIs only and `sidebar.css` is listed for any risk-card styles. `eslint` remains on `^10.4.0`, `vitest-chrome` is deferred, `types.ts` is committed, and parser fallbacks remain silent/empty. Execution checks after build remain required: build, tests, lint, format, npm ls, and unsafe HTML scan. | ✅        |
-| Gemini   | Final approval granted. Scope expansion to include `updateSidebar(results)` is logical and prevents UI/Logic fragmentation. The commitment to using standard DOM APIs (no `innerHTML`) preserves the security fixes from Phase 1. Ready for implementation.                                                                                                                                                               | ✅        |
+| Reviewer | Input                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Approved? |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ⬜        |
+| Codex    | Not approved yet. Fix before `go`: minimap column rules contradict the edge direction — dependency targets should be in the left column and dependents/sources in the right column, but the current text says the left column is resources not referenced by any other resource. Remove prefilled ✅ marks from post-build checks before execution. Formatting is clean after Codex normalized the proposal/log edits. BP-003 implementation itself still builds/tests/lints cleanly. | ❌        |
+| Gemini   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ⬜        |
+
+### Outcome
+
+- **Status:** Pending
+- **Built by:** Claude
+- **Result:** —
+- **Test result:** —
+
+---
+
+## BP-003 — Diff Hunk Parser + Local Risk Classifier ✅
 
 ### Outcome
 
 - **Status:** ✅ Done
 - **Built by:** Claude
-- **Result:** All files built. One mid-build fix: ESLint `no-undef` and `no-unused-vars` produce false positives on browser globals in TS files — disabled both in the TS config block per @typescript-eslint guidance; TS-aware equivalents remain active. One test fix: ingress block test expected a merged old+new `AttributeChange`; parser emits one record per diff direction — test updated to find each direction separately. dist/ layout unchanged. No `innerHTML`/`outerHTML`/`insertAdjacentHTML` in src/ or public/.
+- **Result:** All files built. ESLint `no-undef`/`no-unused-vars` disabled for TS files (false positives on browser globals) per @typescript-eslint guidance; TS-aware equivalents active. Ingress block test updated to find separate added/removed `AttributeChange` records rather than a merged entry. No `innerHTML`/`outerHTML`/`insertAdjacentHTML` in src/ or public/.
 - **Test result:** 46/46 ✅ (9 pageDetector + 16 hunkParser + 21 riskClassifier)
 
 ---
