@@ -94,11 +94,26 @@ tf-diff-explainer/
 | 3 — AI layer      | ✅ Done | AI change summary, interactive rollback checklist, copyable PR description |
 | 4 — Polish + ship | ✅ Done | Onboarding, enterprise org policy, CWS prep (v1.0.0, store assets)         |
 
+## Security guardrails (MV3 compliance)
+
+These rules are enforced across every build and reviewed on every proposal:
+
+| Guardrail                    | Requirement                                                                                                                                                                                                       |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No remote code**           | All JS is bundled locally. No `eval()`, `new Function()`, `setTimeout(string)`, or scripts loaded from external URLs at runtime.                                                                                  |
+| **Content Security Policy**  | Extension pages: `script-src 'self'; object-src 'self'`. No `unsafe-eval`, no `unsafe-inline`. Content script connects only to `https://api.anthropic.com`.                                                       |
+| **Service worker**           | No DOM access, no `XMLHttpRequest`. State is never held in memory — always persisted to `chrome.storage` so the worker can be terminated at any time.                                                             |
+| **Content script isolation** | Runs in an isolated world. Never injects `<script>` tags. All Chrome APIs beyond `chrome.storage` / `chrome.runtime` are proxied through the background service worker.                                           |
+| **Storage**                  | API key stored in `chrome.storage.local` only — never `localStorage`, cookies, or DOM attributes. Session cache in `chrome.storage.session`. Enterprise key via `chrome.storage.managed`.                         |
+| **Permissions**              | `storage` + `activeTab` only. `activeTab` is used solely for `chrome.tabs.query` in the popup to read the current tab URL for per-site enable/disable. No `tabs`, `history`, or `webRequest`.                     |
+| **API key handling**         | Key is read from storage at call time. Never passed in message payloads, never logged, never appears in the DOM. Sensitive Terraform attribute values are redacted to `<sensitive>` before being sent to the API. |
+| **Unsafe HTML**              | All sidebar DOM is built via `createElement` / `appendChild`. No `innerHTML`, `outerHTML`, or `insertAdjacentHTML` anywhere in the codebase (enforced in every post-build scan).                                  |
+| **Host permissions**         | Scoped to `https://github.com/*`, `https://gitlab.com/*`, and `https://api.anthropic.com/*` only. `web_accessible_resources` are not declared (nothing needs to be URL-accessible from the host page).            |
+
 ## Tech
 
 - TypeScript, Vite (three separate IIFE bundles), Vitest (104 tests)
 - No runtime dependencies — everything ships in the bundle
-- MV3 compliant: no `eval`, no `innerHTML`, no remote code
 - AI calls proxied through the background service worker so the host page's CSP cannot block them
 
 ## Chrome Web Store
