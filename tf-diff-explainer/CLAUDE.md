@@ -15,19 +15,19 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                  | Value                                                        |
-| ---------------------- | ------------------------------------------------------------ |
-| Last active session    | 2026-05-29                                                   |
-| Active phase           | Phase 4 — Polish + ship                                      |
-| Phase 1 status         | Sealed ✅ (2026-05-30)                                       |
-| Phase 2 status         | Sealed ✅ (2026-06-02)                                       |
-| Phase 3 status         | Sealed ✅ (2026-05-29)                                       |
-| Waiting on             | Codex review of BP-009 + proposal for BP-010                 |
-| Last build             | BP-009 ✅ (Enterprise org policy via chrome.storage.managed) |
-| Next action for Claude | Propose BP-010 (Chrome Web Store prep)                       |
-| Open bugs              | BUG-6/7/9/10 open — BUG-4/5/8 fixed (see 1playground.md)     |
-| Blocked                | No                                                           |
-| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 97/97 ✅              |
+| Field                  | Value                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| Last active session    | 2026-05-29                                                                   |
+| Active phase           | Phase 4 — Polish + ship                                                      |
+| Phase 1 status         | Sealed ✅ (2026-05-30)                                                       |
+| Phase 2 status         | Sealed ✅ (2026-06-02)                                                       |
+| Phase 3 status         | Sealed ✅ (2026-05-29)                                                       |
+| Waiting on             | BUG-11 final fix (GitHub DOM selector) + Codex commit + BP-010 proposal      |
+| Last build             | Bug fixes: BUG-6/7/9/10/11 + aiSummary.ts hash redaction (100 tests)         |
+| Next action for Claude | Fix BUG-11 properly (GitHub `.file` has no `data-path`), then propose BP-010 |
+| Open bugs              | BUG-11 partially fixed — see critical note below                             |
+| Blocked                | No                                                                           |
+| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 100/100 ✅                            |
 
 ### What was built and confirmed
 
@@ -40,7 +40,24 @@ No exceptions.
 - BP-006: AI Change Summary — `aiSummary.ts` (prompt builder, SHA-256 hash, background-proxied fetch), `background/index.ts` (FETCH_AI_SUMMARY handler fetches `claude-haiku-4-5-20251001`), AI local cache (`chrome.storage.local`, hash-keyed), `updateAISummary` (5 states), AI section CSS, manifest CSP. 80 tests.
 - BP-007: PR Description + Rollback Checklist — `AISummaryResult` extended with `prDescription`, prompt v2 (6 rollback steps + markdown PR description), `max_tokens` 768, `CACHE_VERSION` v2, shape validation, interactive rollback checklist (`<ol>` with checkboxes), PR Description section with Copy button (`navigator.clipboard`). 84 tests.
 - BP-008: Onboarding — install badge `'!'` on extension icon; popup welcome banner (2-step guide + `console.anthropic.com` link) shown when no key set; badge clears + banner hides on key save; sidebar no-key CTA improved to blue action text. 84 tests (unchanged).
-- BP-009: Enterprise org policy — `managed_schema.json` (Chrome policy schema for IT admins); `getApiKey` + `isEnabledForHost` check `chrome.storage.managed` first (Managed → Local fallback); new `isManagedApiKey()`; popup disables API key input + Save with "managed by your organization" message when managed key detected. 97 tests (+13 managed storage tests).
+- BP-009: Enterprise org policy — `managed_schema.json` (Chrome policy schema for IT admins); `getApiKey` + `isEnabledForHost` check `chrome.storage.managed` first (Managed → Local fallback); new `isManagedApiKey()` + `isManagedDisabledHosts()`; popup disables API key + site toggle when org policy active. 97 tests (+13 managed storage tests).
+- Bug batch (BUG-6/7/9/10/11 + hash redaction): generation counter in `runAnalysis` (BUG-6); `response.content[0]?.text` guard (BUG-7); empty-changes guard before AI path (BUG-9); `.filter(a => !a.isSensitive)` in `buildPrompt` (BUG-10); `scrapeGitHub()` data-path fallback (BUG-11 — **partially fixed, see critical note**); `generateDiffHash` redacts sensitive attr values with `<sensitive>`. 100 tests.
+
+### ⚠️ Critical: BUG-11 not fully resolved
+
+`scrapeGitHub()` in `hunkParser.ts` tries `container.getAttribute('data-path')` then `querySelector('[data-path]')` — but **live testing on GitHub shows neither works**: `document.querySelector('.file[data-path$=".tf"]')` returns 0, AND `document.querySelector('.file')?.querySelector('[data-path]')` returns `undefined`.
+
+GitHub's `.file` elements have NO `data-path` attribute anywhere in the subtree.
+
+**Next session must first run this in the browser console to find the correct selector:**
+
+```js
+Array.from(document.querySelector('.file').attributes).map((a) => a.name + '=' + a.value);
+document.querySelector('.file-header')?.outerHTML.slice(0, 400);
+```
+
+Then update `scrapeGitHub()` in `hunkParser.ts` with the correct selector before the sidebar will work on GitHub PRs.
+
 - Git + GitHub: repo at https://github.com/Karthikbangari/Terraf, SSH key configured (port 443), all commits pushed.
 - Codex is currently **out of commission** — Claude is handling git commits and pushes this session.
 

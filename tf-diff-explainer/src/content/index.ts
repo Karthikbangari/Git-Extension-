@@ -22,8 +22,11 @@ import { fetchAISummary, generateDiffHash } from './aiSummary';
 
 (async function init() {
   const host = location.hostname;
+  let generation = 0;
 
   const runAnalysis = async () => {
+    const gen = ++generation;
+
     if (!hasTerraformDiff()) {
       await clearCachedAnalysis(location.href);
       return;
@@ -42,25 +45,33 @@ import { fetchAISummary, generateDiffHash } from './aiSummary';
       await setCachedAnalysis(location.href, changes, graph);
     }
 
+    if (gen !== generation) return;
     updateSidebar(changes);
     updateMinimap(changes, graph);
 
-    // Phase 3: AI Summary Layer
+    // BUG-9: skip AI call when there are no parsed resource changes
+    if (changes.length === 0) return;
+
     const apiKey = await getApiKey();
     if (!apiKey) {
       updateAISummary('no-key');
       return;
     }
 
+    if (gen !== generation) return;
     const hash = await generateDiffHash(changes);
     const cachedAI = await getCachedAISummary(hash);
     if (cachedAI) {
+      if (gen !== generation) return;
       updateAISummary(cachedAI);
       return;
     }
 
+    if (gen !== generation) return;
     updateAISummary('loading');
     const aiResult = await fetchAISummary(changes);
+
+    if (gen !== generation) return;
     if (aiResult) {
       try {
         await setCachedAISummary(hash, aiResult);

@@ -23,11 +23,21 @@ const BLOCK_CLOSE_RE = /^\s*\}/;
 const ATTR_RE = /^\s*([\w-]+)\s*=\s*(.*\S)/;
 
 export function scrapeGitHub(): FileRecord[] {
-  const containers = document.querySelectorAll<HTMLElement>('.file[data-path$=".tf"]');
-  if (containers.length === 0) return [];
+  const allFiles = document.querySelectorAll<HTMLElement>('.file');
+  if (allFiles.length === 0) return [];
 
-  return Array.from(containers).flatMap((container) => {
-    const filePath = container.getAttribute('data-path') ?? '';
+  const tfContainers: Array<{ container: HTMLElement; filePath: string }> = [];
+  for (const container of allFiles) {
+    // GitHub has moved data-path to nested elements in some DOM versions — check both
+    const filePath =
+      container.getAttribute('data-path') ??
+      container.querySelector<HTMLElement>('[data-path]')?.getAttribute('data-path') ??
+      '';
+    if (filePath.endsWith('.tf')) tfContainers.push({ container, filePath });
+  }
+  if (tfContainers.length === 0) return [];
+
+  return tfContainers.flatMap(({ container, filePath }) => {
     if (!filePath) return [];
 
     const lines: LineRecord[] = [];

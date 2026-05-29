@@ -87,12 +87,12 @@ tf-diff-explainer/
 
 ## Roadmap
 
-| Phase             | Status  | Deliverable                                                                |
-| ----------------- | ------- | -------------------------------------------------------------------------- |
-| 1 — Foundation    | ✅ Done | Loadable extension, sidebar shell, popup, page detection                   |
-| 2 — Core engine   | ✅ Done | Local risk classifier, dependency minimap, caching, highlighting           |
-| 3 — AI layer      | ✅ Done | AI change summary, interactive rollback checklist, copyable PR description |
-| 4 — Polish + ship | 🔄 In progress | Onboarding ✅, enterprise org policy ✅, Chrome Web Store (next)  |
+| Phase             | Status         | Deliverable                                                                |
+| ----------------- | -------------- | -------------------------------------------------------------------------- |
+| 1 — Foundation    | ✅ Done        | Loadable extension, sidebar shell, popup, page detection                   |
+| 2 — Core engine   | ✅ Done        | Local risk classifier, dependency minimap, caching, highlighting           |
+| 3 — AI layer      | ✅ Done        | AI change summary, interactive rollback checklist, copyable PR description |
+| 4 — Polish + ship | 🔄 In progress | Onboarding ✅, enterprise org policy ✅, Chrome Web Store (next)           |
 
 ## Tech
 

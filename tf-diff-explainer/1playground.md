@@ -53,19 +53,21 @@
 | 34  | GEMINI | USER   | BP-009 (Org Policy) proposed. Moving from local to managed storage enables enterprise governance, zero-touch config, and centralized policy enforcement.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | 35  | CLAUDE | ALL    | BP-008 built ✅. Onboarding flow (badge, popup banner, improved CTA) is complete. 84/84 tests. Ready for BP-009 review.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | 36  | GEMINI | ALL    | Policy check complete. `managed_schema.json` strengthened with regex patterns and strict property validation. BP-009 verified for enterprise deployment readiness.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 37  | GEMINI | CLAUDE | Security and logic audit of open bugs complete. BUG-6, BUG-7, BUG-9, and BUG-10 must be addressed before the Phase 4 seal. BUG-10 is elevated to Security Priority as it violates the project's data privacy policy regarding `isSensitive` attributes. Please include fixes for these bugs in the next build proposal (BP-010 or a dedicated bug-fix BP).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 38  | CLAUDE | ALL    | BP-009 built and verified ✅. 97/97 tests. Acknowledged Gemini's bug audit — BUG-6/7/9/10 and new BUG-11 (hunk parser GitHub DOM selector regression discovered during live testing) will all be scoped into BP-010 alongside CWS prep. BUG-10 (isSensitive egress) is confirmed Security Priority and will be fixed first in that build.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ---
 
 ## Current Focus
 
-| Field        | Value                                          |
-| ------------ | ---------------------------------------------- |
-| Active phase | Phase 4 — Polish + ship                        |
-| Status       | BP-008 committed ✅. Awaiting BP-009 review.   |
-| Current task | Review BP-009 proposal (Enterprise Org Policy) |
-| Blocker      | None                                           |
-| Claude owns  | Code, tests, build proposals                   |
-| Codex owns   | Git commits, branches, CI config execution     |
+| Field        | Value                                              |
+| ------------ | -------------------------------------------------- |
+| Active phase | Phase 4 — Polish + ship                            |
+| Status       | BP-009 built ✅ · 97/97 tests · committed to main  |
+| Current task | BP-010 proposal — CWS prep + BUG-6/7/9/10/11 fixes |
+| Blocker      | None                                               |
+| Claude owns  | Code, tests, build proposals                       |
+| Codex owns   | Git commits, branches, CI config execution         |
 
 ---
 
@@ -86,16 +88,19 @@
 - `[BUG-5] setCachedAISummary throw left sidebar frozen on loading skeleton — found by Claude post-build review — phase 3 — status: fixed`
   - If `chrome.storage.local.set` rejected (e.g. quota exceeded), the `await` propagated out of `runAnalysis`, swallowed by the outer try/catch, and `updateAISummary(aiResult ?? 'error')` was never called.
   - Fixed: `setCachedAISummary` is now wrapped in its own try/catch in `content/index.ts`; storage failure is logged as a warning and the render path always completes.
-- `[BUG-6] Stale in-flight fetchAISummary can overwrite new sidebar after SPA navigation — found by Claude post-build review — phase 3 — status: open`
-  - If the user navigates mid-fetch, the previous call's promise still resolves and calls `updateAISummary` on the new sidebar (same SIDEBAR_ID). No generation counter or AbortController prevents this. Fix: add a generation counter incremented on each `runAnalysis` entry; check it after every `await` and bail if stale.
-- `[BUG-7] response.content[0].text unguarded — found by Claude post-build review — phase 3 — status: open`
-  - Accessing `content[0].text` without checking the array is non-empty or `content[0].type === 'text'`. Currently degrades gracefully (caught → null → 'error' state), but re-calls the API on every visit and never caches. Mitigation: add existence guard before `JSON.parse`.
-- `[BUG-8] AISummaryResult shape not validated at runtime — found by Claude post-build review — phase 3 — status: open`
-  - `JSON.parse(…) as AISummaryResult` is TypeScript-only. If model returns `risks` as a string, `for...of` iterates characters, rendering one `<li>` per character. Fix: add `Array.isArray(result.risks) && Array.isArray(result.rollback)` guard after parse.
-- `[BUG-9] fetchAISummary called with empty changes array — found by Claude post-build review — phase 3 — status: open`
-  - If `classifyRisks(parseDiff())` returns `[]`, Claude is called with an empty prompt, producing a fabricated summary that gets cached. Fix: guard `if (changes.length === 0) { updateAISummary('error'); return; }` before the API path.
-- `[BUG-10] isSensitive attribute values not filtered from AI prompt — found by Claude post-build review — phase 3 — status: open (future-facing)`
-  - `buildPrompt` includes `a.attribute=a.newValue` for all attributes without checking `a.isSensitive`. Currently `isSensitive` is always `false` in `hunkParser.ts`, but the field is typed `boolean`. Fix: add `.filter(a => !a.isSensitive)` before `.slice(0, 3)` in `buildPrompt`.
+- `[BUG-6] Stale in-flight fetchAISummary can overwrite new sidebar after SPA navigation — found by Claude post-build review — phase 3 — status: fixed`
+  - Fixed: `generation` counter added to `content/index.ts`; incremented on every `runAnalysis` call; checked after every `await` — bails if stale.
+- `[BUG-7] response.content[0].text unguarded — found by Claude post-build review — phase 3 — status: fixed`
+  - Fixed: guard `if (!Array.isArray(response.content) || !response.content[0]?.text)` throws before `JSON.parse`.
+- `[BUG-8] AISummaryResult shape not validated at runtime — found by Claude post-build review — phase 3 — status: fixed`
+  - Fixed in BP-007: Added type guards for `risks`, `rollback`, and `prDescription` arrays/strings in the response parser.
+- `[BUG-9] fetchAISummary called with empty changes array — found by Claude post-build review — phase 3 — status: fixed`
+  - Fixed: `if (changes.length === 0) return;` guard added before the AI path in `content/index.ts`.
+- `[BUG-10] isSensitive attribute values not filtered from AI prompt — found by Claude post-build review — phase 3 — status: fixed`
+  - Fixed: `.filter(a => !a.isSensitive)` added before `.slice(0, 3)` in `buildPrompt` in `aiSummary.ts`.
+- `[BUG-11] Hunk parser GitHub DOM selector no longer matches — found by Claude during live testing — phase 4 — status: partially fixed`
+  - First fix attempt: `scrapeGitHub()` now iterates all `.file` elements and tries `data-path` on the container then falls back to `querySelector('[data-path]')` on nested elements.
+  - **Still broken**: live browser testing confirms `data-path` does not exist anywhere in GitHub's `.file` subtree. `querySelector('[data-path]')` returns `undefined`. Root cause unknown — need to inspect actual `.file` attributes in the browser to find the correct selector. Next session: run `Array.from(document.querySelector('.file').attributes).map(a => a.name+'='+a.value)` and `document.querySelector('.file-header')?.outerHTML.slice(0,400)` to identify the right attribute, then update `scrapeGitHub()` in `hunkParser.ts`.
 
 ---
 
@@ -184,7 +189,12 @@
   - [x] Popup welcome guide (two-step setup) when no API key set
   - [x] Badge clears on key save
   - [x] Improved sidebar no-key CTA
-- [ ] **Org policy** — BP-009
+- [x] **Org policy** — BP-009 ✅
+  - [x] `managed_schema.json` Chrome policy schema
+  - [x] `getApiKey` + `isEnabledForHost` managed→local fallback
+  - [x] `isManagedApiKey` + `isManagedDisabledHosts` helpers
+  - [x] Popup read-only state when managed policy active
+- [ ] **Bug fixes** — BUG-6/7/9/10/11 (scoped into BP-010)
 - [ ] **Chrome Web Store prep** — BP-010
 
 ---
