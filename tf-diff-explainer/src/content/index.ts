@@ -3,12 +3,22 @@ import {
   getCachedAnalysis,
   setCachedAnalysis,
   clearCachedAnalysis,
+  getApiKey,
+  getCachedAISummary,
+  setCachedAISummary,
 } from '../utils/storage';
 import { isSupportedPage, hasTerraformDiff, watchForNavigation } from './pageDetector';
-import { injectSidebar, updateSidebar, updateMinimap, removeSidebar } from './sidebar/index';
+import {
+  injectSidebar,
+  updateSidebar,
+  updateMinimap,
+  removeSidebar,
+  updateAISummary,
+} from './sidebar/index';
 import { parseDiff } from './hunkParser';
 import { classifyRisks } from './riskClassifier';
 import { buildDependencyGraph } from './refParser';
+import { fetchAISummary, generateDiffHash } from './aiSummary';
 
 (async function init() {
   const host = location.hostname;
@@ -34,6 +44,31 @@ import { buildDependencyGraph } from './refParser';
 
     updateSidebar(changes);
     updateMinimap(changes, graph);
+
+    // Phase 3: AI Summary Layer
+    const apiKey = await getApiKey();
+    if (!apiKey) {
+      updateAISummary('no-key');
+      return;
+    }
+
+    const hash = await generateDiffHash(changes);
+    const cachedAI = await getCachedAISummary(hash);
+    if (cachedAI) {
+      updateAISummary(cachedAI);
+      return;
+    }
+
+    updateAISummary('loading');
+    const aiResult = await fetchAISummary(changes);
+    if (aiResult) {
+      try {
+        await setCachedAISummary(hash, aiResult);
+      } catch (error) {
+        console.warn('TFE: Failed to cache AI summary', error);
+      }
+    }
+    updateAISummary(aiResult ?? 'error');
   };
 
   try {

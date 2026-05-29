@@ -4,7 +4,11 @@
   "version": "0.1.0",
   "description": "Explains Terraform diffs on GitHub PRs and GitLab MRs with risk analysis and AI summaries",
   "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://github.com/*", "https://gitlab.com/*"],
+  "host_permissions": [
+    "https://github.com/*",
+    "https://gitlab.com/*",
+    "https://api.anthropic.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
@@ -23,6 +27,9 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://api.anthropic.com"
   },
   "icons": {
     "16": "icons/icon16.png",

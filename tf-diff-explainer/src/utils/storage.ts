@@ -1,4 +1,4 @@
-import type { ResourceChange, DependencyGraph } from '../content/types';
+import type { ResourceChange, DependencyGraph, AISummaryResult } from '../content/types';
 
 type SerializedGraph = Record<string, string[]>;
 
@@ -57,4 +57,18 @@ export async function toggleHost(host: string, enabled: boolean): Promise<void> 
   const current = disabledHosts as string[];
   const updated = enabled ? current.filter((h) => h !== host) : [...new Set([...current, host])];
   await chrome.storage.local.set({ disabledHosts: updated });
+}
+
+function aiCacheKey(hash: string): string {
+  return `tfe_ai_${hash}`;
+}
+
+export async function getCachedAISummary(hash: string): Promise<AISummaryResult | null> {
+  const key = aiCacheKey(hash);
+  const result = await chrome.storage.local.get(key);
+  return (result[key] as AISummaryResult) ?? null;
+}
+
+export async function setCachedAISummary(hash: string, result: AISummaryResult): Promise<void> {
+  await chrome.storage.local.set({ [aiCacheKey(hash)]: result });
 }

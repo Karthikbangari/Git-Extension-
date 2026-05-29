@@ -56,3 +56,10 @@ export interface ResourceChange {
     anchorId?: string;
   };
 }
+
+export interface AISummaryResult {
+  summary: string;
+  risks: string[];
+  rollback: string[];
+  prDescription: string;
+}

@@ -1,4 +1,4 @@
-import type { ResourceChange, DependencyGraph } from '../types';
+import type { ResourceChange, DependencyGraph, AISummaryResult } from '../types';
 import { renderMinimap } from './minimap';
 
 const SIDEBAR_ID = 'tf-diff-explainer-sidebar';
@@ -206,4 +206,128 @@ export function updateMinimap(changes: ResourceChange[], graph: DependencyGraph)
 
 export function removeSidebar(): void {
   document.getElementById(SIDEBAR_ID)?.remove();
+}
+
+export function updateAISummary(
+  state: AISummaryResult | null | 'loading' | 'no-key' | 'error'
+): void {
+  const sidebar = document.getElementById(SIDEBAR_ID);
+  if (!sidebar) return;
+
+  const body = sidebar.querySelector<HTMLElement>('.tfe-body');
+  if (!body) return;
+
+  body.querySelector('.tfe-ai-section')?.remove();
+
+  if (state === null) return;
+
+  const section = document.createElement('div');
+  section.className = 'tfe-ai-section';
+
+  const heading = document.createElement('p');
+  heading.className = 'tfe-ai-heading';
+  heading.textContent = 'AI Summary';
+  section.appendChild(heading);
+
+  if (state === 'loading') {
+    const skeleton = document.createElement('div');
+    skeleton.className = 'tfe-skeleton';
+    for (const short of [false, false, true]) {
+      const line = document.createElement('div');
+      line.className = short ? 'tfe-skeleton-line short' : 'tfe-skeleton-line';
+      skeleton.appendChild(line);
+    }
+    section.appendChild(skeleton);
+  } else if (state === 'no-key') {
+    const msg = document.createElement('p');
+    msg.className = 'tfe-ai-cta';
+    msg.textContent = 'Add an API key in the extension popup to enable AI summaries.';
+    section.appendChild(msg);
+  } else if (state === 'error') {
+    const msg = document.createElement('p');
+    msg.className = 'tfe-ai-error';
+    msg.textContent = 'AI summary unavailable.';
+    section.appendChild(msg);
+  } else {
+    const summary = document.createElement('p');
+    summary.className = 'tfe-ai-summary';
+    summary.textContent = state.summary;
+    section.appendChild(summary);
+
+    if (state.risks.length > 0) {
+      const riskHeading = document.createElement('p');
+      riskHeading.className = 'tfe-ai-subheading';
+      riskHeading.textContent = 'Risks';
+      section.appendChild(riskHeading);
+
+      const riskList = document.createElement('ul');
+      riskList.className = 'tfe-ai-list';
+      for (const risk of state.risks) {
+        const item = document.createElement('li');
+        item.textContent = risk;
+        riskList.appendChild(item);
+      }
+      section.appendChild(riskList);
+    }
+
+    if (state.rollback.length > 0) {
+      const rollbackHeading = document.createElement('p');
+      rollbackHeading.className = 'tfe-ai-subheading';
+      rollbackHeading.textContent = 'Rollback Checklist';
+      section.appendChild(rollbackHeading);
+
+      const rollbackList = document.createElement('ol');
+      rollbackList.className = 'tfe-ai-rollback';
+      rollbackList.setAttribute('aria-label', 'Rollback checklist');
+      for (const step of state.rollback) {
+        const item = document.createElement('li');
+        item.className = 'tfe-ai-rollback-item';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'tfe-ai-rollback-check';
+        checkbox.setAttribute('aria-label', 'Mark step complete');
+        const text = document.createElement('span');
+        text.textContent = step;
+        item.appendChild(checkbox);
+        item.appendChild(text);
+        rollbackList.appendChild(item);
+      }
+      section.appendChild(rollbackList);
+    }
+
+    if (state.prDescription) {
+      const prHeading = document.createElement('p');
+      prHeading.className = 'tfe-ai-subheading';
+      prHeading.textContent = 'PR Description';
+      section.appendChild(prHeading);
+
+      const prHeader = document.createElement('div');
+      prHeader.className = 'tfe-ai-pr-header';
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'tfe-ai-copy-btn';
+      copyBtn.textContent = 'Copy';
+      copyBtn.setAttribute('aria-label', 'Copy PR description');
+      const prDescText = state.prDescription;
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard
+          .writeText(prDescText)
+          .then(() => {
+            copyBtn.textContent = 'Copied ✓';
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy';
+            }, 1500);
+          })
+          .catch(() => {});
+      });
+      prHeader.appendChild(copyBtn);
+      section.appendChild(prHeader);
+
+      const prPre = document.createElement('pre');
+      prPre.className = 'tfe-ai-pr-desc';
+      prPre.textContent = state.prDescription;
+      section.appendChild(prPre);
+    }
+  }
+
+  body.appendChild(section);
 }

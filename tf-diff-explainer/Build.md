@@ -17,6 +17,133 @@
 
 ## Active Proposal
 
+## BP-007 — PR Description + Rollback Checklist
+
+### What & Why
+
+- **Phase:** Phase 3 — AI layer
+- **Task group:** PR Description generator + Rollback checklist
+- **Goal:** Extend the AI Change Summary to generate a copyable PR description (markdown) and an interactive rollback checklist — both from one extended API call, rendered as two new sidebar sections.
+
+### Files
+
+| Action | File path                         | Description                                                                                                                                        |
+| ------ | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MODIFY | `src/content/types.ts`            | Add `prDescription: string` to `AISummaryResult`                                                                                                   |
+| MODIFY | `src/content/aiSummary.ts`        | Update `buildPrompt` to v2 schema (rollback expanded to 6 steps, add `prDescription`); bump `max_tokens` 512 → 768                                 |
+| MODIFY | `src/content/index.ts`            | Prefix cache key with `v2:` to invalidate BP-006 cached entries                                                                                    |
+| MODIFY | `src/content/sidebar/index.ts`    | Extend `updateAISummary`: rollback section renders as interactive `<ol>` with checkboxes; add PR Description section with copy-to-clipboard button |
+| MODIFY | `src/content/sidebar/sidebar.css` | Copy button styles, rollback checkbox items, PR description `<pre>` block; dark-mode variants                                                      |
+| MODIFY | `tests/aiSummary.test.ts`         | Add tests for new prompt fields and `prDescription` response parsing                                                                               |
+
+### Approach
+
+**Schema extension (`types.ts`):**
+
+```ts
+interface AISummaryResult {
+  summary: string; // 2-4 sentences (unchanged)
+  risks: string[]; // up to 3 bullets (unchanged)
+  rollback: string[]; // expanded to 6 concrete ordered steps
+  prDescription: string; // markdown PR description (new)
+}
+```
+
+**Updated prompt v2 (`aiSummary.ts`):**
+
+`buildPrompt` produces:
+
+```
+You are a Terraform diff reviewer. Analyse these resource changes and respond with valid JSON only.
+
+Changes:
+{for each resource: "ACTION aws_type.name [RISK]: attr=value, attr=value"}
+
+Respond with exactly this JSON schema:
+{"summary":"...","risks":["..."],"rollback":["step 1...","step 2..."],"prDescription":"..."}
+
+Rules:
+- summary: 2-4 sentences
+- risks: max 3 items, each prefixed [HIGH], [MEDIUM], or [LOW]
+- rollback: max 6 concrete ordered steps (e.g. "terraform state pull > backup.tfstate before applying")
+- prDescription: markdown with sections ## Summary, ## Changes, ## Risk Assessment, ## Pre-merge Checklist (checkboxes)
+```
+
+`max_tokens` bumped 512 → 768 to accommodate the PR description.
+
+**Cache invalidation (`content/index.ts`):**
+
+```ts
+const cacheKey = `v2:${await generateDiffHash(changes)}`;
+```
+
+BP-006 cache entries (raw hash key) are silently bypassed; they expire naturally via storage quotas. No `chrome.storage` API changes needed.
+
+**Sidebar rendering (`sidebar/index.ts`):**
+
+`updateAISummary` gains two new sections when a full `AISummaryResult` is displayed:
+
+1. **Rollback Checklist** — replaces the existing `<ul>` rollback list:
+   - `<ol aria-label="Rollback checklist">` with one `<li>` per step
+   - Each `<li>` contains `<input type="checkbox" aria-label="Mark step complete">` + step text
+   - Checkboxes are client-side only — not persisted
+
+2. **PR Description** — new section below rollback:
+   - Section header "PR Description"
+   - `<pre>` block with the markdown text
+   - `<button aria-label="Copy PR description">Copy</button>` — calls `navigator.clipboard.writeText(prDescription)` on click
+   - Button label changes to "Copied ✓" for 1.5 s then reverts (driven by `setTimeout`)
+
+**Shape validation** (extending BUG-8 fix scope):
+
+Add `typeof result.prDescription === 'string'` to the existing `Array.isArray` guard in `fetchAISummary` so malformed responses still degrade to `'error'` state.
+
+### MV3 Compliance Check
+
+- ✅ No `innerHTML` — rollback list, PR description block, and copy button built via DOM construction
+- ✅ No new permissions — `navigator.clipboard.writeText` works in content scripts from a user gesture (button click); `github.com`/`gitlab.com` are HTTPS origins
+- ✅ API key path unchanged — background service worker reads key from storage, never crosses IPC
+- ✅ Cache key versioning (`v2:`) is transparent to `chrome.storage.local` — no new storage APIs
+- ✅ `setTimeout` used only for button label revert (1.5 s) — not a service worker, no MV3 concern
+- ✅ `max_tokens` 768 is well within Haiku output limits
+- ✅ No new `connect-src` additions — same `https://api.anthropic.com` already in manifest CSP
+
+### Dependencies / Prerequisites
+
+- BP-006 ✅ — `AISummaryResult`, `fetchAISummary`, `generateDiffHash`, `getCachedAISummary`/`setCachedAISummary`, and `updateAISummary` all carry forward
+
+### Risk
+
+- **Level:** Low
+- **Notes:** Schema change is additive (`prDescription` is new; `rollback` count increases 3→6). The `v2:` cache prefix means every user gets one fresh API fetch per diff after the update — acceptable cost. Copy button fails silently if clipboard is unavailable (non-HTTPS or permission denied); the PR description text is still visible in the `<pre>` block so nothing is lost. Rollback checkbox state is intentionally ephemeral — no storage risk.
+
+### Post-build checks
+
+1. `npm run build:ext`
+2. `npm run test:ext` — all new tests must pass
+3. `npm run lint`
+4. `npm run format:check`
+5. `rg -n "innerHTML|outerHTML|insertAdjacentHTML" tf-diff-explainer/src tf-diff-explainer/public` — must return empty
+6. Verify `max_tokens: 768` in `aiSummary.ts`
+7. Verify `v2:` prefix in cache key assignment in `content/index.ts`
+
+### Review
+
+| Reviewer | Input | Approved? |
+| -------- | ----- | --------- |
+| User     |       | ⬜        |
+| Codex    |       | ⬜        |
+| Gemini   |       | ⬜        |
+
+### Outcome
+
+- **Status:** ✅ Done
+- **Built by:** Claude
+- **Result:** 6 files built. `AISummaryResult` extended with `prDescription: string`. `CACHE_VERSION` bumped `v1`→`v2` in `aiSummary.ts` (invalidates all BP-006 cached entries via hash change). `buildPrompt` updated to v2 schema: rollback expanded to 6 steps, `prDescription` markdown section added, `max_tokens` 512→768 in `background/index.ts`. Shape validation in `fetchAISummary` now guards `typeof prDescription === 'string'`. `updateAISummary` in `sidebar/index.ts` renders rollback as interactive `<ol>` with `<input type="checkbox">` items and new PR Description section (`<pre>` block + Copy button with `navigator.clipboard.writeText` + 1.5 s "Copied ✓" feedback). New CSS: `.tfe-ai-rollback`, `.tfe-ai-rollback-item`, `.tfe-ai-rollback-check`, `.tfe-ai-pr-header`, `.tfe-ai-copy-btn`, `.tfe-ai-pr-desc` + full dark-mode variants. `content/index.ts` unchanged (cache invalidation handled by `CACHE_VERSION`). content.js grew from 15.64 kB to 17.08 kB.
+- **Test result:** 84/84 ✅ (62 previous + 22 aiSummary: 5 generateDiffHash + 9 buildPrompt + 8 fetchAISummary)
+
+---
+
 ## BP-006 — AI Change Summary
 
 ### What & Why
@@ -138,10 +265,10 @@ runAnalysis():
 
 ### Outcome
 
-- **Status:** Pending
+- **Status:** ✅ Done
 - **Built by:** Claude
-- **Result:** —
-- **Test result:** —
+- **Result:** All 7 files built. `AISummaryResult` moved to `types.ts` (shared by `aiSummary.ts` and `storage.ts`). `aiSummary.ts` rewired to route through background service worker via `chrome.runtime.sendMessage` (avoids host-page CSP blocking content-script fetch). Model corrected to `claude-haiku-4-5-20251001`. `buildPrompt` exported for testability. `background/index.ts` gained `FETCH_AI_SUMMARY` message handler that makes the actual `fetch()` to Anthropic and forwards the response. `storage.ts` gained `getCachedAISummary`/`setCachedAISummary` using `chrome.storage.local`. `sidebar/index.ts` gained `updateAISummary` (5 states: `loading`, `no-key`, `error`, `AISummaryResult`, `null`). AI section styles + dark-mode variants added to `sidebar.css`. CSP added to manifest with `connect-src https://api.anthropic.com`. content.js grew from 12.26 kB to 15.64 kB.
+- **Test result:** 80/80 ✅ (62 previous + 18 aiSummary: 5 generateDiffHash + 7 buildPrompt + 6 fetchAISummary)
 
 ---
 
