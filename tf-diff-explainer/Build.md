@@ -115,10 +115,10 @@
 
 ### Outcome
 
-- **Status:** Pending
+- **Status:** ✅ Done
 - **Built by:** Claude
-- **Result:** —
-- **Test result:** —
+- **Result:** All files built. One mid-build fix: ESLint `no-undef` and `no-unused-vars` produce false positives on browser globals in TS files — disabled both in the TS config block per @typescript-eslint guidance; TS-aware equivalents remain active. One test fix: ingress block test expected a merged old+new `AttributeChange`; parser emits one record per diff direction — test updated to find each direction separately. dist/ layout unchanged. No `innerHTML`/`outerHTML`/`insertAdjacentHTML` in src/ or public/.
+- **Test result:** 46/46 ✅ (9 pageDetector + 16 hunkParser + 21 riskClassifier)
 
 ---
 

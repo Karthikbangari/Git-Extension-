@@ -1,6 +1,8 @@
 import { isEnabledForHost } from '../utils/storage';
 import { isSupportedPage, hasTerraformDiff, watchForNavigation } from './pageDetector';
-import { injectSidebar, removeSidebar } from './sidebar/index';
+import { injectSidebar, updateSidebar, removeSidebar } from './sidebar/index';
+import { parseDiff } from './hunkParser';
+import { classifyRisks } from './riskClassifier';
 
 (async function init() {
   try {
@@ -13,6 +15,8 @@ import { injectSidebar, removeSidebar } from './sidebar/index';
 
     if (hasTerraformDiff()) {
       injectSidebar();
+      const raw = await parseDiff();
+      updateSidebar(classifyRisks(raw));
     }
 
     // GitHub uses Turbo/pjax; GitLab uses Vue router — both mutate DOM without a full reload
@@ -25,8 +29,12 @@ import { injectSidebar, removeSidebar } from './sidebar/index';
       if (!stillEnabled) return;
 
       // Allow the SPA to finish rendering before inspecting the new diff
-      setTimeout(() => {
-        if (hasTerraformDiff()) injectSidebar();
+      setTimeout(async () => {
+        if (hasTerraformDiff()) {
+          injectSidebar();
+          const raw = await parseDiff();
+          updateSidebar(classifyRisks(raw));
+        }
       }, 500);
     });
   } catch {

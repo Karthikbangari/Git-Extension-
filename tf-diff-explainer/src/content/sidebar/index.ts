@@ -1,3 +1,5 @@
+import type { ResourceChange } from '../types';
+
 const SIDEBAR_ID = 'tf-diff-explainer-sidebar';
 
 export function injectSidebar(): void {
@@ -43,6 +45,58 @@ export function injectSidebar(): void {
     btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
     btn.textContent = collapsed ? '❯' : '✕';
   });
+}
+
+export function updateSidebar(results: ResourceChange[]): void {
+  const sidebar = document.getElementById(SIDEBAR_ID);
+  if (!sidebar) return;
+
+  const body = sidebar.querySelector<HTMLElement>('.tfe-body');
+  if (!body) return;
+
+  body.textContent = '';
+
+  if (results.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'tfe-empty';
+    empty.textContent = 'No Terraform changes detected.';
+    body.appendChild(empty);
+    return;
+  }
+
+  for (const change of results) {
+    const card = document.createElement('div');
+    card.className = `tfe-card tfe-risk-${change.riskProfile.level}`;
+
+    const cardHeader = document.createElement('div');
+    cardHeader.className = 'tfe-card-header';
+
+    const cardTitle = document.createElement('span');
+    cardTitle.className = 'tfe-card-title';
+    cardTitle.textContent = change.id;
+
+    const badge = document.createElement('span');
+    badge.className = `tfe-card-badge tfe-risk-${change.riskProfile.level}`;
+    badge.textContent = change.riskProfile.level.toUpperCase();
+
+    cardHeader.appendChild(cardTitle);
+    cardHeader.appendChild(badge);
+    card.appendChild(cardHeader);
+
+    if (change.riskProfile.reasons.length > 0) {
+      const reasonList = document.createElement('ul');
+      reasonList.className = 'tfe-card-reasons';
+      for (const reason of change.riskProfile.reasons) {
+        const item = document.createElement('li');
+        item.className = 'tfe-card-reason';
+        item.textContent = reason;
+        reasonList.appendChild(item);
+      }
+      card.appendChild(reasonList);
+    }
+
+    body.appendChild(card);
+  }
 }
 
 export function removeSidebar(): void {

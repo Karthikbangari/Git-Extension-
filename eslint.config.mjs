@@ -1,4 +1,6 @@
 import js from '@eslint/js';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
 
 export default [
   js.configs.recommended,
@@ -20,6 +22,18 @@ export default [
     },
   },
   {
-    ignores: ['**/*.ts', '**/dist/**', '**/node_modules/**', '**/.tools/**'],
+    files: ['tf-diff-explainer/src/**/*.ts', 'tf-diff-explainer/tests/**/*.ts'],
+    plugins: { '@typescript-eslint': tsPlugin },
+    languageOptions: { parser: tsParser },
+    rules: {
+      // TypeScript's own type-checker handles these; JS rules produce false positives on TS globals
+      'no-undef': 'off',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+    },
+  },
+  {
+    ignores: ['**/dist/**', '**/node_modules/**', '**/.tools/**'],
   },
 ];
