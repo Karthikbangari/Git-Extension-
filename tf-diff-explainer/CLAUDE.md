@@ -15,19 +15,19 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                  | Value                                                    |
-| ---------------------- | -------------------------------------------------------- |
-| Last active session    | 2026-05-29                                               |
-| Active phase           | Phase 4 — Polish + ship                                  |
-| Phase 1 status         | Sealed ✅ (2026-05-30)                                   |
-| Phase 2 status         | Sealed ✅ (2026-06-02)                                   |
-| Phase 3 status         | Sealed ✅ (2026-05-29)                                   |
-| Waiting on             | User + Codex review of BP-009 proposal (pre-written)     |
-| Last build             | BP-008 ✅ (Onboarding: badge + popup welcome + CTA)      |
-| Next action for Claude | Build BP-009 after user types "go"                       |
-| Open bugs              | BUG-6/7/9/10 open — BUG-4/5/8 fixed (see 1playground.md) |
-| Blocked                | No                                                       |
-| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 84/84 ✅          |
+| Field                  | Value                                                        |
+| ---------------------- | ------------------------------------------------------------ |
+| Last active session    | 2026-05-29                                                   |
+| Active phase           | Phase 4 — Polish + ship                                      |
+| Phase 1 status         | Sealed ✅ (2026-05-30)                                       |
+| Phase 2 status         | Sealed ✅ (2026-06-02)                                       |
+| Phase 3 status         | Sealed ✅ (2026-05-29)                                       |
+| Waiting on             | Codex review of BP-009 + proposal for BP-010                 |
+| Last build             | BP-009 ✅ (Enterprise org policy via chrome.storage.managed) |
+| Next action for Claude | Propose BP-010 (Chrome Web Store prep)                       |
+| Open bugs              | BUG-6/7/9/10 open — BUG-4/5/8 fixed (see 1playground.md)     |
+| Blocked                | No                                                           |
+| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 97/97 ✅              |
 
 ### What was built and confirmed
 
@@ -40,6 +40,7 @@ No exceptions.
 - BP-006: AI Change Summary — `aiSummary.ts` (prompt builder, SHA-256 hash, background-proxied fetch), `background/index.ts` (FETCH_AI_SUMMARY handler fetches `claude-haiku-4-5-20251001`), AI local cache (`chrome.storage.local`, hash-keyed), `updateAISummary` (5 states), AI section CSS, manifest CSP. 80 tests.
 - BP-007: PR Description + Rollback Checklist — `AISummaryResult` extended with `prDescription`, prompt v2 (6 rollback steps + markdown PR description), `max_tokens` 768, `CACHE_VERSION` v2, shape validation, interactive rollback checklist (`<ol>` with checkboxes), PR Description section with Copy button (`navigator.clipboard`). 84 tests.
 - BP-008: Onboarding — install badge `'!'` on extension icon; popup welcome banner (2-step guide + `console.anthropic.com` link) shown when no key set; badge clears + banner hides on key save; sidebar no-key CTA improved to blue action text. 84 tests (unchanged).
+- BP-009: Enterprise org policy — `managed_schema.json` (Chrome policy schema for IT admins); `getApiKey` + `isEnabledForHost` check `chrome.storage.managed` first (Managed → Local fallback); new `isManagedApiKey()`; popup disables API key input + Save with "managed by your organization" message when managed key detected. 97 tests (+13 managed storage tests).
 - Git + GitHub: repo at https://github.com/Karthikbangari/Terraf, SSH key configured (port 443), all commits pushed.
 - Codex is currently **out of commission** — Claude is handling git commits and pushes this session.
 

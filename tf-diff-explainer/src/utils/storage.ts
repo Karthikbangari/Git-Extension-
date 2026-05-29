@@ -43,11 +43,43 @@ export async function clearCachedAnalysis(url: string): Promise<void> {
 }
 
 export async function getApiKey(): Promise<string | null> {
+  try {
+    const { apiKey: managedKey } = await chrome.storage.managed.get('apiKey');
+    if (managedKey) return managedKey as string;
+  } catch {
+    // managed storage unavailable (no enterprise policy deployed)
+  }
   const { apiKey } = await chrome.storage.local.get('apiKey');
   return (apiKey as string) || null;
 }
 
+export async function isManagedApiKey(): Promise<boolean> {
+  try {
+    const { apiKey } = await chrome.storage.managed.get('apiKey');
+    return !!apiKey;
+  } catch {
+    return false;
+  }
+}
+
+export async function isManagedDisabledHosts(): Promise<boolean> {
+  try {
+    const { disabledHosts } = await chrome.storage.managed.get('disabledHosts');
+    return Array.isArray(disabledHosts);
+  } catch {
+    return false;
+  }
+}
+
 export async function isEnabledForHost(host: string): Promise<boolean> {
+  try {
+    const { disabledHosts: managedDisabled } = await chrome.storage.managed.get('disabledHosts');
+    if (Array.isArray(managedDisabled)) {
+      return !(managedDisabled as string[]).includes(host);
+    }
+  } catch {
+    // managed storage unavailable
+  }
   const { disabledHosts = [] } = await chrome.storage.local.get('disabledHosts');
   return !(disabledHosts as string[]).includes(host);
 }
