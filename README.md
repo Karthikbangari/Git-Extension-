@@ -1,6 +1,6 @@
 # TF Diff Explainer
 
-A Chrome extension (Manifest V3) that injects a sidebar into GitHub PR and GitLab MR pages when Terraform `.tf` files appear in the diff. Provides instant, local risk analysis and a dependency minimap — no API key required for core features.
+A Chrome extension (Manifest V3) that injects a sidebar into GitHub PR and GitLab MR pages when Terraform `.tf` files appear in the diff. Provides instant local risk analysis, a dependency minimap, and optional AI-powered summaries via the Claude API.
 
 ## What it does
 
@@ -8,8 +8,10 @@ A Chrome extension (Manifest V3) that injects a sidebar into GitHub PR and GitLa
 - **Dependency minimap** — SVG graph showing which changed resources reference each other, laid out in a two-column dependent → target layout
 - **Relationship highlighting** — hover any resource card to dim unrelated resources and edges
 - **Session caching** — analysis results are cached per URL so re-opening the sidebar is instant
+- **AI Change Summary** _(requires Anthropic API key)_ — plain-English summary of the diff, up to 3 risk bullets, and a 6-step interactive rollback checklist; results are cached per diff hash so each unique diff costs one API call
+- **PR Description generator** _(requires Anthropic API key)_ — generates a copyable markdown PR description (Summary, Changes, Risk Assessment, Pre-merge Checklist sections) with a one-click Copy button
 
-All analysis runs entirely in the browser. Nothing is sent to any server.
+Local analysis runs entirely in the browser. AI features make a single request to `api.anthropic.com` via the extension's background service worker — the API key never touches the page DOM.
 
 ## Install (development)
 
@@ -30,6 +32,8 @@ Then in Chrome:
 
 The sidebar appears automatically on GitHub PR and GitLab MR pages that contain `.tf` file changes.
 
+To enable AI features, open the extension popup and paste an Anthropic API key (`sk-ant-…`). The key is stored in `chrome.storage.local` and never leaves the extension.
+
 ## Development commands
 
 All commands run from the repo root (`/Terraf`).
@@ -48,17 +52,18 @@ All commands run from the repo root (`/Terraf`).
 tf-diff-explainer/
 ├── src/
 │   ├── content/          # Content script (injected into PR pages)
-│   │   ├── index.ts      # Orchestrator: detect → cache → analyse → render
+│   │   ├── index.ts      # Orchestrator: detect → cache → analyse → render → AI
 │   │   ├── hunkParser.ts # DOM scraper: extracts ResourceChange[] from diff
 │   │   ├── riskClassifier.ts
 │   │   ├── refParser.ts  # Cross-resource reference detection (regex)
+│   │   ├── aiSummary.ts  # Prompt builder, diff hash, background-proxied fetch
 │   │   ├── pageDetector.ts
 │   │   ├── types.ts
 │   │   └── sidebar/
-│   │       ├── index.ts  # Sidebar DOM, cards, minimap, hover highlighting
+│   │       ├── index.ts  # Sidebar DOM, cards, minimap, AI sections, copy button
 │   │       ├── minimap.ts # SVG renderer
 │   │       └── sidebar.css
-│   ├── background/       # MV3 service worker
+│   ├── background/       # MV3 service worker — handles Anthropic API fetch
 │   ├── utils/storage.ts  # chrome.storage wrappers (local + session cache)
 │   └── popup/            # Extension popup (API key, per-site toggle)
 ├── tests/
@@ -66,6 +71,7 @@ tf-diff-explainer/
 │   ├── hunkParser.test.ts
 │   ├── riskClassifier.test.ts
 │   ├── refParser.test.ts
+│   ├── aiSummary.test.ts
 │   └── integration/caching.test.ts
 ├── public/               # Static assets copied to dist/
 │   ├── manifest.json
@@ -76,15 +82,16 @@ tf-diff-explainer/
 
 ## Roadmap
 
-| Phase             | Status  | Deliverable                                                      |
-| ----------------- | ------- | ---------------------------------------------------------------- |
-| 1 — Foundation    | ✅ Done | Loadable extension, sidebar shell, popup, page detection         |
-| 2 — Core engine   | ✅ Done | Local risk classifier, dependency minimap, caching, highlighting |
-| 3 — AI layer      | Planned | Claude API: change summary, PR description, rollback checklist   |
-| 4 — Polish + ship | Planned | Org policy, onboarding, Chrome Web Store                         |
+| Phase             | Status  | Deliverable                                                                |
+| ----------------- | ------- | -------------------------------------------------------------------------- |
+| 1 — Foundation    | ✅ Done | Loadable extension, sidebar shell, popup, page detection                   |
+| 2 — Core engine   | ✅ Done | Local risk classifier, dependency minimap, caching, highlighting           |
+| 3 — AI layer      | ✅ Done | AI change summary, interactive rollback checklist, copyable PR description |
+| 4 — Polish + ship | Planned | Org policy, onboarding, Chrome Web Store                                   |
 
 ## Tech
 
-- TypeScript, Vite (three separate IIFE bundles), Vitest
+- TypeScript, Vite (three separate IIFE bundles), Vitest (84 tests)
 - No runtime dependencies — everything ships in the bundle
 - MV3 compliant: no `eval`, no `innerHTML`, no remote code
+- AI calls proxied through the background service worker so the host page's CSP cannot block them
