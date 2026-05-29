@@ -11,7 +11,9 @@ Codex handles repository stewardship for this project:
 - Final phase end-to-end verification after Claude signs off
 - Reporting test results and logging phase-blocking bugs
 
-Claude handles day-to-day coding, unit tests, integration tests, build proposals, and implementation details unless the user explicitly asks Codex to help with code.
+Claude handles day-to-day coding, unit tests, integration tests, build proposals, and implementation details.
+
+The user has also authorized Codex to write code when asked or when it is the most direct way to complete an assigned task. When Codex writes code, keep changes scoped, preserve Manifest V3 compliance, and avoid colliding with Claude's active work.
 
 ---
 
@@ -19,10 +21,31 @@ Claude handles day-to-day coding, unit tests, integration tests, build proposals
 
 - Treat Claude-generated files as peer-agent work.
 - Do not delete, revert, overwrite, or "clean up" files created by Claude unless the user explicitly asks.
+- Read `CLAUDE.md`, `Build.md`, `1playground.md`, and this file before phase work, build review, testing, or commits.
+- Check `HANDOFF.md` when present for current alignment decisions or blockers.
 - Before committing, check `git status --short` and stage only files relevant to the requested Codex task.
 - Keep unrelated Claude/user changes out of Codex commits.
 - If a file has unexpected changes, assume they are intentional and work around them.
 - Prefer small, descriptive commits.
+
+---
+
+## Build Review Workflow
+
+- Build proposals live in `Build.md` as `BP-NNN` blocks.
+- Codex fills in the `Codex` row in the proposal review table before Claude builds.
+- Gemini is a third reviewer. Do not proceed if the `Gemini` review row is empty unless the user explicitly overrides that requirement.
+- The approval keyword is `go`. A user message containing `go` approves the reviewed build proposal or test plan for execution.
+- Claude executes approved build proposals unless the user explicitly assigns implementation to Codex.
+- Codex should flag security, MV3 compliance, missing tests, scope creep, and CI/release risks during review.
+
+---
+
+## Branch Policy
+
+- Use branch names in the format `phase-N/<short-description>`, for example `phase-1/scaffold`.
+- Do not merge to `main` without user approval.
+- Do not rebase, force-push, delete branches, or rewrite history without explicit user instruction.
 
 ---
 
@@ -37,6 +60,8 @@ Before each commit:
 3. Stage only the intended paths.
 4. Commit with a concise imperative message.
 5. Report the commit hash and working-tree state.
+
+Always commit `package-lock.json` when dependency changes affect it, so CI and other agents reproduce the same dependency tree.
 
 Do not amend, squash, reset, rebase, force-push, or delete branches without explicit user instruction.
 
@@ -80,4 +105,4 @@ PATH="$PWD/.tools/node/bin:$PATH"
 
 - Root-level dependencies are installed for Codex/tooling support.
 - The extension itself lives in `tf-diff-explainer/`.
-
+- There is currently an alignment question about whether the project should use one root `package.json` or keep separate root and extension package files. Do not reconcile that structure until the user decides.
