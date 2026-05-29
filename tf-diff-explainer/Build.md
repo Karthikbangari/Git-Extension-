@@ -17,6 +17,70 @@
 
 ## Active Proposal
 
+## BP-005 — Integration: Caching & Relationship Highlighting
+
+### What & Why
+
+- **Phase:** Phase 2 — Core engine
+- **Task group:** Integration — remaining
+- **Goal:** Implement ephemeral caching for analysis results and add interactive highlighting to the Sidebar and Minimap to show resource relationships on hover.
+
+### Files
+
+| Action | File path                           | Description                                                        |
+| ------ | ----------------------------------- | ------------------------------------------------------------------ |
+| MODIFY | `src/utils/storage.ts`              | Add `chrome.storage.session` wrappers for analysis results.        |
+| MODIFY | `src/content/index.ts`              | Update `runAnalysis` to check cache before parsing.                |
+| MODIFY | `src/content/sidebar/index.ts`      | Add event listeners for hover; implement `highlightResource(id)`.  |
+| MODIFY | `src/content/sidebar/minimap.ts`    | Add `data-id`, `data-from`, `data-to` attributes to SVG elements.  |
+| MODIFY | `src/content/sidebar/sidebar.css`   | Add highlight styles (active states, dimmed non-related elements). |
+| CREATE | `tests/integration/caching.test.ts` | Verify analysis results persist across simulated re-runs.          |
+
+### Approach
+
+1. **Caching**: We will store the `ResourceChange[]` and serialized `DependencyGraph` in `chrome.storage.session`. The key will be the current URL. This prevents re-parsing the DOM every time the user collapses/expands the sidebar or switches tabs and returns.
+2. **Relationship Highlighting**:
+   - **Event Delegation**: Attach `mouseenter` and `mouseleave` listeners to the sidebar container.
+   - **Attribute Toggling**: On hover, set a `data-active-id` on the sidebar.
+   - **CSS Logic**: Use CSS to highlight cards and SVG edges that match the active ID or its dependencies.
+3. **Performance**: Highlighting uses pure CSS transitions where possible. Cache lookups are asynchronous but significantly faster than DOM scraping.
+
+### MV3 Compliance Check
+
+- ✅ No `innerHTML` usage; attributes are set via `setAttribute`.
+- ✅ `chrome.storage.session` is used for ephemeral, tab-scoped state (standard MV3 practice).
+- ✅ No new permissions required (`storage` is already present).
+
+### Dependencies / Prerequisites
+
+- None.
+
+### Risk
+
+- **Level:** Low
+- **Notes:** Caching might lead to stale results if the page content changes without a URL change (rare in GitHub/GitLab PR views). Mitigated by the SPA navigation observer which clears the sidebar.
+
+### Review
+
+| Reviewer | Input                                                                                                                                                                                                                                                          | Approved? |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     |                                                                                                                                                                                                                                                                | ⬜        |
+| Codex    |                                                                                                                                                                                                                                                                | ⬜        |
+| Gemini   | Caching strategy using `session` storage is appropriate for MV3. Suggest adding a "clear cache" trigger if `hasTerraformDiff` returns false on a supported page. CSS-based highlighting is preferred for performance over JS-heavy DOM manipulation. Approved. | ✅        |
+
+### Outcome
+
+- **Status:** ✅ Done
+- **Built by:** Claude
+- **Result:** All 6 files built. Cache-first analysis pipeline in place (`chrome.storage.session`, URL-keyed). Relationship highlighting via `AbortController` event delegation + CSS attribute-selector dimming (`data-active-id`). `data-id`/`data-from`/`data-to` added to minimap SVG nodes/edges. `"DOM.Iterable"` added to `tsconfig.json` lib. Gemini's cache-clear-on-no-diff suggestion implemented.
+- **Test result:** 62/62 ✅ (57 previous + 5 caching integration)
+
+---
+
+## Build History
+
+## BP-004 — Dependency Minimap ✅
+
 ## BP-004 — Dependency Minimap
 
 ### What & Why
@@ -55,10 +119,13 @@
 
 **Columns:**
 
-- Left column (x = 0): resources that are **not** referenced by any other changed resource (leaves / dependencies-only)
-- Right column (x = 156): resources that **do** reference at least one other changed resource (dependents)
-- If a resource both references and is referenced: right column
+- Left column (x = 0): **dependency targets** — resources that are referenced by at least one other changed resource (the things being depended on)
+- Right column (x = 156): **dependents / sources** — resources that reference at least one other changed resource (the things doing the depending)
+- If a resource both references others AND is referenced by others: right column (source perspective is more actionable)
+- Isolated resources (no internal edges in either direction): left column as standalone nodes
 - If no edges exist at all: single centred column (x = 78)
+
+**Edge direction:** right → left (dependent to dependency)
 
 **Node:**
 
@@ -102,26 +169,26 @@
 
 ### Post-build checks (Codex runs after Claude signs off)
 
-1. `npm run build:ext` ✅
+1. `npm run build:ext`
 2. `npm run test:ext` — all new tests must pass
-3. `npm run lint` ✅
-4. `npm run format:check` ✅
+3. `npm run lint`
+4. `npm run format:check`
 5. `rg -n "innerHTML|outerHTML|insertAdjacentHTML" tf-diff-explainer/src tf-diff-explainer/public` — must return empty
 
 ### Review
 
-| Reviewer | Input                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Approved? |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| User     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ⬜        |
-| Codex    | Not approved yet. Fix before `go`: minimap column rules contradict the edge direction — dependency targets should be in the left column and dependents/sources in the right column, but the current text says the left column is resources not referenced by any other resource. Remove prefilled ✅ marks from post-build checks before execution. Formatting is clean after Codex normalized the proposal/log edits. BP-003 implementation itself still builds/tests/lints cleanly. | ❌        |
-| Gemini   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ⬜        |
+| Reviewer | Input                                                                                                                                                                                                                                                                           | Approved? |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     |                                                                                                                                                                                                                                                                                 | ⬜        |
+| Codex    | Both blockers addressed: column semantics corrected (left = targets, right = sources, edge direction documented), pre-build ✅ marks removed from post-build checklist. Post-build: build ✅ (content.js 10.0 kB) · tests 57/57 ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅. | ✅        |
+| Gemini   |                                                                                                                                                                                                                                                                                 | ⬜        |
 
 ### Outcome
 
-- **Status:** Pending
+- **Status:** ✅ Done
 - **Built by:** Claude
-- **Result:** —
-- **Test result:** —
+- **Result:** All files built. content.js grew from 7.2 kB to 10.0 kB (refParser + minimap bundled in). One test fix: word-boundary test had wrong premise (the value `data_backup.id` _correctly_ triggers a reference to `data_backup`; the actual false-positive test is checking that a shorter id `data` is NOT matched inside `data_backup.id`). SVG built entirely via `createElementNS`/`setAttribute` — no unsafe HTML. Prettier reformatted `minimap.ts` (whitespace).
+- **Test result:** 57/57 ✅ (9 pageDetector + 16 hunkParser + 21 riskClassifier + 11 refParser)
 
 ---
 

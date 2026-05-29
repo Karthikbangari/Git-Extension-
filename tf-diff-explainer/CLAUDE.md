@@ -15,17 +15,17 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                  | Value                                                    |
-| ---------------------- | -------------------------------------------------------- |
-| Last active session    | 2026-05-30                                               |
-| Active phase           | Phase 2 — Core engine                                    |
-| Phase 1 status         | Sealed ✅ (2026-05-30)                                   |
-| Waiting on             | BP-003 (Core Engine: Local Risk Classifier)              |
-| Last build             | BP-002 ✅ (Pre-Phase 2 dependency verification complete) |
-| Next action for Claude | Post Phase 2 build proposal (BP-003)                     |
-| Open bugs              | None — BUG-1/2/3 all fixed                               |
-| Blocked                | No                                                       |
-| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 9/9 ✅            |
+| Field                  | Value                                                  |
+| ---------------------- | ------------------------------------------------------ |
+| Last active session    | 2026-06-02                                             |
+| Active phase           | Phase 2 — Core engine                                  |
+| Phase 1 status         | Sealed ✅ (2026-05-30)                                 |
+| Waiting on             | Codex post-build checklist + commit for BP-005         |
+| Last build             | BP-005 ✅ (Caching & Relationship Highlighting)        |
+| Next action for Claude | Await Codex sign-off; then Phase 2 seal / Phase 3 plan |
+| Open bugs              | None — BUG-1/2/3 all fixed                             |
+| Blocked                | No                                                     |
+| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 62/62 ✅        |
 
 ### What was built and confirmed
 
