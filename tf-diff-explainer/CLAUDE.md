@@ -15,17 +15,17 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                | Value                                                                              |
-| -------------------- | ---------------------------------------------------------------------------------- |
-| Last active session  | 2026-05-30                                                                         |
-| Active phase         | Phase 4 — complete · new project (GitHub Repo File Explainer) in scoping           |
-| Phase 1–4 status     | All sealed ✅                                                                      |
-| Last commit          | `154178c` — docs: CLAUDE.md session handoff                                        |
-| Last build           | build ✅ · tests 129/129 ✅ · format ✅ · lint ✅                                  |
-| Next action (Codex)  | Review/commit BUG-13/17/18 fixes; CWS submission by user                           |
-| Next action (Claude) | Write BP-013 for new GitHub Repo File Explainer Phase 1 scaffold when user says go |
-| Open bugs            | None                                                                               |
-| Blocked              | No                                                                                 |
+| Field                | Value                                                                    |
+| -------------------- | ------------------------------------------------------------------------ |
+| Last active session  | 2026-05-30                                                               |
+| Active phase         | Phase 4 — complete · new project (GitHub Repo File Explainer) in scoping |
+| Phase 1–4 status     | All sealed ✅                                                            |
+| Last commit          | `154178c` — docs: CLAUDE.md session handoff                              |
+| Last build           | build ✅ · tests 129/129 ✅ · format ✅ · lint ✅                        |
+| Next action (Codex)  | Review/commit BUG-13/17/18 fixes; CWS submission by user                 |
+| Next action (Claude) | Draft BP-013 proposal using Codex input in `1playground.md` #45          |
+| Open bugs            | None                                                                     |
+| Blocked              | No                                                                       |
 
 ### What was built and confirmed
 
