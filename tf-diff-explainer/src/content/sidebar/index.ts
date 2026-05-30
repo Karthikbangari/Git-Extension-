@@ -94,13 +94,19 @@ export function injectSidebar(): void {
   title.className = 'tfe-title';
   title.textContent = 'TF Diff Explainer';
 
-  const btn = document.createElement('button');
-  btn.className = 'tfe-toggle';
-  btn.setAttribute('aria-label', 'Collapse sidebar');
-  btn.textContent = '‹';
+  const collapseBtn = document.createElement('button');
+  collapseBtn.className = 'tfe-toggle tfe-collapse-btn';
+  collapseBtn.setAttribute('aria-label', 'Collapse sidebar');
+  collapseBtn.textContent = '‹';
 
+  const expandBtn = document.createElement('button');
+  expandBtn.className = 'tfe-toggle tfe-expand-btn';
+  expandBtn.setAttribute('aria-label', 'Expand sidebar');
+  expandBtn.textContent = '›';
+
+  headerRow.appendChild(collapseBtn);
   headerRow.appendChild(title);
-  headerRow.appendChild(btn);
+  headerRow.appendChild(expandBtn);
 
   const riskSummary = document.createElement('div');
   riskSummary.className = 'tfe-risk-summary';
@@ -124,12 +130,8 @@ export function injectSidebar(): void {
   sidebar.appendChild(body);
   document.body.appendChild(sidebar);
 
-  btn.addEventListener('click', () => {
-    sidebar.classList.toggle('tfe-collapsed');
-    const collapsed = sidebar.classList.contains('tfe-collapsed');
-    btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
-    btn.textContent = collapsed ? '›' : '‹';
-  });
+  collapseBtn.addEventListener('click', () => sidebar.classList.add('tfe-collapsed'));
+  expandBtn.addEventListener('click', () => sidebar.classList.remove('tfe-collapsed'));
 }
 
 const ACTION_LABELS: Record<string, string> = {
@@ -308,7 +310,7 @@ export function updateAISummary(
   } else if (state === 'error') {
     const msg = document.createElement('p');
     msg.className = 'tfe-ai-error';
-    msg.textContent = 'AI summary unavailable.';
+    msg.textContent = 'AI summary failed. Check your API key in the extension popup, then reload.';
     section.appendChild(msg);
   } else {
     const summary = document.createElement('p');

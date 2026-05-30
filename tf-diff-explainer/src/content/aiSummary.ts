@@ -64,7 +64,13 @@ export async function fetchAISummary(changes: ResourceChange[]): Promise<AISumma
     if (!Array.isArray(response.content) || !response.content[0]?.text) {
       throw new Error('Unexpected response format');
     }
-    const parsed = JSON.parse(response.content[0].text);
+    // Models sometimes wrap JSON in markdown code fences — strip them before parsing
+    const rawText: string = response.content[0].text;
+    const jsonText = rawText
+      .replace(/^```(?:json)?\s*\n?/, '')
+      .replace(/\n?```\s*$/, '')
+      .trim();
+    const parsed = JSON.parse(jsonText);
     if (
       typeof parsed.summary !== 'string' ||
       !Array.isArray(parsed.risks) ||

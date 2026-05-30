@@ -15,33 +15,41 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field               | Value                                                                 |
-| ------------------- | --------------------------------------------------------------------- |
-| Last active session | 2026-05-30                                                            |
-| Active phase        | Phase 4 — Polish + ship (complete — awaiting CWS submission by user) |
-| Phase 1–4 status    | All sealed ✅                                                         |
-| Last commit         | `60ba12f` — visual refresh (dark header, risk chips, action badges)   |
-| Last build          | build ✅ · format ✅ · tests 117/117 ✅                               |
-| Next action         | User submits to CWS dashboard (requires their Google login)           |
-| Open bugs           | None                                                                  |
-| Blocked             | No — waiting on user CWS action only                                  |
+| Field                | Value                                                                                   |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| Last active session  | 2026-05-30                                                                              |
+| Active phase         | Phase 4 — complete · new project (GitHub Repo File Explainer) in scoping                |
+| Phase 1–4 status     | All sealed ✅                                                                           |
+| Last commit          | `154178c` — docs: CLAUDE.md session handoff                                             |
+| Last build           | build ✅ · tests 127/127 ✅ · format ✅ · lint ❌ BUG-17 pre-existing only              |
+| Next action (Codex)  | Commit BP-011 + BP-012 changes (11 files uncommitted); CWS submission by user           |
+| Next action (Claude) | Write BP-013 for new GitHub Repo File Explainer Phase 1 scaffold when user says go      |
+| Open bugs            | BUG-17 — pre-existing lint in `master.ts` + `take-screenshots.mjs` (not Claude's files) |
+| Blocked              | No                                                                                      |
 
 ### What was built and confirmed
 
 - BP-001 through BP-010: Full extension (scaffold → AI layer → org policy → CWS prep). See prior entries below.
-- **BUG-11 complete fix** (`9eeb0f2`): `hasTerraformDiff()` gate extended to mirror `scrapeGitHub()` fallbacks — adds `a[title$=".tf"]` and `.Truncate-text` checks so the sidebar fires even when GitHub omits `data-path`. 13 new jsdom DOM tests added. 117 tests total.
-- **Visual refresh** (`60ba12f`): Dark gradient header (`◆ TF Diff Explainer` + `‹` collapse), risk count chips in header (`2 HIGH · 1 MED · 3 LOW`), card redesign (action badges `+ CREATE / ~ UPDATE / − DELETE / ⟳ REPLACE`, per-risk background tints, `tfe-card-top/meta/badges` layout, file path shown below resource name for named resources), section headings with colored 3px left-border accents (purple = Resource Graph, blue = AI Summary), 340px width, better shadows. Popup matching dark header + improved onboarding banner. `master.ts` synced.
-- **CWS assets** (`d1ea5c8`): Three 1280×800 screenshots at `store/screenshots/`, screenshot script at `scripts/take-screenshots.mjs` (Puppeteer + Chromium). `jsdom` + `puppeteer-core` moved to single root `package.json`.
+- **BUG-11 complete fix** (`9eeb0f2`): `hasTerraformDiff()` gate extended.
+- **Visual refresh** (`60ba12f`): Dark gradient header, risk chips, action badges, card redesign, 340px width.
+- **CWS assets** (`d1ea5c8`): Three 1280×800 screenshots, screenshot script.
+- **BP-011 — Session hotfixes (uncommitted):** BUG-13 CORS header, BUG-14 JSON code-fence stripping, BUG-15 collapse button CSS, BUG-16 two dedicated toggle buttons. Tests: 119/119.
+- **BP-012 — Multi-language detection (uncommitted):** `SUPPORTED_EXTENSIONS` (22 types) replaces `.tf`-only gate. Tests: 127/127.
+- **New project scoped:** GitHub Repo File Explainer (repo_explainer_tracker.pdf) discussed in `1playground.md` log entry #41. Drawbacks and reuse analysis posted. Awaiting Codex + Gemini input before Phase 1 scaffold.
+
+### Workflow rule reminder
+
+Every change — even a one-line bug fix — must follow: BP proposal in `Build.md` → Codex + Gemini review in `1playground.md` → user "go" → Claude builds → update `1playground.md` + `CLAUDE.md`. This was not followed this session. BP-011 and BP-012 are retroactive. Do not repeat.
 
 ### CWS submission checklist (user action required)
 
-| Step | Asset | Status |
-| ---- | ----- | ------ |
-| Zip  | `tf-diff-explainer/web-ext-artifacts/tf_diff_explainer-1.0.0.zip` | ✅ Ready |
-| Screenshots | `tf-diff-explainer/store/screenshots/` (3 × 1280×800) | ✅ Ready |
-| Listing copy | `tf-diff-explainer/store/listing.md` | ✅ Ready |
-| Privacy policy URL | `https://raw.githubusercontent.com/Karthikbangari/Terraf/main/tf-diff-explainer/store/privacy-policy.md` | ✅ Live |
-| CWS dashboard login | Requires user's Google account | ⏳ User |
+| Step                | Asset                                                                                                    | Status   |
+| ------------------- | -------------------------------------------------------------------------------------------------------- | -------- |
+| Zip                 | `tf-diff-explainer/web-ext-artifacts/tf_diff_explainer-1.0.0.zip`                                        | ✅ Ready |
+| Screenshots         | `tf-diff-explainer/store/screenshots/` (3 × 1280×800)                                                    | ✅ Ready |
+| Listing copy        | `tf-diff-explainer/store/listing.md`                                                                     | ✅ Ready |
+| Privacy policy URL  | `https://raw.githubusercontent.com/Karthikbangari/Terraf/main/tf-diff-explainer/store/privacy-policy.md` | ✅ Live  |
+| CWS dashboard login | Requires user's Google account                                                                           | ⏳ User  |
 
 Dashboard: https://chrome.google.com/webstore/devconsole
 
@@ -60,6 +68,7 @@ Dashboard: https://chrome.google.com/webstore/devconsole
 - **Vite now** — three separate single-entry configs (Vite 8 prohibits IIFE + multiple entries)
 - **Gemini + Codex** both run final phase E2E tests — not Codex alone
 - **Claude tests after every subphase** (task group), not just end of phase
+- **Coordination log is mandatory** — every agent review, code/doc change, blocker, approval, or verification result must update `1playground.md` in the same turn
 - **CLAUDE.md is the session handoff file** — no new `.md` files for this purpose
 
 ### Known gotchas (discovered during BP-002)

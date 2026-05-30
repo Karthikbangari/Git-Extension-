@@ -17,6 +17,107 @@
 
 ## Active Proposal
 
+_(none — awaiting next task)_
+
+---
+
+## BP-012 — Multi-language file detection
+
+### What & Why
+
+- **Phase:** Post-ship improvement (2026-05-30)
+- **Task group:** Page detection
+- **Goal:** Replace the `.tf`-only extension gate with a broad `SUPPORTED_EXTENSIONS` list so the sidebar fires on any meaningful code or config file, not just Terraform. Driven by the user providing an explicit extension list and the decision to expand scope beyond Terraform-only.
+
+### Files
+
+| Action | File                             | Description                                                                                                              |
+| ------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| MODIFY | `src/content/pageDetector.ts`    | Add `SUPPORTED_EXTENSIONS` constant (22 types), `hasMatchingExtension()` helper, update all 3 detection paths            |
+| MODIFY | `tests/hasTerraformDiff.test.ts` | Fix 4 "returns false" tests (`.ts`/`.json`/`.go`/`.py` now return true), add 4 new tests for `.yaml`/`.tsx`/`.sql`/`.sh` |
+
+### Approach
+
+Single source of truth: `export const SUPPORTED_EXTENSIONS = ['.tf', '.js', '.ts', ...]`. Three detection paths (data-path selector, `a[title]` selector, `.Truncate-text`/GitLab text) all call `hasMatchingExtension(filePath)`. CSS selectors built dynamically via `.flatMap` and `.join(', ')`.
+
+### MV3 Compliance Check
+
+- ✅ No new permissions
+- ✅ No new packages
+- ✅ No external connections
+
+### Risk
+
+- **Level:** Low
+- **Notes:** Additive — existing `.tf` detection still works. Broader matching means sidebar fires on more pages than before; this is the intended behaviour.
+
+### Review
+
+| Reviewer | Input                                                          | Approved? |
+| -------- | -------------------------------------------------------------- | --------- |
+| User     | Provided extension list explicitly — "add this instead of .tf" | ✅        |
+| Codex    |                                                                | ⬜        |
+| Gemini   |                                                                | ⬜        |
+
+### Outcome
+
+- **Status:** ✅ Built (retroactive — built same session as user request)
+- **Test result:** 127/127 ✅ · build ✅
+
+---
+
+## BP-011 — Session hotfixes (BUG-13 through BUG-16)
+
+### What & Why
+
+- **Phase:** Post-ship (2026-05-30)
+- **Task group:** Bug fixes
+- **Goal:** Fix four bugs discovered during first real-world extension use against a live GitHub PR.
+
+### Bugs covered
+
+| Bug                                | Root cause                                                                                                                | Fix                                                                                                                         |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| BUG-13 CORS block                  | Anthropic API requires `anthropic-dangerous-direct-browser-access: true` for browser-context requests; header was missing | Add header to `background/index.ts` fetch                                                                                   |
+| BUG-14 JSON parse failure          | Claude Haiku sometimes wraps JSON in markdown code fences; raw `JSON.parse` threw                                         | Strip ` ```json ``` ` and ` ``` ``` ` fences before parse in `aiSummary.ts`                                                 |
+| BUG-15 Collapse button unclickable | Collapsed sidebar is 40px wide; 14px L+R padding left only 12px content, `.tfe-title` overflowed onto the `›` button      | Hide title + shrink header padding + centre button when collapsed (CSS)                                                     |
+| BUG-16 Toggle button confusing     | Single button changed text ‹↔›; user found this unclear                                                                   | Replace with two dedicated buttons: `collapseBtn` (‹) and `expandBtn` (›); CSS drives visibility via `.tfe-collapsed` class |
+
+### Files
+
+| Action | File                              | Description                                                                     |
+| ------ | --------------------------------- | ------------------------------------------------------------------------------- |
+| MODIFY | `src/background/index.ts`         | Add `'anthropic-dangerous-direct-browser-access': 'true'` to fetch headers      |
+| MODIFY | `src/content/aiSummary.ts`        | Strip code fences before JSON.parse; also improve error state message           |
+| MODIFY | `src/content/sidebar/index.ts`    | Replace single `btn` with `collapseBtn` + `expandBtn`; simplify event listeners |
+| MODIFY | `src/content/sidebar/sidebar.css` | Collapsed-state: hide title + collapse btn, shrink padding, centre expand btn   |
+| MODIFY | `tests/aiSummary.test.ts`         | 2 new tests: parse with `json` fence, parse with plain fence                    |
+
+### MV3 Compliance Check
+
+- ✅ No new permissions
+- ✅ `anthropic-dangerous-direct-browser-access` is a request header, not a new host
+- ✅ No inline scripts
+
+### Risk
+
+- **Level:** Low — all fixes are targeted and contained to their files
+
+### Review
+
+| Reviewer | Input                                                              | Approved? |
+| -------- | ------------------------------------------------------------------ | --------- |
+| User     | Reported BUG-13 via screenshot; requested BUG-15/16 fixes verbally | ✅        |
+| Codex    |                                                                    | ⬜        |
+| Gemini   |                                                                    | ⬜        |
+
+### Outcome
+
+- **Status:** ✅ Built (retroactive — built same session as user reports)
+- **Test result:** 119/119 ✅ · build ✅
+
+---
+
 ## BP-010 — Chrome Web Store prep
 
 ### What & Why

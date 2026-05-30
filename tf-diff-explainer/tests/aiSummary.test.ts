@@ -251,4 +251,32 @@ describe('aiSummary.fetchAISummary', () => {
     const result = await fetchAISummary([makeChange()]);
     expect(result).toBeNull();
   });
+
+  it('parses response wrapped in json code fences', async () => {
+    const payload = {
+      summary: 'Adds EIP association.',
+      risks: ['EIP reassignment'],
+      rollback: ['Remove association'],
+      prDescription: '## Summary\nAdds EIP.',
+    };
+    const fenced = '```json\n' + JSON.stringify(payload) + '\n```';
+    sendMessageMock.mockResolvedValue({ content: [{ text: fenced }] });
+
+    const result = await fetchAISummary([makeChange()]);
+    expect(result).toEqual(payload);
+  });
+
+  it('parses response wrapped in plain code fences', async () => {
+    const payload = {
+      summary: 'Updates variables.',
+      risks: [],
+      rollback: [],
+      prDescription: '## Summary\nUpdates vars.',
+    };
+    const fenced = '```\n' + JSON.stringify(payload) + '\n```';
+    sendMessageMock.mockResolvedValue({ content: [{ text: fenced }] });
+
+    const result = await fetchAISummary([makeChange()]);
+    expect(result).toEqual(payload);
+  });
 });

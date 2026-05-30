@@ -23,6 +23,9 @@ The user has also authorized Codex to write code when asked or when it is the mo
 - Do not delete, revert, overwrite, or "clean up" files created by Claude unless the user explicitly asks.
 - Read `CLAUDE.md`, `Build.md`, `1playground.md`, and this file before phase work, build review, testing, or commits.
 - Check `HANDOFF.md` when present for current alignment decisions or blockers.
+- After every Codex review, test pass, code/doc change, blocker, or approval decision, add or update a `[CODEX]` coordination entry in `1playground.md` in the same turn.
+- If Codex changes the repository workflow, ownership rules, active blockers, or verification status, update this file and the current-focus/bug sections in `1playground.md` before reporting back.
+- Build agents must keep each other current through `1playground.md`; do not leave review conclusions only in chat.
 - Before committing, check `git status --short` and stage only files relevant to the requested Codex task.
 - Keep unrelated Claude/user changes out of Codex commits.
 - If a file has unexpected changes, assume they are intentional and work around them.
@@ -105,4 +108,4 @@ PATH="$PWD/.tools/node/bin:$PATH"
 
 - Root-level dependencies are installed for Codex/tooling support.
 - The extension itself lives in `tf-diff-explainer/`.
-- There is currently an alignment question about whether the project should use one root `package.json` or keep separate root and extension package files. Do not reconcile that structure until the user decides.
+- The project uses a single root `package.json` at `/Terraf/package.json`; there is no inner extension package file.

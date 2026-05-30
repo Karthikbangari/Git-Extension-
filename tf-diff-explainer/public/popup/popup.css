@@ -67,7 +67,9 @@ input[type='password'] {
   font-family: ui-monospace, 'SFMono-Regular', monospace;
   background: #f6f8fa;
   color: #1f2328;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 input[type='password']:focus {

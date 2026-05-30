@@ -7,7 +7,8 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.resolve(__dirname, '../dist');
 const OUT = path.resolve(__dirname, '../store/screenshots');
-const CHROME = '/tmp/tfe-browsers/chromium/mac_arm-1639011/chrome-mac/Chromium.app/Contents/MacOS/Chromium';
+const CHROME =
+  '/tmp/tfe-browsers/chromium/mac_arm-1639011/chrome-mac/Chromium.app/Contents/MacOS/Chromium';
 const PR_URL = 'https://github.com/terraform-aws-modules/terraform-aws-lambda/pull/577/files';
 
 // Fresh profile so no existing Chrome state interferes
@@ -38,12 +39,15 @@ await page.setViewport({ width: 1280, height: 800 });
 
 // Verify extension targets loaded
 const allTargets = await browser.targets();
-const extTargets = allTargets.filter(t => t.url().startsWith('chrome-extension://'));
-console.log('Extension targets:', extTargets.map(t => ({ type: t.type(), url: t.url() })));
+const extTargets = allTargets.filter((t) => t.url().startsWith('chrome-extension://'));
+console.log(
+  'Extension targets:',
+  extTargets.map((t) => ({ type: t.type(), url: t.url() }))
+);
 
 // Capture all console messages from the page (includes extension content script output)
-page.on('console', msg => console.log(`[PAGE ${msg.type()}]`, msg.text()));
-page.on('pageerror', err => console.error('[PAGE ERROR]', err.message));
+page.on('console', (msg) => console.log(`[PAGE ${msg.type()}]`, msg.text()));
+page.on('pageerror', (err) => console.error('[PAGE ERROR]', err.message));
 
 console.log('Navigating to PR…');
 await page.goto(PR_URL, { waitUntil: 'networkidle2', timeout: 30000 });
@@ -51,25 +55,34 @@ console.log('Final URL:', page.url());
 
 // Wait for GitHub diff to render
 await page.waitForSelector('.file', { timeout: 15000 });
-console.log('Diff files found:', await page.$$eval('.file', els => els.length));
+console.log('Diff files found:', await page.$$eval('.file', (els) => els.length));
 
 // Check if extension content script is running
-const sidebarPresent = await page.evaluate(() => !!document.querySelector('#tf-diff-explainer-sidebar'));
+const sidebarPresent = await page.evaluate(
+  () => !!document.querySelector('#tf-diff-explainer-sidebar')
+);
 console.log('Sidebar in DOM:', sidebarPresent);
 
 // Check raw DOM for .tf files
-const tfFiles = await page.$$eval('.file', els =>
-  els.map(el => el.getAttribute('data-path') ||
-    el.querySelector('.file-header a[title]')?.title ||
-    el.querySelector('.file-header .Truncate-text')?.textContent?.trim() || '?'
-  ).filter(p => p.endsWith('.tf'))
+const tfFiles = await page.$$eval('.file', (els) =>
+  els
+    .map(
+      (el) =>
+        el.getAttribute('data-path') ||
+        el.querySelector('.file-header a[title]')?.title ||
+        el.querySelector('.file-header .Truncate-text')?.textContent?.trim() ||
+        '?'
+    )
+    .filter((p) => p.endsWith('.tf'))
 );
 console.log('.tf files detected:', tfFiles);
 
 // Allow content script time to inject sidebar
-await new Promise(r => setTimeout(r, 6000));
+await new Promise((r) => setTimeout(r, 6000));
 
-const sidebarAfter = await page.evaluate(() => !!document.querySelector('#tf-diff-explainer-sidebar'));
+const sidebarAfter = await page.evaluate(
+  () => !!document.querySelector('#tf-diff-explainer-sidebar')
+);
 console.log('Sidebar after wait:', sidebarAfter);
 
 // Screenshot 1 — full sidebar + minimap
@@ -81,7 +94,12 @@ const sidebarRect = await page.evaluate(() => {
   const sidebar = document.getElementById('tf-diff-explainer-sidebar');
   if (!sidebar) return null;
   const r = sidebar.getBoundingClientRect();
-  return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
+  return {
+    x: Math.round(r.x),
+    y: Math.round(r.y),
+    w: Math.round(r.width),
+    h: Math.round(r.height),
+  };
 });
 console.log('Sidebar rect:', sidebarRect);
 if (sidebarRect) {
@@ -103,7 +121,9 @@ console.log('Shot 2 saved');
 // Screenshot 3 — popup
 // Open the extension popup via chrome.action (need extension ID first)
 const targets = await browser.targets();
-const extTarget = targets.find(t => t.type() === 'service_worker' || t.url().startsWith('chrome-extension://'));
+const extTarget = targets.find(
+  (t) => t.type() === 'service_worker' || t.url().startsWith('chrome-extension://')
+);
 let popupUrl = null;
 if (extTarget) {
   const extId = extTarget.url().split('/')[2];
@@ -132,7 +152,7 @@ if (popupUrl) {
         </div>
       </div>`;
   });
-  await new Promise(r => setTimeout(r, 800));
+  await new Promise((r) => setTimeout(r, 800));
   await popupPage.screenshot({ path: `${OUT}/03-popup.png` });
   console.log('Shot 3 saved');
   await popupPage.close();

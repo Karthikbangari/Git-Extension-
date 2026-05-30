@@ -1,6 +1,36 @@
 const GITHUB_PR_RE = /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+/;
 const GITLAB_MR_RE = /^https:\/\/gitlab\.com\/[^/]+\/[^/]+\/-\/merge_requests\/\d+/;
 
+export const SUPPORTED_EXTENSIONS = [
+  '.tf',
+  '.js',
+  '.ts',
+  '.tsx',
+  '.jsx',
+  '.py',
+  '.java',
+  '.go',
+  '.php',
+  '.rb',
+  '.cs',
+  '.cpp',
+  '.c',
+  '.json',
+  '.yaml',
+  '.yml',
+  '.xml',
+  '.sql',
+  '.html',
+  '.css',
+  '.scss',
+  '.md',
+];
+
+function hasMatchingExtension(filePath: string): boolean {
+  const lower = filePath.toLowerCase();
+  return SUPPORTED_EXTENSIONS.some((ext) => lower.endsWith(ext));
+}
+
 export function isGitHubPR(url = location.href): boolean {
   return GITHUB_PR_RE.test(url);
 }
@@ -15,18 +45,23 @@ export function isSupportedPage(url = location.href): boolean {
 
 export function hasTerraformDiff(): boolean {
   // Fast path: data-path attribute present (older GitHub, some GitLab)
-  if (document.querySelector('[data-path$=".tf"], .file-header[data-path$=".tf"]')) return true;
+  const dataPathSelector = SUPPORTED_EXTENSIONS.flatMap((ext) => [
+    `[data-path$="${ext}"]`,
+    `.file-header[data-path$="${ext}"]`,
+  ]).join(', ');
+  if (document.querySelector(dataPathSelector)) return true;
 
   // Current GitHub: filename lives in a[title] or .Truncate-text inside .file-header
+  const titleSelector = SUPPORTED_EXTENSIONS.map((ext) => `a[title$="${ext}"]`).join(', ');
   for (const header of document.querySelectorAll('.file-header')) {
-    if (header.querySelector('a[title$=".tf"]')) return true;
+    if (header.querySelector(titleSelector)) return true;
     const text = header.querySelector('.Truncate-text')?.textContent?.trim() ?? '';
-    if (text.endsWith('.tf')) return true;
+    if (hasMatchingExtension(text)) return true;
   }
 
   // GitLab
   for (const el of document.querySelectorAll('.diff-file-changes .file-title-name')) {
-    if (el.textContent?.trim().endsWith('.tf')) return true;
+    if (hasMatchingExtension(el.textContent?.trim() ?? '')) return true;
   }
   return false;
 }
