@@ -18,16 +18,16 @@ No exceptions.
 | Field                | Value                                                                                       |
 | -------------------- | ------------------------------------------------------------------------------------------- |
 | Last active session  | 2026-05-31                                                                                  |
-| Active phase         | GFE Phase 2 built ✅                                                                        |
-| Last commit          | pending Codex commit — BP-014 changes built but not yet committed                           |
+| Active phase         | GFE Phase 3 — Q&A + GitLab                                                                  |
+| Last commit          | `f86f02f` — BP-014: GFE Core Engine (Phase 2)                                               |
 | Last build           | TFE build ✅ · TFE tests 129/129 ✅ · GFE build ✅ · GFE tests 41/41 ✅                     |
 | Lint / format        | ✅ clean                                                                                    |
-| Next action (Codex)  | commit BP-014 + smoke-test `git-file-explainer/dist/` on a `github.com/*/blob/*` page       |
-| Next action (Gemini) | smoke-test BP-014: sidebar appears on GitHub file page, AI summary renders with API key set |
-| Next action (Claude) | write BP-015 (GFE Phase 3: GitLab extraction + Q&A) after Codex + Gemini sign off on BP-014 |
+| Next action (Codex)  | Review BP-015 proposal alignment                                                            |
+| Next action (Gemini) | Audit BP-015 for MV3/Google Policy compliance                                               |
+| Next action (Claude) | Write BP-015 (GitLab extraction + interactive Q&A)                                          |
 | Next action (user)   | CWS submission for TF Diff Explainer (dashboard link below)                                 |
 | Open bugs            | None                                                                                        |
-| Blocked              | Waiting on Codex commit + Gemini E2E of BP-014                                              |
+| Blocked              | None                                                                                        |
 
 ### What was built this session
 

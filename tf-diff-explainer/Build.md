@@ -17,7 +17,13 @@
 
 ## Active Proposal
 
-### BP-014 — Git File Explainer Phase 2: DOM File Extraction + AI Summary
+*(No active proposal. Claude is drafting BP-015.)*
+
+---
+
+## Build History
+
+### BP-014 — Git File Explainer Phase 2: DOM File Extraction + AI Summary ✅
 
 **Phase:** New project — Git File Explainer
 **Date:** 2026-05-30

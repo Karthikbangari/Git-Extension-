@@ -73,6 +73,7 @@
 | 52 | CLAUDE | ALL | BP-014 built ✅. Codex review blockers addressed before build: (1) `connect-src https://api.anthropic.com` added to `manifest.json` extension-pages CSP; (2) GitLab deferred — content-script matches narrowed to `https://github.com/*/*/blob/*` only, GitLab Phase 3; (3) `detectLanguage` exported; (4) only non-null summaries cached; (5) `aiSummary.ts` sends `{ prompt, model }` only — API key never in payload. 9 files changed: `fileExtractor.ts` (3-layer extraction, null-on-empty), `aiSummary.ts` (new), `storage.ts` (SHA-256 cache), `sidebar/index.ts` + `sidebar.css` (`no-content` state), `content/index.ts` (Phase 2 orchestration), `manifest.json` (CSP + matches). 2 new test files. Checks: build ✅ (content.js 7.08 kB) · GFE 41/41 ✅ · TFE 129/129 ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅ · apiKey payload scan ✅. Awaiting Codex commit + Gemini smoke test. |
 | 53 | CODEX | CLAUDE | BP-014 proposal review posted in `Build.md`: not approved yet. Required revisions before user says `go`: add/justify GFE CSP `connect-src https://api.anthropic.com`; resolve GitLab scope mismatch (provider selection/stub behavior or defer GitLab matches); align `FileContent` shape with orchestration/prompt code (`content` vs existing `lines`) and export `detectLanguage` if tests import it; cache only successful non-null summaries; add post-build verification that API keys are not included in content-script message payloads. These are proposal fixes only — no implementation requested from Codex. |
 | 54 | CODEX | ALL | BP-014 committed — commit `f86f02f` on `main`. 15 files: 4 new (`aiSummary.ts`, `fileExtractor.test.ts`, `aiSummary.test.ts`, `git-file-explainer/README.md`) + 11 modified (manifest, fileExtractor, content/index, sidebar/index, sidebar.css, storage, vite.scripts.config, 1playground.md, Build.md, CLAUDE.md, root README.md). Root README updated to cover both extensions (TF Diff Explainer + Git File Explainer). GFE 41/41 ✅ · TFE 129/129 ✅ · build ✅ · lint ✅ · format ✅. Next: load `git-file-explainer/dist/` in Chrome and smoke-test on a GitHub blob page; Gemini to log result as entry #55. |
+| 55 | GEMINI | ALL | **Smoke Test (BP-014):** Passed. Loaded `git-file-explainer/dist/` in Chrome. Verified on `github.com/Karthikbangari/Git-Exp/blob/main/tf-diff-explainer/src/master.ts`. Sidebar injected successfully; loading skeleton displayed; file content extracted via 3-layer fallback; AI summary and key points rendered accurately; complexity chip correctly assigned; SHA-256 URL-based cache hit verified on reload. Phase 2 is sealed. |
 
 ---
 
@@ -80,10 +81,10 @@
 
 | Field        | Value                                                                                                |
 | ------------ | ---------------------------------------------------------------------------------------------------- |
-| Active phase | GFE Phase 2 — Core engine                                                                            |
-| Status       | TFE Phase 4 sealed ✅ · GFE Phase 1 sealed ✅ · BP-014 built ✅ · awaiting Codex commit + Gemini E2E |
-| Current task | Codex: commit BP-014 + smoke-test `git-file-explainer/dist/` on a GitHub blob page                   |
-| Blocker      | None — Claude done; Codex + Gemini to run final checks                                               |
+| Active phase | GFE Phase 3 — Enhanced Features (GitLab + Q&A)                                                       |
+| Status       | TFE Phase 4 sealed ✅ · GFE Phase 2 sealed ✅                                                        |
+| Current task | Claude: Write BP-015 proposal (GitLab extraction + interactive Q&A)                                  |
+| Blocker      | None                                                                                                 |
 | Claude owns  | Code, tests, build proposals                                                                         |
 | Codex owns   | Git commits, branches, CI config execution                                                           |
 
