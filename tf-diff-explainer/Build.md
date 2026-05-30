@@ -17,7 +17,78 @@
 
 ## Active Proposal
 
-_(none — awaiting next task)_
+### BP-013 — Git File Explainer Phase 1: Scaffold
+
+**Phase:** New project — Git File Explainer  
+**Date:** 2026-05-30  
+**Task group:** Scaffold / foundation
+
+#### What & Why
+
+Create the `git-file-explainer/` extension scaffold inside the same Git-Exp repo alongside `tf-diff-explainer/`. Phase 1 is design-decisions + skeleton only — no AI calls, no file content parsing, no streaming. Establishes product name, route detection, storage namespace, sidebar shell, and test fixtures so Phase 2 can add real file extraction.
+
+#### Files
+
+| Action | File                                                 | Description                                                                   |
+| ------ | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
+| CREATE | `git-file-explainer/public/manifest.json`            | MV3 manifest, version 0.1.0, GitHub + GitLab + Anthropic host permissions     |
+| CREATE | `git-file-explainer/public/popup/popup.html`         | Identical structure to TFE popup, title updated                               |
+| CREATE | `git-file-explainer/public/popup/popup.css`          | Copied from TFE, header copy updated                                          |
+| CREATE | `git-file-explainer/src/content/types.ts`            | `FileContent`, `FileSummaryResult` interfaces                                 |
+| CREATE | `git-file-explainer/src/content/pageDetector.ts`     | `isGitHubFilePage`, `isGitLabFilePage`, `isFilePage`, `watchForNavigation`    |
+| CREATE | `git-file-explainer/src/content/fileExtractor.ts`    | `FileExtractor` interface + `GitHubDomExtractor` (DOM stub for Phase 2)       |
+| CREATE | `git-file-explainer/src/content/index.ts`            | Orchestrator: detect → inject → show skeleton                                 |
+| CREATE | `git-file-explainer/src/content/sidebar/index.ts`    | `injectSidebar`, `updateSidebar`, `removeSidebar` DOM builders                |
+| CREATE | `git-file-explainer/src/content/sidebar/sidebar.css` | Adapted from TFE, `gfe-` prefix, same visual language                         |
+| CREATE | `git-file-explainer/src/background/index.ts`         | Service worker: session access + onInstalled                                  |
+| CREATE | `git-file-explainer/src/popup/popup.ts`              | Identical logic to TFE popup, storage uses `gfe_` prefix                      |
+| CREATE | `git-file-explainer/src/utils/storage.ts`            | `getApiKey`, `isEnabledForHost`, `toggleHost` with `gfe_` cache keys          |
+| CREATE | `git-file-explainer/tsconfig.json`                   | Same settings as TFE                                                          |
+| CREATE | `git-file-explainer/vitest.config.ts`                | Root set to `git-file-explainer/`                                             |
+| CREATE | `git-file-explainer/vite.config.ts`                  | Popup bundle + cpSync                                                         |
+| CREATE | `git-file-explainer/vite.scripts.config.ts`          | Content bundle (IIFE)                                                         |
+| CREATE | `git-file-explainer/vite.background.config.ts`       | Background bundle (IIFE)                                                      |
+| CREATE | `git-file-explainer/scripts/generate-icons.js`       | Copied from TFE (same PNG generator)                                          |
+| CREATE | `git-file-explainer/tests/pageDetector.test.ts`      | 12 tests: GitHub file page ✓/✗, GitLab file page ✓/✗, PR pages ✗, repo root ✗ |
+| MODIFY | `package.json`                                       | Add `build:gfe`, `test:gfe`, `dev:gfe` scripts                                |
+
+#### Design decisions
+
+| Decision             | Choice                                                | Rationale                                                    |
+| -------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
+| Product name         | Git File Explainer                                    | Works for GitHub + GitLab; not Terraform-specific            |
+| Folder               | `git-file-explainer/`                                 | Mirrors `tf-diff-explainer/` layout                          |
+| CSS / storage prefix | `gfe-` / `gfe_`                                       | Avoids collision with `tfe-` / `tfe_`                        |
+| Manifest version     | `0.1.0`                                               | New extension; separate semver from TFE                      |
+| host_permissions     | `github.com/*`, `gitlab.com/*`, `api.anthropic.com/*` | No `raw.githubusercontent.com` in Phase 1                    |
+| Route: GitHub file   | `/github\.com\/[^/]+\/[^/]+\/blob\//`                 | Matches `/{owner}/{repo}/blob/{ref}/{path}`                  |
+| Route: GitLab file   | `/gitlab\.com\/[^/]+\/[^/]+\/-\/blob\//`              | Matches `/{owner}/{repo}/-/blob/{ref}/{path}`                |
+| Provider boundary    | `FileExtractor` interface, `GitHubDomExtractor` stub  | Allows raw fallback in Phase 2 without touching orchestrator |
+
+#### MV3 Compliance Check
+
+- ✅ No `eval`, `new Function`, remote script loading
+- ✅ No new unsafe permissions beyond TFE baseline
+- ✅ No `raw.githubusercontent.com` permission
+- ✅ No inline scripts in HTML
+- ✅ API key storage: `chrome.storage.local` only
+
+#### Risk
+
+- **Level:** Low — scaffold only; no live API calls, no DOM scraping in Phase 1
+
+#### Review
+
+| Reviewer | Input                                                     | Approved? |
+| -------- | --------------------------------------------------------- | --------- |
+| User     | "go" (2026-05-30)                                         | ✅        |
+| Codex    | Approved scaffold scope in log #45; constraints respected | ✅        |
+| Gemini   | Pending                                                   | ⬜        |
+
+#### Outcome
+
+- **Status:** ✅ Built (2026-05-30)
+- **Test result:** GFE 15/15 ✅ · TFE 129/129 ✅ · build ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅
 
 ---
 

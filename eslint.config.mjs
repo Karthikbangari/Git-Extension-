@@ -5,7 +5,11 @@ import tsParser from '@typescript-eslint/parser';
 export default [
   js.configs.recommended,
   {
-    files: ['tf-diff-explainer/scripts/**/*.js', 'tf-diff-explainer/scripts/**/*.mjs'],
+    files: [
+      'tf-diff-explainer/scripts/**/*.js',
+      'tf-diff-explainer/scripts/**/*.mjs',
+      'git-file-explainer/scripts/**/*.js',
+    ],
     languageOptions: {
       globals: {
         require: 'readonly',
@@ -24,7 +28,14 @@ export default [
     },
   },
   {
-    files: ['tf-diff-explainer/src/**/*.ts', 'tf-diff-explainer/tests/**/*.ts'],
+    files: [
+      'tf-diff-explainer/src/**/*.ts',
+      'tf-diff-explainer/tests/**/*.ts',
+      'git-file-explainer/src/**/*.ts',
+      'git-file-explainer/tests/**/*.ts',
+      'git-file-explainer/vite.*.ts',
+      'git-file-explainer/vitest.config.ts',
+    ],
     plugins: { '@typescript-eslint': tsPlugin },
     languageOptions: { parser: tsParser },
     rules: {
@@ -40,6 +51,7 @@ export default [
       '**/dist/**',
       '**/node_modules/**',
       '**/.tools/**',
+      'tf-diff-explainer/web-ext-artifacts/**',
       'tf-diff-explainer/src/master.ts',
     ],
   },

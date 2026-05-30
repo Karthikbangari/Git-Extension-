@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Git File Explainer",
+  "version": "0.1.0",
+  "description": "AI-powered explanations for files viewed on GitHub and GitLab",
+  "homepage_url": "https://github.com/Karthikbangari/Git-Exp",
+  "minimum_chrome_version": "120",
+  "permissions": ["storage", "activeTab", "tabs"],
+  "host_permissions": [
+    "https://github.com/*",
+    "https://gitlab.com/*",
+    "https://api.anthropic.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*/*/blob/*", "https://gitlab.com/*/*/-/blob/*"],
+      "js": ["content.js"],
+      "css": ["sidebar.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'",
+    "sandbox": "sandbox allow-scripts; script-src 'self'"
+  }
+}

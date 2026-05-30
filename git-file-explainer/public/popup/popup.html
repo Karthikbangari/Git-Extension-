@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Git File Explainer</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Git File Explainer</h1>
+    </header>
+
+    <main>
+      <section id="onboarding-banner" style="display: none">
+        <p class="onboarding-title">Set up AI explanations</p>
+        <ol class="onboarding-steps">
+          <li>
+            Get a free API key at
+            <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer"
+              >console.anthropic.com ↗</a
+            >
+          </li>
+          <li>Paste it in the field below and click Save</li>
+        </ol>
+      </section>
+
+      <section class="field">
+        <label for="api-key">Anthropic API Key</label>
+        <div class="input-row">
+          <input
+            type="password"
+            id="api-key"
+            placeholder="sk-ant-..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button id="save-key">Save</button>
+        </div>
+        <p class="hint" id="key-status"></p>
+      </section>
+
+      <section class="field">
+        <label class="toggle-label">
+          <span>Enable on this site</span>
+          <input type="checkbox" id="site-toggle" />
+          <span class="toggle-switch"></span>
+        </label>
+        <p class="hint" id="site-hint"></p>
+      </section>
+    </main>
+
+    <script src="./popup.js"></script>
+  </body>
+</html>
