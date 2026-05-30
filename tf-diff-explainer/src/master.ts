@@ -58,6 +58,36 @@ interface AISummaryResult {
 const GITHUB_PR_RE = /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+/;
 const GITLAB_MR_RE = /^https:\/\/gitlab\.com\/[^/]+\/[^/]+\/-\/merge_requests\/\d+/;
 
+const SUPPORTED_EXTENSIONS = [
+  '.tf',
+  '.js',
+  '.ts',
+  '.tsx',
+  '.jsx',
+  '.py',
+  '.java',
+  '.go',
+  '.php',
+  '.rb',
+  '.cs',
+  '.cpp',
+  '.c',
+  '.json',
+  '.yaml',
+  '.yml',
+  '.xml',
+  '.sql',
+  '.html',
+  '.css',
+  '.scss',
+  '.md',
+];
+
+function isSupportedFilePath(filePath: string): boolean {
+  const lower = filePath.toLowerCase();
+  return SUPPORTED_EXTENSIONS.some((ext) => lower.endsWith(ext));
+}
+
 function isGitHubPR(url = location.href): boolean {
   return GITHUB_PR_RE.test(url);
 }
@@ -72,18 +102,23 @@ function isSupportedPage(url = location.href): boolean {
 
 function hasTerraformDiff(): boolean {
   // Fast path: data-path attribute present (older GitHub, some GitLab)
-  if (document.querySelector('[data-path$=".tf"], .file-header[data-path$=".tf"]')) return true;
+  const dataPathSelector = SUPPORTED_EXTENSIONS.flatMap((ext) => [
+    `[data-path$="${ext}"]`,
+    `.file-header[data-path$="${ext}"]`,
+  ]).join(', ');
+  if (document.querySelector(dataPathSelector)) return true;
 
   // Current GitHub: filename lives in a[title] or .Truncate-text inside .file-header
+  const titleSelector = SUPPORTED_EXTENSIONS.map((ext) => `a[title$="${ext}"]`).join(', ');
   for (const header of document.querySelectorAll('.file-header')) {
-    if (header.querySelector('a[title$=".tf"]')) return true;
+    if (header.querySelector(titleSelector)) return true;
     const text = header.querySelector('.Truncate-text')?.textContent?.trim() ?? '';
-    if (text.endsWith('.tf')) return true;
+    if (isSupportedFilePath(text)) return true;
   }
 
   // GitLab
   for (const el of document.querySelectorAll('.diff-file-changes .file-title-name')) {
-    if (el.textContent?.trim().endsWith('.tf')) return true;
+    if (isSupportedFilePath(el.textContent?.trim() ?? '')) return true;
   }
   return false;
 }
@@ -146,7 +181,7 @@ async function setCachedAnalysis(
       [cacheKey(url)]: { changes, graph: serializeGraph(graph) },
     });
   } catch {
-    // Fail-open: Analysis can still render when the ephemeral cache is unavailable.
+    // Analysis can still render when the ephemeral cache is unavailable.
   }
 }
 
@@ -154,7 +189,7 @@ async function clearCachedAnalysis(url: string): Promise<void> {
   try {
     await chrome.storage.session.remove(cacheKey(url));
   } catch {
-    // Session cache removal is best-effort.
+    // Cache cleanup is best-effort.
   }
 }
 
@@ -162,11 +197,29 @@ async function getApiKey(): Promise<string | null> {
   try {
     const { apiKey: managedKey } = await chrome.storage.managed.get('apiKey');
     if (managedKey) return managedKey as string;
-  } catch (e) {
-    /* Managed storage unavailable or not supported in this environment */
+  } catch {
+    // managed storage unavailable (no enterprise policy deployed)
   }
   const { apiKey } = await chrome.storage.local.get('apiKey');
   return (apiKey as string) || null;
+}
+
+async function isManagedApiKey(): Promise<boolean> {
+  try {
+    const { apiKey } = await chrome.storage.managed.get('apiKey');
+    return !!apiKey;
+  } catch {
+    return false;
+  }
+}
+
+async function isManagedDisabledHosts(): Promise<boolean> {
+  try {
+    const { disabledHosts } = await chrome.storage.managed.get('disabledHosts');
+    return Array.isArray(disabledHosts);
+  } catch {
+    return false;
+  }
 }
 
 async function isEnabledForHost(host: string): Promise<boolean> {
@@ -176,10 +229,17 @@ async function isEnabledForHost(host: string): Promise<boolean> {
       return !(managedDisabled as string[]).includes(host);
     }
   } catch {
-    // Managed policy lookup failed, falling back to local storage.
+    // managed storage unavailable
   }
   const { disabledHosts = [] } = await chrome.storage.local.get('disabledHosts');
   return !(disabledHosts as string[]).includes(host);
+}
+
+async function toggleHost(host: string, enabled: boolean): Promise<void> {
+  const { disabledHosts = [] } = await chrome.storage.local.get('disabledHosts');
+  const current = disabledHosts as string[];
+  const updated = enabled ? current.filter((h) => h !== host) : [...new Set([...current, host])];
+  await chrome.storage.local.set({ disabledHosts: updated });
 }
 
 function aiCacheKey(hash: string): string {
@@ -225,7 +285,7 @@ function scrapeGitHub(): FileRecord[] {
   const allFiles = document.querySelectorAll<HTMLElement>('.file');
   if (allFiles.length === 0) return [];
 
-  const tfContainers: Array<{ container: HTMLElement; filePath: string }> = [];
+  const supportedContainers: Array<{ container: HTMLElement; filePath: string }> = [];
   for (const container of allFiles) {
     // data-path may be on the container, a nested element (older GitHub), or absent entirely
     // (current GitHub). Fall back to the link title and text in .file-header.
@@ -235,12 +295,13 @@ function scrapeGitHub(): FileRecord[] {
       container.querySelector<HTMLElement>('.file-header a[title]')?.getAttribute('title') ??
       container.querySelector<HTMLElement>('.file-header .Truncate-text')?.textContent?.trim() ??
       '';
-    if (filePath.endsWith('.tf')) tfContainers.push({ container, filePath });
+    if (isSupportedFilePath(filePath)) supportedContainers.push({ container, filePath });
   }
-  if (tfContainers.length === 0) return [];
+  if (supportedContainers.length === 0) return [];
 
-  return tfContainers.flatMap(({ container, filePath }) => {
+  return supportedContainers.flatMap(({ container, filePath }) => {
     if (!filePath) return [];
+
     const lines: LineRecord[] = [];
     for (const row of container.querySelectorAll<HTMLElement>('tr')) {
       const inner = row.querySelector<HTMLElement>('.blob-code-inner');
@@ -262,7 +323,7 @@ function scrapeGitLab(): FileRecord[] {
   return Array.from(containers).flatMap((container) => {
     const titleEl = container.querySelector<HTMLElement>('.file-title-name');
     const filePath = titleEl?.textContent?.trim() ?? '';
-    if (!filePath.endsWith('.tf')) return [];
+    if (!isSupportedFilePath(filePath)) return [];
 
     const lines: LineRecord[] = [];
     for (const holder of container.querySelectorAll<HTMLElement>('.line_holder')) {
@@ -289,6 +350,7 @@ function extractAttributes(lines: LineRecord[]): AttributeChange[] {
       else if (BLOCK_CLOSE_RE.test(text) && blockStack.length > 0) blockStack.pop();
       continue;
     }
+
     const open = BLOCK_OPEN_RE.exec(text);
     if (open && !RESOURCE_RE.test(text)) {
       blockStack.push(open[1]);
@@ -301,6 +363,7 @@ function extractAttributes(lines: LineRecord[]): AttributeChange[] {
 
     const m = ATTR_RE.exec(text);
     if (!m) continue;
+
     const prefix = blockStack.length > 0 ? `${blockStack.join('.')}.` : '';
     changes.push({
       attribute: `${prefix}${m[1]}`,
@@ -309,11 +372,13 @@ function extractAttributes(lines: LineRecord[]): AttributeChange[] {
       isSensitive: false,
     });
   }
+
   return changes;
 }
 
 function parseFileRecord(record: FileRecord): ResourceChange[] {
   const { filePath, lines } = record;
+
   interface Slice {
     type: string;
     name: string;
@@ -321,12 +386,14 @@ function parseFileRecord(record: FileRecord): ResourceChange[] {
     start: number;
     end: number;
   }
+
   const slices: Slice[] = [];
   let depth = 0;
   let current: Omit<Slice, 'end'> | null = null;
 
   for (let i = 0; i < lines.length; i++) {
     const { text, kind } = lines[i];
+
     if (current === null) {
       const m = RESOURCE_RE.exec(text);
       if (m) {
@@ -364,6 +431,7 @@ function parseFileRecord(record: FileRecord): ResourceChange[] {
   return slices.map((slice) => {
     const sliceLines = lines.slice(slice.start, slice.end + 1);
     const removedLines = sliceLines.filter((l) => l.kind === 'removed');
+
     let action: ActionType = 'update';
     if (slice.headerKind === 'added' && removedLines.length === 0) {
       action = 'create';
@@ -374,6 +442,7 @@ function parseFileRecord(record: FileRecord): ResourceChange[] {
       );
       action = hasMatchingAdd ? 'replace' : 'delete';
     }
+
     return {
       id: `${slice.type}.${slice.name}`,
       type: slice.type,
@@ -381,19 +450,33 @@ function parseFileRecord(record: FileRecord): ResourceChange[] {
       action,
       filePath,
       changes: extractAttributes(sliceLines),
-      riskProfile: { level: 'low', reasons: [], isDestructive: action === 'delete' },
+      riskProfile: {
+        level: 'low',
+        reasons: [],
+        isDestructive: action === 'delete',
+      },
       domReference: { dataFilePath: filePath },
     };
   });
+}
+
+function extractChanges(records: FileRecord[]): ResourceChange[] {
+  const results: ResourceChange[] = [];
+  for (const record of records) {
+    results.push(...parseFileRecord(record));
+  }
+  return results;
 }
 
 async function parseDiff(): Promise<ResourceChange[]> {
   try {
     const records = isGitHubPR() ? scrapeGitHub() : scrapeGitLab();
     if (records.length === 0) return [];
+
     return new Promise((resolve) => {
       const results: ResourceChange[] = [];
       let idx = 0;
+
       const step: IdleRequestCallback = (deadline) => {
         let processed = 0;
         while (idx < records.length && (processed === 0 || deadline.timeRemaining() > 0)) {
@@ -403,10 +486,11 @@ async function parseDiff(): Promise<ResourceChange[]> {
         if (idx < records.length) requestIdleCallback(step);
         else resolve(results);
       };
+
       requestIdleCallback(step);
     });
   } catch {
-    return []; // Return empty on parse failure to prevent sidebar crash
+    return [];
   }
 }
 
@@ -426,6 +510,7 @@ function lastPart(attr: string): string {
 
 const RULES: Rule[] = [
   {
+    // actions = ["*"] (HCL) or "Action": "*" (JSON in heredoc)
     test: (change) =>
       change.changes.some((c) => {
         if (!c.newValue) return false;
@@ -438,6 +523,7 @@ const RULES: Rule[] = [
     isDestructive: false,
   },
   {
+    // identifiers = ["*"] or principal = "*"
     test: (change) =>
       change.changes.some((c) => {
         if (!c.newValue) return false;
@@ -499,6 +585,7 @@ function classifyRisks(changes: ResourceChange[]): ResourceChange[] {
     let level: RiskLevel = 'low';
     const reasons: string[] = [];
     let isDestructive = change.riskProfile.isDestructive;
+
     for (const rule of RULES) {
       const reason = rule.test(change);
       if (reason !== null) {
@@ -507,6 +594,7 @@ function classifyRisks(changes: ResourceChange[]): ResourceChange[] {
         if (rule.isDestructive) isDestructive = true;
       }
     }
+
     return { ...change, riskProfile: { level, reasons, isDestructive } };
   });
 }
@@ -519,21 +607,28 @@ function buildDependencyGraph(changes: ResourceChange[]): DependencyGraph {
   const graph: DependencyGraph = new Map();
   if (changes.length === 0) return graph;
 
+  // Pre-compile one regex per id: match the id at a word boundary so that
+  // "aws_s3_bucket.data" does not match "aws_s3_bucket.data_backup"
   const idPatterns = new Map<string, RegExp>(
     changes.map((c) => [c.id, new RegExp(c.id.replace(/\./g, '\\.') + '\\b')])
   );
 
   for (const change of changes) {
     const deps = new Set<string>();
+
     for (const attr of change.changes) {
       if (!attr.newValue) continue;
       for (const [otherId, pattern] of idPatterns) {
         if (otherId === change.id) continue;
-        if (pattern.test(attr.newValue)) deps.add(otherId);
+        if (pattern.test(attr.newValue)) {
+          deps.add(otherId);
+        }
       }
     }
+
     graph.set(change.id, deps);
   }
+
   return graph;
 }
 
@@ -542,7 +637,7 @@ function buildDependencyGraph(changes: ResourceChange[]): DependencyGraph {
 // =============================================================================
 
 async function generateDiffHash(changes: ResourceChange[]): Promise<string> {
-  const CACHE_VERSION = 'v2';
+  const CACHE_VERSION = 'v2'; // increment to bust all cached AI summaries
   const simplified = changes.map((c) => ({
     id: c.id,
     action: c.action,
@@ -550,6 +645,7 @@ async function generateDiffHash(changes: ResourceChange[]): Promise<string> {
       a.isSensitive ? `${a.attribute}:<sensitive>` : `${a.attribute}:${a.newValue ?? ''}`
     ),
   }));
+
   const msgBuffer = new TextEncoder().encode(JSON.stringify(simplified) + CACHE_VERSION);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
   return Array.from(new Uint8Array(hashBuffer))
@@ -571,7 +667,7 @@ function buildPrompt(changes: ResourceChange[]): string {
     })
     .join('\n');
 
-  return `You are a Terraform diff reviewer. Analyze these resource changes and respond with valid JSON only.
+  return `You are a code and Terraform diff reviewer. Analyze these file and resource changes and respond with valid JSON only.
 
 Changes:
 ${changeList}
@@ -590,15 +686,25 @@ Rules:
 async function fetchAISummary(changes: ResourceChange[]): Promise<AISummaryResult | null> {
   try {
     const prompt = buildPrompt(changes);
-    // Routed through background service worker — content scripts can be blocked by the host page CSP
+
+    // Routed through background service worker — content scripts run in the host page's
+    // security context and can be blocked by the page's own CSP headers.
     const response = await chrome.runtime.sendMessage({
       type: 'FETCH_AI_SUMMARY',
       payload: { prompt, model: 'claude-haiku-4-5-20251001' },
     });
+
     if (!response || response.error) throw new Error(response?.error || 'Empty response');
-    if (!Array.isArray(response.content) || !response.content[0]?.text)
+    if (!Array.isArray(response.content) || !response.content[0]?.text) {
       throw new Error('Unexpected response format');
-    const parsed = JSON.parse(response.content[0].text);
+    }
+    // Models sometimes wrap JSON in markdown code fences — strip them before parsing
+    const rawText: string = response.content[0].text;
+    const jsonText = rawText
+      .replace(/^```(?:json)?\s*\n?/, '')
+      .replace(/\n?```\s*$/, '')
+      .trim();
+    const parsed = JSON.parse(jsonText);
     if (
       typeof parsed.summary !== 'string' ||
       !Array.isArray(parsed.risks) ||
@@ -619,14 +725,14 @@ async function fetchAISummary(changes: ResourceChange[]): Promise<AISummaryResul
 // =============================================================================
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const NODE_W = 120,
-  NODE_H = 24,
-  ROW_H = 32;
-const COL_X_LEFT = 0,
-  COL_X_RIGHT = 160,
-  CANVAS_W = 280,
-  PADDING = 8,
-  ARROW_SIZE = 5;
+const NODE_W = 120;
+const NODE_H = 24;
+const ROW_H = 32;
+const COL_X_LEFT = 0;
+const COL_X_RIGHT = 160; // 280 canvas - 120 node width
+const CANVAS_W = 280;
+const PADDING = 8;
+const ARROW_SIZE = 5;
 
 const RISK_CLASS: Record<RiskLevel | 'unknown', string> = {
   high: 'tfe-node-high',
@@ -638,6 +744,7 @@ const RISK_CLASS: Record<RiskLevel | 'unknown', string> = {
 function svgCreate(tag: string): Element {
   return document.createElementNS(SVG_NS, tag);
 }
+
 function truncate(s: string, max: number): string {
   return s.length > max ? s.slice(0, max - 1) + '…' : s;
 }
@@ -652,6 +759,9 @@ function renderMinimap(changes: ResourceChange[], graph: DependencyGraph): SVGSV
     return svg as SVGSVGElement;
   }
 
+  // Classify into columns:
+  // right = dependents (resources that reference at least one other changed resource)
+  // left  = dependency targets + isolated resources
   const rightIds = new Set<string>();
   for (const [id, deps] of graph) {
     if (deps.size > 0) rightIds.add(id);
@@ -662,29 +772,44 @@ function renderMinimap(changes: ResourceChange[], graph: DependencyGraph): SVGSV
   const hasEdges = rightNodes.length > 0 && leftNodes.length > 0;
 
   const positions = new Map<string, { x: number; y: number }>();
+
   if (!hasEdges) {
     const cx = Math.round((CANVAS_W - NODE_W) / 2);
-    changes.forEach((c, i) => positions.set(c.id, { x: cx, y: PADDING + i * ROW_H }));
+    changes.forEach((c, i) => {
+      positions.set(c.id, { x: cx, y: PADDING + i * ROW_H });
+    });
   } else {
-    leftNodes.forEach((c, i) => positions.set(c.id, { x: COL_X_LEFT, y: PADDING + i * ROW_H }));
-    rightNodes.forEach((c, i) => positions.set(c.id, { x: COL_X_RIGHT, y: PADDING + i * ROW_H }));
+    leftNodes.forEach((c, i) => {
+      positions.set(c.id, { x: COL_X_LEFT, y: PADDING + i * ROW_H });
+    });
+    rightNodes.forEach((c, i) => {
+      positions.set(c.id, { x: COL_X_RIGHT, y: PADDING + i * ROW_H });
+    });
   }
 
   const rowCount = hasEdges ? Math.max(leftNodes.length, rightNodes.length) : changes.length;
-  svg.setAttribute('height', String(PADDING + rowCount * ROW_H - (ROW_H - NODE_H) + PADDING));
+  const svgH = PADDING + rowCount * ROW_H - (ROW_H - NODE_H) + PADDING;
+  svg.setAttribute('height', String(svgH));
 
+  // Edges (drawn behind nodes)
   if (hasEdges) {
     for (const [srcId, deps] of graph) {
       if (deps.size === 0) continue;
       const srcPos = positions.get(srcId);
       if (!srcPos) continue;
+
       for (const depId of deps) {
         const depPos = positions.get(depId);
-        if (!depPos || srcPos.x === depPos.x) continue;
-        const x1 = srcPos.x,
-          y1 = srcPos.y + NODE_H / 2;
-        const x2 = depPos.x + NODE_W,
-          y2 = depPos.y + NODE_H / 2;
+        if (!depPos) continue;
+
+        // Only draw cross-column edges (right source → left target)
+        if (srcPos.x === depPos.x) continue;
+
+        const x1 = srcPos.x; // left edge of right-column source
+        const y1 = srcPos.y + NODE_H / 2;
+        const x2 = depPos.x + NODE_W; // right edge of left-column target
+        const y2 = depPos.y + NODE_H / 2;
+
         const line = svgCreate('line');
         line.setAttribute('class', 'tfe-edge');
         line.setAttribute('data-from', srcId);
@@ -694,50 +819,65 @@ function renderMinimap(changes: ResourceChange[], graph: DependencyGraph): SVGSV
         line.setAttribute('x2', String(x2));
         line.setAttribute('y2', String(y2));
         svg.appendChild(line);
+
+        // Arrowhead pointing left at (x2, y2)
+        const ax = x2;
+        const ay = y2;
+        const ah = ARROW_SIZE;
         const arrow = svgCreate('polygon');
         arrow.setAttribute('class', 'tfe-edge-arrow');
         arrow.setAttribute('data-from', srcId);
         arrow.setAttribute('data-to', depId);
         arrow.setAttribute(
           'points',
-          `${x2},${y2} ${x2 + ARROW_SIZE},${y2 - ARROW_SIZE / 2} ${x2 + ARROW_SIZE},${y2 + ARROW_SIZE / 2}`
+          `${ax},${ay} ${ax + ah},${ay - ah / 2} ${ax + ah},${ay + ah / 2}`
         );
         svg.appendChild(arrow);
       }
     }
   }
 
+  // Nodes
   for (const change of changes) {
     const pos = positions.get(change.id);
     if (!pos) continue;
+
     const level = change.riskProfile.level in RISK_CLASS ? change.riskProfile.level : 'unknown';
+    const riskClass = RISK_CLASS[level as RiskLevel];
+
     const g = svgCreate('g');
     g.setAttribute('data-id', change.id);
+
     const title = svgCreate('title');
     title.textContent = change.id;
     g.appendChild(title);
+
     const rect = svgCreate('rect');
-    rect.setAttribute('class', `tfe-node-rect ${RISK_CLASS[level as RiskLevel]}`);
+    rect.setAttribute('class', `tfe-node-rect ${riskClass}`);
     rect.setAttribute('x', String(pos.x));
     rect.setAttribute('y', String(pos.y));
     rect.setAttribute('width', String(NODE_W));
     rect.setAttribute('height', String(NODE_H));
     rect.setAttribute('rx', '4');
     g.appendChild(rect);
+
     const label = svgCreate('text');
     label.setAttribute('class', 'tfe-node-label');
     label.setAttribute('x', String(pos.x + 6));
     label.setAttribute('y', String(pos.y + 14));
     label.textContent = truncate(change.name, 15);
     g.appendChild(label);
+
     const sub = svgCreate('text');
     sub.setAttribute('class', 'tfe-node-sublabel');
     sub.setAttribute('x', String(pos.x + 6));
     sub.setAttribute('y', String(pos.y + 22));
     sub.textContent = truncate(change.type, 20);
     g.appendChild(sub);
+
     svg.appendChild(g);
   }
+
   return svg as SVGSVGElement;
 }
 
@@ -746,6 +886,7 @@ function renderMinimap(changes: ResourceChange[], graph: DependencyGraph): SVGSV
 // =============================================================================
 
 const SIDEBAR_ID = 'tf-diff-explainer-sidebar';
+
 let highlightController: AbortController | null = null;
 
 function getRelated(activeId: string, graph: DependencyGraph): Set<string> {
@@ -778,21 +919,25 @@ function applyHighlight(sidebar: HTMLElement, activeId: string, graph: Dependenc
   clearHighlight(sidebar);
   sidebar.dataset.activeId = activeId;
   const related = getRelated(activeId, graph);
+
   for (const card of sidebar.querySelectorAll<HTMLElement>('.tfe-card[data-resource-id]')) {
     const id = card.dataset.resourceId!;
     if (id === activeId) card.classList.add('tfe-active');
     else if (related.has(id)) card.classList.add('tfe-related');
   }
+
   for (const g of sidebar.querySelectorAll<Element>('g[data-id]')) {
     const id = g.getAttribute('data-id')!;
     if (id === activeId) g.classList.add('tfe-node-active');
     else if (related.has(id)) g.classList.add('tfe-node-related');
   }
+
   for (const edge of sidebar.querySelectorAll<Element>('line[data-from], polygon[data-from]')) {
     const from = edge.getAttribute('data-from')!;
     const to = edge.getAttribute('data-to')!;
     if (from === activeId || to === activeId) {
-      edge.classList.add(edge.tagName === 'line' ? 'tfe-edge-active' : 'tfe-arrow-active');
+      const cls = edge.tagName === 'line' ? 'tfe-edge-active' : 'tfe-arrow-active';
+      edge.classList.add(cls);
     }
   }
 }
@@ -801,6 +946,7 @@ function setupHighlighting(sidebar: HTMLElement, body: HTMLElement, graph: Depen
   highlightController?.abort();
   highlightController = new AbortController();
   const { signal } = highlightController;
+
   body.addEventListener(
     'mouseover',
     (e) => {
@@ -812,7 +958,64 @@ function setupHighlighting(sidebar: HTMLElement, body: HTMLElement, graph: Depen
     },
     { signal }
   );
+
   sidebar.addEventListener('mouseleave', () => clearHighlight(sidebar), { signal });
+}
+
+function injectSidebar(): void {
+  if (document.getElementById(SIDEBAR_ID)) return;
+
+  const sidebar = document.createElement('div');
+  sidebar.id = SIDEBAR_ID;
+
+  const header = document.createElement('div');
+  header.className = 'tfe-header';
+
+  const headerRow = document.createElement('div');
+  headerRow.className = 'tfe-header-row';
+
+  const title = document.createElement('span');
+  title.className = 'tfe-title';
+  title.textContent = 'TF Diff Explainer';
+
+  const collapseBtn = document.createElement('button');
+  collapseBtn.className = 'tfe-toggle tfe-collapse-btn';
+  collapseBtn.setAttribute('aria-label', 'Collapse sidebar');
+  collapseBtn.textContent = '‹';
+
+  const expandBtn = document.createElement('button');
+  expandBtn.className = 'tfe-toggle tfe-expand-btn';
+  expandBtn.setAttribute('aria-label', 'Expand sidebar');
+  expandBtn.textContent = '›';
+
+  headerRow.appendChild(collapseBtn);
+  headerRow.appendChild(title);
+  headerRow.appendChild(expandBtn);
+
+  const riskSummary = document.createElement('div');
+  riskSummary.className = 'tfe-risk-summary';
+
+  header.appendChild(headerRow);
+  header.appendChild(riskSummary);
+
+  const body = document.createElement('div');
+  body.className = 'tfe-body';
+
+  const skeleton = document.createElement('div');
+  skeleton.className = 'tfe-skeleton';
+  for (const short of [false, true, false, true]) {
+    const line = document.createElement('div');
+    line.className = short ? 'tfe-skeleton-line short' : 'tfe-skeleton-line';
+    skeleton.appendChild(line);
+  }
+
+  body.appendChild(skeleton);
+  sidebar.appendChild(header);
+  sidebar.appendChild(body);
+  document.body.appendChild(sidebar);
+
+  collapseBtn.addEventListener('click', () => sidebar.classList.add('tfe-collapsed'));
+  expandBtn.addEventListener('click', () => sidebar.classList.remove('tfe-collapsed'));
 }
 
 const ACTION_LABELS: Record<string, string> = {
@@ -822,53 +1025,14 @@ const ACTION_LABELS: Record<string, string> = {
   replace: '⟳ REPLACE',
 };
 
-function injectSidebar(): void {
-  if (document.getElementById(SIDEBAR_ID)) return;
-  const sidebar = document.createElement('div');
-  sidebar.id = SIDEBAR_ID;
-  const header = document.createElement('div');
-  header.className = 'tfe-header';
-  const headerRow = document.createElement('div');
-  headerRow.className = 'tfe-header-row';
-  const title = document.createElement('span');
-  title.className = 'tfe-title';
-  title.textContent = 'TF Diff Explainer';
-  const btn = document.createElement('button');
-  btn.className = 'tfe-toggle';
-  btn.setAttribute('aria-label', 'Collapse sidebar');
-  btn.textContent = '‹';
-  headerRow.appendChild(title);
-  headerRow.appendChild(btn);
-  const riskSummary = document.createElement('div');
-  riskSummary.className = 'tfe-risk-summary';
-  header.appendChild(headerRow);
-  header.appendChild(riskSummary);
-  const body = document.createElement('div');
-  body.className = 'tfe-body';
-  const skeleton = document.createElement('div');
-  skeleton.className = 'tfe-skeleton';
-  for (const short of [false, true, false, true]) {
-    const line = document.createElement('div');
-    line.className = short ? 'tfe-skeleton-line short' : 'tfe-skeleton-line';
-    skeleton.appendChild(line);
-  }
-  body.appendChild(skeleton);
-  sidebar.appendChild(header);
-  sidebar.appendChild(body);
-  document.body.appendChild(sidebar);
-  btn.addEventListener('click', () => {
-    sidebar.classList.toggle('tfe-collapsed');
-    const collapsed = sidebar.classList.contains('tfe-collapsed');
-    btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
-    btn.textContent = collapsed ? '›' : '‹';
-  });
-}
-
 function updateSidebar(results: ResourceChange[]): void {
   const sidebar = document.getElementById(SIDEBAR_ID);
   if (!sidebar) return;
+
   const body = sidebar.querySelector<HTMLElement>('.tfe-body');
   if (!body) return;
+
+  // Update risk summary chips in header
   const riskSummary = sidebar.querySelector<HTMLElement>('.tfe-risk-summary');
   if (riskSummary) {
     riskSummary.textContent = '';
@@ -893,38 +1057,49 @@ function updateSidebar(results: ResourceChange[]): void {
       }
     }
   }
+
   body.textContent = '';
+
   if (results.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'tfe-empty';
-    empty.textContent = 'No Terraform changes detected.';
+    empty.textContent = 'No supported changes detected.';
     body.appendChild(empty);
     return;
   }
+
   for (const change of results) {
     const card = document.createElement('div');
     card.className = `tfe-card tfe-risk-${change.riskProfile.level}`;
     card.dataset.resourceId = change.id;
+
     const top = document.createElement('div');
     top.className = 'tfe-card-top';
+
     const meta = document.createElement('div');
     meta.className = 'tfe-card-meta';
+
     const cardTitle = document.createElement('span');
     cardTitle.className = 'tfe-card-title';
     cardTitle.textContent = change.id;
     meta.appendChild(cardTitle);
+
+    // Show file path only when the card represents a named resource (not a file-level fallback)
     if (change.type !== 'unknown' && change.filePath !== change.id) {
       const filePath = document.createElement('span');
       filePath.className = 'tfe-card-file';
       filePath.textContent = change.filePath;
       meta.appendChild(filePath);
     }
+
     const badges = document.createElement('div');
     badges.className = 'tfe-card-badges';
+
     const riskBadge = document.createElement('span');
     riskBadge.className = `tfe-card-badge tfe-risk-${change.riskProfile.level}`;
     riskBadge.textContent = change.riskProfile.level.toUpperCase();
     badges.appendChild(riskBadge);
+
     const actionLabel = ACTION_LABELS[change.action];
     if (actionLabel) {
       const actionBadge = document.createElement('span');
@@ -932,9 +1107,11 @@ function updateSidebar(results: ResourceChange[]): void {
       actionBadge.textContent = actionLabel;
       badges.appendChild(actionBadge);
     }
+
     top.appendChild(meta);
     top.appendChild(badges);
     card.appendChild(top);
+
     if (change.riskProfile.reasons.length > 0) {
       const reasonList = document.createElement('ul');
       reasonList.className = 'tfe-card-reasons';
@@ -946,6 +1123,7 @@ function updateSidebar(results: ResourceChange[]): void {
       }
       card.appendChild(reasonList);
     }
+
     body.appendChild(card);
   }
 }
@@ -953,18 +1131,27 @@ function updateSidebar(results: ResourceChange[]): void {
 function updateMinimap(changes: ResourceChange[], graph: DependencyGraph): void {
   const sidebar = document.getElementById(SIDEBAR_ID);
   if (!sidebar) return;
+
   const body = sidebar.querySelector<HTMLElement>('.tfe-body');
   if (!body) return;
+
   body.querySelector('.tfe-minimap-section')?.remove();
+
   if (changes.length === 0) return;
+
   const section = document.createElement('div');
   section.className = 'tfe-minimap-section';
+
   const heading = document.createElement('p');
   heading.className = 'tfe-minimap-heading';
   heading.textContent = 'Resource Graph';
   section.appendChild(heading);
+
   const svgNode = renderMinimap(changes, graph);
-  if (Number(svgNode.getAttribute('height')) > 0) section.appendChild(svgNode);
+  if (Number(svgNode.getAttribute('height')) > 0) {
+    section.appendChild(svgNode);
+  }
+
   body.appendChild(section);
   setupHighlighting(sidebar, body, graph);
 }
@@ -976,16 +1163,22 @@ function removeSidebar(): void {
 function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 'error'): void {
   const sidebar = document.getElementById(SIDEBAR_ID);
   if (!sidebar) return;
+
   const body = sidebar.querySelector<HTMLElement>('.tfe-body');
   if (!body) return;
+
   body.querySelector('.tfe-ai-section')?.remove();
+
   if (state === null) return;
+
   const section = document.createElement('div');
   section.className = 'tfe-ai-section';
+
   const heading = document.createElement('p');
   heading.className = 'tfe-ai-heading';
   heading.textContent = 'AI Summary';
   section.appendChild(heading);
+
   if (state === 'loading') {
     const skeleton = document.createElement('div');
     skeleton.className = 'tfe-skeleton';
@@ -1003,18 +1196,20 @@ function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 
   } else if (state === 'error') {
     const msg = document.createElement('p');
     msg.className = 'tfe-ai-error';
-    msg.textContent = 'AI summary unavailable.';
+    msg.textContent = 'AI summary failed. Check your API key in the extension popup, then reload.';
     section.appendChild(msg);
   } else {
     const summary = document.createElement('p');
     summary.className = 'tfe-ai-summary';
     summary.textContent = state.summary;
     section.appendChild(summary);
+
     if (state.risks.length > 0) {
       const riskHeading = document.createElement('p');
       riskHeading.className = 'tfe-ai-subheading';
       riskHeading.textContent = 'Risks';
       section.appendChild(riskHeading);
+
       const riskList = document.createElement('ul');
       riskList.className = 'tfe-ai-list';
       for (const risk of state.risks) {
@@ -1024,11 +1219,13 @@ function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 
       }
       section.appendChild(riskList);
     }
+
     if (state.rollback.length > 0) {
       const rollbackHeading = document.createElement('p');
       rollbackHeading.className = 'tfe-ai-subheading';
       rollbackHeading.textContent = 'Rollback Checklist';
       section.appendChild(rollbackHeading);
+
       const rollbackList = document.createElement('ol');
       rollbackList.className = 'tfe-ai-rollback';
       rollbackList.setAttribute('aria-label', 'Rollback checklist');
@@ -1047,11 +1244,13 @@ function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 
       }
       section.appendChild(rollbackList);
     }
+
     if (state.prDescription) {
       const prHeading = document.createElement('p');
       prHeading.className = 'tfe-ai-subheading';
       prHeading.textContent = 'PR Description';
       section.appendChild(prHeading);
+
       const prHeader = document.createElement('div');
       prHeader.className = 'tfe-ai-pr-header';
       const copyBtn = document.createElement('button');
@@ -1072,12 +1271,14 @@ function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 
       });
       prHeader.appendChild(copyBtn);
       section.appendChild(prHeader);
+
       const prPre = document.createElement('pre');
       prPre.className = 'tfe-ai-pr-desc';
       prPre.textContent = state.prDescription;
       section.appendChild(prPre);
     }
   }
+
   body.appendChild(section);
 }
 
@@ -1114,6 +1315,7 @@ function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 
     updateSidebar(changes);
     updateMinimap(changes, graph);
 
+    // BUG-9: skip AI call when there are no parsed resource changes
     if (changes.length === 0) return;
 
     const apiKey = await getApiKey();
@@ -1148,6 +1350,7 @@ function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 
 
   try {
     if (!isSupportedPage()) return;
+
     const enabled = await isEnabledForHost(host);
     if (!enabled) return;
 
@@ -1159,20 +1362,27 @@ function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 
     watchForNavigation(async (newUrl: string) => {
       removeSidebar();
       if (navObserver) navObserver.disconnect();
+
       if (!isSupportedPage(newUrl)) return;
+
       const stillEnabled = await isEnabledForHost(host);
       if (!stillEnabled) return;
+
+      // Use MutationObserver to wait for the diff container to populate/stabilize
       navObserver = new MutationObserver((_, obs) => {
         if (hasTerraformDiff()) {
           obs.disconnect();
           runAnalysis();
         }
       });
+
       navObserver.observe(document.body, { childList: true, subtree: true });
+
+      // Safety cleanup to prevent stale observers on pages without supported changes
       setTimeout(() => navObserver?.disconnect(), 5000);
     });
   } catch {
-    /* Error boundary: suppress failures to ensure host page functionality is never impacted */
+    // Swallow silently — errors must not surface to the host PR page
   }
 })();
 
@@ -1180,15 +1390,19 @@ function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 
 // SECTION 11: BACKGROUND SERVICE WORKER  (src/background/index.ts)
 // =============================================================================
 
-// NOTE: In the real build this is a separate bundle. Chrome MV3 requires the
-// service worker to be its own file. This section is here for reading only.
-
-/*
-void chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' }).catch(() => {});
+void chrome.storage.session
+  .setAccessLevel({
+    accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS',
+  })
+  .catch(() => {});
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === 'install') {
-    chrome.storage.local.set({ enabled: true, disabledHosts: [], apiKey: null });
+    chrome.storage.local.set({
+      enabled: true,
+      disabledHosts: [],
+      apiKey: null,
+    });
     chrome.action.setBadgeText({ text: '!' });
     chrome.action.setBadgeBackgroundColor({ color: '#0969da' });
   }
@@ -1196,32 +1410,54 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type !== 'FETCH_AI_SUMMARY') return false;
-  const { prompt, model } = message.payload as { prompt: string; model: string };
+
+  const { prompt, model } = message.payload as {
+    prompt: string;
+    model: string;
+  };
+
   void (async () => {
     try {
       const apiKey = await getApiKey();
-      if (!apiKey) { sendResponse({ error: 'Missing API key' }); return; }
+      if (!apiKey) {
+        sendResponse({ error: 'Missing API key' });
+        return;
+      }
+
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({ model, max_tokens: 768, messages: [{ role: 'user', content: prompt }] }),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 768,
+          messages: [{ role: 'user', content: prompt }],
+        }),
       });
-      if (!res.ok) { const body = await res.json().catch(() => null); sendResponse({ error: body?.error?.message ?? `HTTP ${res.status}` }); return; }
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        sendResponse({ error: body?.error?.message ?? `HTTP ${res.status}` });
+        return;
+      }
+
       sendResponse(await res.json());
-    } catch (err) { sendResponse({ error: err instanceof Error ? err.message : 'Unknown error' }); }
+    } catch (err) {
+      sendResponse({ error: err instanceof Error ? err.message : 'Unknown error' });
+    }
   })();
-  return true;
+
+  return true; // keep message channel open for async sendResponse
 });
-*/
 
 // =============================================================================
 // SECTION 12: POPUP  (src/popup/popup.ts)
 // =============================================================================
 
-// NOTE: In the real build this runs in the popup page context, not the content
-// script. This section is here for reading only.
-
-/*
 const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
 
 async function getCurrentHost(): Promise<string | null> {
@@ -1237,10 +1473,15 @@ async function initPopup(): Promise<void> {
   const banner = document.getElementById('onboarding-banner') as HTMLElement;
 
   if (managed) {
-    keyInput.value = apiKey ?? ''; keyInput.disabled = true; saveBtn.disabled = true;
-    keyStatus.textContent = 'This setting is managed by your organization.'; keyStatus.className = 'hint';
+    keyInput.value = apiKey ?? '';
+    keyInput.disabled = true;
+    saveBtn.disabled = true;
+    keyStatus.textContent = 'This setting is managed by your organization.';
+    keyStatus.className = 'hint';
   } else if (apiKey) {
-    keyInput.value = apiKey; keyStatus.textContent = 'Key saved.'; keyStatus.className = 'hint success';
+    keyInput.value = apiKey;
+    keyStatus.textContent = 'Key saved.';
+    keyStatus.className = 'hint success';
   } else {
     banner.style.display = 'block';
   }
@@ -1248,30 +1489,49 @@ async function initPopup(): Promise<void> {
   if (!managed) {
     saveBtn.addEventListener('click', async () => {
       const val = keyInput.value.trim();
-      if (!ANTHROPIC_KEY_RE.test(val)) { keyStatus.textContent = 'Invalid key format. Must start with sk-ant-'; keyStatus.className = 'hint error'; return; }
+      if (!ANTHROPIC_KEY_RE.test(val)) {
+        keyStatus.textContent = 'Invalid key format. Must start with sk-ant-';
+        keyStatus.className = 'hint error';
+        return;
+      }
       await chrome.storage.local.set({ apiKey: val });
-      keyStatus.textContent = 'Key saved.'; keyStatus.className = 'hint success';
-      banner.style.display = 'none'; chrome.action.setBadgeText({ text: '' });
+      keyStatus.textContent = 'Key saved.';
+      keyStatus.className = 'hint success';
+      banner.style.display = 'none';
+      chrome.action.setBadgeText({ text: '' });
     });
   }
 
   const host = await getCurrentHost();
   const siteHint = document.getElementById('site-hint') as HTMLParagraphElement;
   const siteToggle = document.getElementById('site-toggle') as HTMLInputElement;
-  if (!host) { siteHint.textContent = 'Not on a supported page.'; siteToggle.disabled = true; return; }
+
+  if (!host) {
+    siteHint.textContent = 'Not on a supported page.';
+    siteToggle.disabled = true;
+    return;
+  }
+
   siteHint.textContent = host;
-  const [enabled, managedHosts] = await Promise.all([isEnabledForHost(host), isManagedDisabledHosts()]);
+
+  const [enabled, managedHosts] = await Promise.all([
+    isEnabledForHost(host),
+    isManagedDisabledHosts(),
+  ]);
   siteToggle.checked = enabled;
+
   if (managedHosts) {
-    siteToggle.disabled = true; siteHint.textContent = `${host} — managed by your organization`;
+    siteToggle.disabled = true;
+    siteHint.textContent = `${host} — managed by your organization`;
   } else {
     siteToggle.addEventListener('change', async () => {
       const { disabledHosts: current = [] } = await chrome.storage.local.get('disabledHosts');
-      const updated = siteToggle.checked ? (current as string[]).filter((h) => h !== host) : [...new Set([...(current as string[]), host])];
+      const updated = siteToggle.checked
+        ? (current as string[]).filter((h) => h !== host)
+        : [...new Set([...(current as string[]), host])];
       await chrome.storage.local.set({ disabledHosts: updated });
     });
   }
 }
 
 initPopup();
-*/
