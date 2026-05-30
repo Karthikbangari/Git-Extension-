@@ -15,27 +15,35 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                | Value                                                                    |
-| -------------------- | ------------------------------------------------------------------------ |
-| Last active session  | 2026-05-30                                                               |
-| Active phase         | Phase 4 — complete · new project (GitHub Repo File Explainer) in scoping |
-| Phase 1–4 status     | All sealed ✅                                                            |
-| Last commit          | `154178c` — docs: CLAUDE.md session handoff                              |
-| Last build           | build ✅ · tests 129/129 ✅ · format ✅ · lint ✅                        |
-| Next action (Codex)  | Review/commit BUG-13/17/18 fixes; CWS submission by user                 |
-| Next action (Claude) | Draft BP-013 proposal using Codex input in `1playground.md` #45          |
-| Open bugs            | None                                                                     |
-| Blocked              | No                                                                       |
+| Field                | Value                                                                              |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| Last active session  | 2026-05-30                                                                         |
+| Active phase         | TFE Phase 4 sealed ✅ · GFE Phase 1 scaffold complete ✅                           |
+| Last commit          | `95768e2` — feat(BP-013): Git File Explainer Phase 1 scaffold                      |
+| Last build           | TFE build ✅ · TFE tests 129/129 ✅ · GFE build ✅ · GFE tests 15/15 ✅           |
+| Lint / format        | ✅ clean                                                                           |
+| Next action (Codex)  | `git push` (5 commits ahead of origin); smoke-test `git-file-explainer/dist/`     |
+| Next action (Claude) | Write BP-014 (GFE Phase 2: real DOM extraction + AI call) after Gemini reviews BP-013 |
+| Next action (user)   | CWS submission for TF Diff Explainer (dashboard link below)                        |
+| Open bugs            | None                                                                               |
+| Blocked              | Waiting on Gemini review of BP-013 before Phase 2 coding                           |
 
-### What was built and confirmed
+### What was built this session
 
-- BP-001 through BP-010: Full extension (scaffold → AI layer → org policy → CWS prep). See prior entries below.
-- **BUG-11 complete fix** (`9eeb0f2`): `hasTerraformDiff()` gate extended.
-- **Visual refresh** (`60ba12f`): Dark gradient header, risk chips, action badges, card redesign, 340px width.
-- **CWS assets** (`d1ea5c8`): Three 1280×800 screenshots, screenshot script.
-- **BP-011 — Session hotfixes (uncommitted):** BUG-13 CORS header, BUG-14 JSON code-fence stripping, BUG-15 collapse button CSS, BUG-16 two dedicated toggle buttons. Tests: 119/119.
-- **BP-012 — Multi-language detection (uncommitted):** `SUPPORTED_EXTENSIONS` (22 types) replaces `.tf`-only gate. Tests: 127/127.
-- **New project scoped:** GitHub Repo File Explainer (repo_explainer_tracker.pdf) discussed in `1playground.md` log entry #41. Drawbacks and reuse analysis posted. Awaiting Codex + Gemini input before Phase 1 scaffold.
+- **Repo renamed** `Terraf` → `Git-Exp`; remote updated; all `Karthikbangari/Terraf` URLs replaced (commits `095f1cb`)
+- **BUG-17/18 fixed** (`095f1cb`): ESLint config extended for `.mjs`, `master.ts` ignored, hunkParser uses `isSupportedFilePath`
+- **master.ts regenerated** (`47b6293`): all 12 sections synced to current source
+- **BP-013 built** (`95768e2`): `git-file-explainer/` scaffold — 19 new files, 15 unit tests, `gfe-` prefix, route detection for GitHub/GitLab file views, `FileExtractor` provider interface, sidebar shell, dark mode
+
+### GFE Phase 1 key facts (for Phase 2 planning)
+
+- Folder: `git-file-explainer/` alongside `tf-diff-explainer/`
+- Routes detected: `github.com/*/blob/*` · `gitlab.com/*/-/blob/*`
+- Storage prefix: `gfe_` (no TFE collision)
+- Provider interface: `FileExtractor` → `GitHubDomExtractor` (stub) + `GitLabDomExtractor` (stub)
+- Message type: `GFE_FETCH_AI_SUMMARY` (different from TFE's `FETCH_AI_SUMMARY`)
+- Icons: green `#10b981` (vs TFE purple)
+- Build commands: `npm run build:gfe` · `npm run test:gfe` · `npm run dev:gfe`
 
 ### Workflow rule reminder
 
