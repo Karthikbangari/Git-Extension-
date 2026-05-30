@@ -842,21 +842,34 @@ function setupHighlighting(sidebar: HTMLElement, body: HTMLElement, graph: Depen
   sidebar.addEventListener('mouseleave', () => clearHighlight(sidebar), { signal });
 }
 
+const ACTION_LABELS: Record<string, string> = {
+  create: '+ CREATE',
+  update: '~ UPDATE',
+  delete: '− DELETE',
+  replace: '⟳ REPLACE',
+};
+
 function injectSidebar(): void {
   if (document.getElementById(SIDEBAR_ID)) return;
   const sidebar = document.createElement('div');
   sidebar.id = SIDEBAR_ID;
   const header = document.createElement('div');
   header.className = 'tfe-header';
+  const headerRow = document.createElement('div');
+  headerRow.className = 'tfe-header-row';
   const title = document.createElement('span');
   title.className = 'tfe-title';
   title.textContent = 'TF Diff Explainer';
   const btn = document.createElement('button');
   btn.className = 'tfe-toggle';
   btn.setAttribute('aria-label', 'Collapse sidebar');
-  btn.textContent = '✕';
-  header.appendChild(title);
-  header.appendChild(btn);
+  btn.textContent = '‹';
+  headerRow.appendChild(title);
+  headerRow.appendChild(btn);
+  const riskSummary = document.createElement('div');
+  riskSummary.className = 'tfe-risk-summary';
+  header.appendChild(headerRow);
+  header.appendChild(riskSummary);
   const body = document.createElement('div');
   body.className = 'tfe-body';
   const skeleton = document.createElement('div');
@@ -874,7 +887,7 @@ function injectSidebar(): void {
     sidebar.classList.toggle('tfe-collapsed');
     const collapsed = sidebar.classList.contains('tfe-collapsed');
     btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
-    btn.textContent = collapsed ? '❯' : '✕';
+    btn.textContent = collapsed ? '›' : '‹';
   });
 }
 
@@ -883,6 +896,26 @@ function updateSidebar(results: ResourceChange[]): void {
   if (!sidebar) return;
   const body = sidebar.querySelector<HTMLElement>('.tfe-body');
   if (!body) return;
+  const riskSummary = sidebar.querySelector<HTMLElement>('.tfe-risk-summary');
+  if (riskSummary) {
+    riskSummary.textContent = '';
+    if (results.length > 0) {
+      const counts = { high: 0, medium: 0, low: 0 };
+      for (const r of results) counts[r.riskProfile.level]++;
+      const defs: Array<{ key: keyof typeof counts; label: string; cls: string }> = [
+        { key: 'high', label: 'HIGH', cls: 'tfe-chip-high' },
+        { key: 'medium', label: 'MED', cls: 'tfe-chip-medium' },
+        { key: 'low', label: 'LOW', cls: 'tfe-chip-low' },
+      ];
+      for (const { key, label, cls } of defs) {
+        if (counts[key] === 0) continue;
+        const chip = document.createElement('span');
+        chip.className = `tfe-chip ${cls}`;
+        chip.innerHTML = `<span class="tfe-chip-count">${counts[key]}</span> ${label}`;
+        riskSummary.appendChild(chip);
+      }
+    }
+  }
   body.textContent = '';
   if (results.length === 0) {
     const empty = document.createElement('p');
@@ -895,17 +928,36 @@ function updateSidebar(results: ResourceChange[]): void {
     const card = document.createElement('div');
     card.className = `tfe-card tfe-risk-${change.riskProfile.level}`;
     card.dataset.resourceId = change.id;
-    const cardHeader = document.createElement('div');
-    cardHeader.className = 'tfe-card-header';
+    const top = document.createElement('div');
+    top.className = 'tfe-card-top';
+    const meta = document.createElement('div');
+    meta.className = 'tfe-card-meta';
     const cardTitle = document.createElement('span');
     cardTitle.className = 'tfe-card-title';
     cardTitle.textContent = change.id;
-    const badge = document.createElement('span');
-    badge.className = `tfe-card-badge tfe-risk-${change.riskProfile.level}`;
-    badge.textContent = change.riskProfile.level.toUpperCase();
-    cardHeader.appendChild(cardTitle);
-    cardHeader.appendChild(badge);
-    card.appendChild(cardHeader);
+    meta.appendChild(cardTitle);
+    if (change.type !== 'unknown' && change.filePath !== change.id) {
+      const filePath = document.createElement('span');
+      filePath.className = 'tfe-card-file';
+      filePath.textContent = change.filePath;
+      meta.appendChild(filePath);
+    }
+    const badges = document.createElement('div');
+    badges.className = 'tfe-card-badges';
+    const riskBadge = document.createElement('span');
+    riskBadge.className = `tfe-card-badge tfe-risk-${change.riskProfile.level}`;
+    riskBadge.textContent = change.riskProfile.level.toUpperCase();
+    badges.appendChild(riskBadge);
+    const actionLabel = ACTION_LABELS[change.action];
+    if (actionLabel) {
+      const actionBadge = document.createElement('span');
+      actionBadge.className = `tfe-action-badge tfe-action-${change.action}`;
+      actionBadge.textContent = actionLabel;
+      badges.appendChild(actionBadge);
+    }
+    top.appendChild(meta);
+    top.appendChild(badges);
+    card.appendChild(top);
     if (change.riskProfile.reasons.length > 0) {
       const reasonList = document.createElement('ul');
       reasonList.className = 'tfe-card-reasons';
