@@ -15,41 +15,43 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                  | Value                                                       |
-| ---------------------- | ----------------------------------------------------------- |
-| Last active session    | 2026-05-30                                                  |
-| Active phase           | Phase 4 — Polish + ship                                     |
-| Phase 1 status         | Sealed ✅ (2026-05-30)                                      |
-| Phase 2 status         | Sealed ✅ (2026-06-02)                                      |
-| Phase 3 status         | Sealed ✅ (2026-05-29)                                      |
-| Waiting on             | Push sealed Phase 4 release → CWS dashboard submission      |
-| Last build             | Phase 4 sealed ✅ — version 1.0.0, CWS zip ready            |
-| Next action for Claude | Support CWS dashboard submission if screenshots need polish |
-| Open bugs              | None                                                        |
-| Blocked                | No                                                          |
-| Last clean check       | build ✅ · lint ✅ · format ✅ · tests 104/104 ✅ · E2E ✅  |
+| Field               | Value                                                                 |
+| ------------------- | --------------------------------------------------------------------- |
+| Last active session | 2026-05-30                                                            |
+| Active phase        | Phase 4 — Polish + ship (complete — awaiting CWS submission by user) |
+| Phase 1–4 status    | All sealed ✅                                                         |
+| Last commit         | `60ba12f` — visual refresh (dark header, risk chips, action badges)   |
+| Last build          | build ✅ · format ✅ · tests 117/117 ✅                               |
+| Next action         | User submits to CWS dashboard (requires their Google login)           |
+| Open bugs           | None                                                                  |
+| Blocked             | No — waiting on user CWS action only                                  |
 
 ### What was built and confirmed
 
-- BP-001: Full Phase 1 scaffold (manifest, sidebar, popup, page detection, CI)
-- BP-002: Vite build pipeline, TypeScript conversion, single root `package.json`, icon generation, Vitest tests
-- BUG-1/2/3 fixes: ESLint Node globals, Prettier, innerHTML → DOM construction
-- BP-003: Local risk classifier (IAM wildcard, open SG, force_destroy, destructive actions) + hunk parser. 46 tests.
-- BP-004: Dependency minimap — `refParser.ts` (word-boundary regex reference detection), SVG renderer (2-col layout, risk-coloured nodes, arrowhead edges). 57 tests.
-- BP-005: Session cache (`chrome.storage.session`, URL-keyed), cache-first `runAnalysis`, hover relationship highlighting (AbortController delegation, CSS dimming). 62 tests.
-- BP-006: AI Change Summary — `aiSummary.ts` (prompt builder, SHA-256 hash, background-proxied fetch), `background/index.ts` (FETCH_AI_SUMMARY handler fetches `claude-haiku-4-5-20251001`), AI local cache (`chrome.storage.local`, hash-keyed), `updateAISummary` (5 states), AI section CSS, manifest CSP. 80 tests.
-- BP-007: PR Description + Rollback Checklist — `AISummaryResult` extended with `prDescription`, prompt v2 (6 rollback steps + markdown PR description), `max_tokens` 768, `CACHE_VERSION` v2, shape validation, interactive rollback checklist (`<ol>` with checkboxes), PR Description section with Copy button (`navigator.clipboard`). 84 tests.
-- BP-008: Onboarding — install badge `'!'` on extension icon; popup welcome banner (2-step guide + `console.anthropic.com` link) shown when no key set; badge clears + banner hides on key save; sidebar no-key CTA improved to blue action text. 84 tests (unchanged).
-- BP-009: Enterprise org policy — `managed_schema.json` (Chrome policy schema for IT admins); `getApiKey` + `isEnabledForHost` check `chrome.storage.managed` first (Managed → Local fallback); new `isManagedApiKey()` + `isManagedDisabledHosts()`; popup disables API key + site toggle when org policy active. 97 tests (+13 managed storage tests).
-- Bug batch (BUG-6/7/9/10/11/12 + hash redaction): generation counter in `runAnalysis` (BUG-6); `response.content[0]?.text` guard (BUG-7); empty-changes guard before AI path (BUG-9); `.filter(a => !a.isSensitive)` in `buildPrompt` (BUG-10); `scrapeGitHub()` four-level fallback chain including `.file-header a[title]` (BUG-11); `generateDiffHash` redacts sensitive attr values with `<sensitive>`; `chrome.storage.session` access + fail-open cache helpers prevent stuck skeletons (BUG-12). 104 tests.
-- BP-010: Version bumped to `1.0.0`, `manifest.json` gains `homepage_url` + `minimum_chrome_version: "120"`, `store/privacy-policy.md` + `store/listing.md` created for CWS dashboard.
+- BP-001 through BP-010: Full extension (scaffold → AI layer → org policy → CWS prep). See prior entries below.
+- **BUG-11 complete fix** (`9eeb0f2`): `hasTerraformDiff()` gate extended to mirror `scrapeGitHub()` fallbacks — adds `a[title$=".tf"]` and `.Truncate-text` checks so the sidebar fires even when GitHub omits `data-path`. 13 new jsdom DOM tests added. 117 tests total.
+- **Visual refresh** (`60ba12f`): Dark gradient header (`◆ TF Diff Explainer` + `‹` collapse), risk count chips in header (`2 HIGH · 1 MED · 3 LOW`), card redesign (action badges `+ CREATE / ~ UPDATE / − DELETE / ⟳ REPLACE`, per-risk background tints, `tfe-card-top/meta/badges` layout, file path shown below resource name for named resources), section headings with colored 3px left-border accents (purple = Resource Graph, blue = AI Summary), 340px width, better shadows. Popup matching dark header + improved onboarding banner. `master.ts` synced.
+- **CWS assets** (`d1ea5c8`): Three 1280×800 screenshots at `store/screenshots/`, screenshot script at `scripts/take-screenshots.mjs` (Puppeteer + Chromium). `jsdom` + `puppeteer-core` moved to single root `package.json`.
 
-### Phase 4 seal status
+### CWS submission checklist (user action required)
 
-Codex final E2E passed on 2026-05-30 using Chrome 148 via `web-ext run` against a live GitHub PR (`terraform-aws-modules/terraform-aws-lambda/pull/577/files`). Observed result: 4 `.tf` paths detected, 4 LOW cards rendered, no loading skeleton, no-key AI CTA shown. Submission package rebuilt at `tf-diff-explainer/web-ext-artifacts/tf_diff_explainer-1.0.0.zip`.
+| Step | Asset | Status |
+| ---- | ----- | ------ |
+| Zip  | `tf-diff-explainer/web-ext-artifacts/tf_diff_explainer-1.0.0.zip` | ✅ Ready |
+| Screenshots | `tf-diff-explainer/store/screenshots/` (3 × 1280×800) | ✅ Ready |
+| Listing copy | `tf-diff-explainer/store/listing.md` | ✅ Ready |
+| Privacy policy URL | `https://raw.githubusercontent.com/Karthikbangari/Terraf/main/tf-diff-explainer/store/privacy-policy.md` | ✅ Live |
+| CWS dashboard login | Requires user's Google account | ⏳ User |
 
-- Git + GitHub: repo at https://github.com/Karthikbangari/Terraf, SSH key configured (port 443), all commits pushed.
-- Codex is currently **out of commission** — Claude is handling git commits and pushes this session.
+Dashboard: https://chrome.google.com/webstore/devconsole
+
+### Confirmed decisions (do not re-litigate)
+
+- **TypeScript** — all source files are `.ts`
+- **Single root `package.json`** at `/Terraf/` — no inner `package.json`
+- **Vite now** — three separate single-entry configs (Vite 8 prohibits IIFE + multiple entries)
+- **Gemini + Codex** both run final phase E2E tests — not Codex alone
+- **Claude tests after every subphase** (task group), not just end of phase
 
 ### Confirmed decisions (do not re-litigate)
 
