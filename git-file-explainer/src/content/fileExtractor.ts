@@ -4,7 +4,7 @@ export interface FileExtractor {
   extract(): FileContent | null;
 }
 
-function detectLanguage(filePath: string): string {
+export function detectLanguage(filePath: string): string {
   const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
   const map: Record<string, string> = {
     ts: 'typescript',
@@ -34,30 +34,54 @@ function detectLanguage(filePath: string): string {
   return map[ext] ?? ext;
 }
 
+function extractCodeLines(): string[] {
+  // Layer 1: classic GitHub blob table
+  const layer1 = Array.from(document.querySelectorAll<HTMLElement>('td.blob-code-inner')).map(
+    (el) => el.textContent ?? ''
+  );
+  if (layer1.length > 0) return layer1;
+
+  // Layer 2: LC-prefixed line cells (older GitHub layout)
+  const layer2 = Array.from(document.querySelectorAll<HTMLElement>('td[id^="LC"]')).map(
+    (el) => el.textContent ?? ''
+  );
+  if (layer2.length > 0) return layer2;
+
+  // Layer 3: React blob viewer container
+  const container = document.querySelector('[data-testid="blob-code-content"]');
+  if (container) {
+    const text = container.textContent ?? '';
+    if (text.trim()) return text.split('\n');
+  }
+
+  return [];
+}
+
 export class GitHubDomExtractor implements FileExtractor {
   extract(): FileContent | null {
-    // Phase 1 stub — DOM extraction wired in Phase 2
     const pathEl = document.querySelector<HTMLElement>(
       '[data-testid="blob-path"], .final-path, .breadcrumb-item-selected'
     );
-    const filePath = pathEl?.textContent?.trim() ?? location.pathname.split('/blob/').pop() ?? '';
+    const filePath =
+      pathEl?.textContent?.trim() ??
+      location.pathname.split('/blob/').pop()?.split('/').slice(1).join('/') ??
+      '';
     if (!filePath) return null;
 
-    const codeLines = Array.from(
-      document.querySelectorAll<HTMLElement>('.blob-code-inner, .blob-code .blob-code-inner')
-    ).map((el) => el.textContent ?? '');
+    const lines = extractCodeLines();
+    if (lines.length === 0) return null;
 
     return {
       filePath,
       language: detectLanguage(filePath),
-      lines: codeLines,
+      lines,
     };
   }
 }
 
 export class GitLabDomExtractor implements FileExtractor {
   extract(): FileContent | null {
-    // Phase 1 stub — DOM extraction wired in Phase 2
+    // Phase 3 — GitLab DOM extraction
     const pathEl = document.querySelector<HTMLElement>('.file-title-name');
     const filePath = pathEl?.textContent?.trim() ?? '';
     if (!filePath) return null;
@@ -65,6 +89,7 @@ export class GitLabDomExtractor implements FileExtractor {
     const codeLines = Array.from(document.querySelectorAll<HTMLElement>('.blob-content .line')).map(
       (el) => el.textContent ?? ''
     );
+    if (codeLines.length === 0) return null;
 
     return {
       filePath,

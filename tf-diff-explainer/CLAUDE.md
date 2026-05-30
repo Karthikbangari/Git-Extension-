@@ -15,25 +15,23 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                | Value                                                                              |
-| -------------------- | ---------------------------------------------------------------------------------- |
-| Last active session  | 2026-05-30                                                                         |
-| Active phase         | TFE Phase 4 sealed ✅ · GFE Phase 1 scaffold complete ✅                           |
-| Last commit          | `95768e2` — feat(BP-013): Git File Explainer Phase 1 scaffold                      |
-| Last build           | TFE build ✅ · TFE tests 129/129 ✅ · GFE build ✅ · GFE tests 15/15 ✅           |
-| Lint / format        | ✅ clean                                                                           |
-| Next action (Codex)  | `git push` (5 commits ahead of origin); smoke-test `git-file-explainer/dist/`     |
-| Next action (Claude) | Write BP-014 (GFE Phase 2: real DOM extraction + AI call) after Gemini reviews BP-013 |
-| Next action (user)   | CWS submission for TF Diff Explainer (dashboard link below)                        |
-| Open bugs            | None                                                                               |
-| Blocked              | Waiting on Gemini review of BP-013 before Phase 2 coding                           |
+| Field                | Value                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| Last active session  | 2026-05-31                                                                                  |
+| Active phase         | GFE Phase 2 built ✅                                                                        |
+| Last commit          | pending Codex commit — BP-014 changes built but not yet committed                           |
+| Last build           | TFE build ✅ · TFE tests 129/129 ✅ · GFE build ✅ · GFE tests 41/41 ✅                     |
+| Lint / format        | ✅ clean                                                                                    |
+| Next action (Codex)  | commit BP-014 + smoke-test `git-file-explainer/dist/` on a `github.com/*/blob/*` page       |
+| Next action (Gemini) | smoke-test BP-014: sidebar appears on GitHub file page, AI summary renders with API key set |
+| Next action (Claude) | write BP-015 (GFE Phase 3: GitLab extraction + Q&A) after Codex + Gemini sign off on BP-014 |
+| Next action (user)   | CWS submission for TF Diff Explainer (dashboard link below)                                 |
+| Open bugs            | None                                                                                        |
+| Blocked              | Waiting on Codex commit + Gemini E2E of BP-014                                              |
 
 ### What was built this session
 
-- **Repo renamed** `Terraf` → `Git-Exp`; remote updated; all `Karthikbangari/Terraf` URLs replaced (commits `095f1cb`)
-- **BUG-17/18 fixed** (`095f1cb`): ESLint config extended for `.mjs`, `master.ts` ignored, hunkParser uses `isSupportedFilePath`
-- **master.ts regenerated** (`47b6293`): all 12 sections synced to current source
-- **BP-013 built** (`95768e2`): `git-file-explainer/` scaffold — 19 new files, 15 unit tests, `gfe-` prefix, route detection for GitHub/GitLab file views, `FileExtractor` provider interface, sidebar shell, dark mode
+- **BP-014 built** (uncommitted): GFE Phase 2 — real DOM extraction (3-layer fallback) + AI summary via Claude Haiku + SHA-256 URL cache + `no-content` sidebar state. Content-script matches narrowed to GitHub-only; GitLab deferred to Phase 3. GFE 41/41 tests · TFE 129/129 · build ✅ · lint ✅ · format ✅
 
 ### GFE Phase 1 key facts (for Phase 2 planning)
 

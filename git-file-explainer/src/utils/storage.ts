@@ -1,3 +1,5 @@
+import type { FileSummaryResult } from '../content/types';
+
 const GFE_PREFIX = 'gfe_';
 
 export async function getApiKey(): Promise<string | null> {
@@ -33,4 +35,31 @@ export async function toggleHost(host: string, enabled: boolean): Promise<void> 
 
 export function gfeCacheKey(id: string): string {
   return `${GFE_PREFIX}${id}`;
+}
+
+async function hashUrl(url: string): Promise<string> {
+  const data = new TextEncoder().encode(url);
+  const buffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+export async function getCachedSummary(url: string): Promise<FileSummaryResult | null> {
+  try {
+    const key = gfeCacheKey(`summary_${await hashUrl(url)}`);
+    const result = await chrome.storage.local.get(key);
+    return (result[key] as FileSummaryResult) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setCachedSummary(url: string, result: FileSummaryResult): Promise<void> {
+  try {
+    const key = gfeCacheKey(`summary_${await hashUrl(url)}`);
+    await chrome.storage.local.set({ [key]: result });
+  } catch {
+    // best-effort — never blocks render
+  }
 }

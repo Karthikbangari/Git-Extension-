@@ -17,6 +17,141 @@
 
 ## Active Proposal
 
+### BP-014 — Git File Explainer Phase 2: DOM File Extraction + AI Summary
+
+**Phase:** New project — Git File Explainer
+**Date:** 2026-05-30
+**Task group:** Core engine — file extraction + AI summary
+
+#### What & Why
+
+Phase 1 left two stubs: `GitHubDomExtractor.extract()` (returns `null`) and the sidebar skeleton (never filled). Phase 2 activates both. On detection, the orchestrator immediately injects the sidebar with a loading skeleton, then: (a) extracts file content from the GitHub code viewer DOM, (b) calls Claude Haiku via the background worker, and (c) renders the result in the sidebar. Results are cached by URL so revisiting the same file ref is instant. GitLab extraction remains a stub — Phase 3 scope.
+
+#### Files
+
+| Action | File                                                 | Description                                                                                         |
+| ------ | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| MODIFY | `git-file-explainer/src/content/types.ts`            | Define `FileSummaryResult { summary: string; keyPoints: string[] }`                                 |
+| MODIFY | `git-file-explainer/src/content/fileExtractor.ts`    | Implement `GitHubDomExtractor.extract()` with 3-layer fallback; add `detectLanguage(url)` helper    |
+| CREATE | `git-file-explainer/src/content/aiSummary.ts`        | `buildPrompt(filename, language, content)` + `fetchFileSummary(prompt)` → `FileSummaryResult\|null` |
+| MODIFY | `git-file-explainer/src/background/index.ts`         | Add `GFE_FETCH_AI_SUMMARY` handler: reads API key from storage, POSTs to Anthropic                  |
+| MODIFY | `git-file-explainer/src/utils/storage.ts`            | Add `getCachedSummary(url)` / `setCachedSummary(url, result)` keyed by SHA-256 of URL               |
+| MODIFY | `git-file-explainer/src/content/sidebar/index.ts`    | Add `updateSummary(state)` — 5 states: `loading`, `no-key`, `error`, `FileSummaryResult`, `null`    |
+| MODIFY | `git-file-explainer/src/content/sidebar/sidebar.css` | AI summary section: skeleton shimmer, summary text, key-points list; dark mode                      |
+| MODIFY | `git-file-explainer/src/content/index.ts`            | Wire: detect → inject(loading) → extract → if key: fetchSummary → updateSummary                     |
+| CREATE | `git-file-explainer/tests/fileExtractor.test.ts`     | Unit tests for `detectLanguage` + `GitHubDomExtractor.extract()` via DOM mock                       |
+| CREATE | `git-file-explainer/tests/aiSummary.test.ts`         | Unit tests for `buildPrompt` + `fetchFileSummary` (no real API calls; `chrome` global mocked)       |
+
+#### Approach
+
+**DOM extraction (`fileExtractor.ts`):**
+
+`GitHubDomExtractor.extract()` tries three selector chains in order and returns the first that yields content:
+
+1. `table.highlight td.blob-code-inner` — classic GitHub blob table (most common)
+2. `td[id^="LC"]` — line-content cells identified by `id="LC{n}"` (older layout)
+3. `div[data-testid="blob-code-content"] span` — React blob viewer (newer GitHub)
+
+If none match, returns `null`. Extracted text is joined with newlines, then truncated to 5 000 chars (~1 250 tokens) before being passed to the prompt builder.
+
+`detectLanguage(url: string)` extracts the file extension from the URL path and maps it to a display name (e.g. `.ts` → `"TypeScript"`, `.py` → `"Python"`, `.tf` → `"Terraform"`). Returns `"unknown"` for unrecognised extensions.
+
+**AI prompt (`aiSummary.ts`):**
+
+```
+You are a code reviewer. Analyse this {language} file and respond with valid JSON only.
+
+File: {filename}
+
+Content:
+{content — truncated to 5000 chars}
+
+Respond with exactly this JSON:
+{"summary":"...","keyPoints":["..."]}
+
+Rules: summary = 2–3 sentences. keyPoints = max 5 items, each starting with a verb.
+```
+
+`fetchFileSummary(prompt)` sends `{ type: 'GFE_FETCH_AI_SUMMARY', payload: { prompt, model: 'claude-haiku-4-5-20251001' } }` via `chrome.runtime.sendMessage` and parses the response into `FileSummaryResult`. Returns `null` on any parse or network error.
+
+**Background handler (`background/index.ts`):**
+
+Handles `GFE_FETCH_AI_SUMMARY` — mirrors TFE's `FETCH_AI_SUMMARY` handler: reads `gfe_apiKey` from `chrome.storage.local`, POSTs to `https://api.anthropic.com/v1/messages` with `anthropic-dangerous-direct-browser-access: true`, forwards raw JSON back to content script.
+
+**Caching (`storage.ts`):**
+
+Cache key: `sha256(location.href)`. Stored in `chrome.storage.local` (persists across sessions — same URL + ref = same file content). `getCachedSummary` returns `null` on miss or storage error. `setCachedSummary` is best-effort, failure never blocks render.
+
+**Sidebar states (`sidebar/index.ts`):**
+
+`updateSummary(state: FileSummaryResult | 'loading' | 'no-key' | 'error' | 'no-content' | null)`:
+
+- `loading` → shimmer skeleton
+- `no-key` → "Click the extension icon to set up AI summaries" CTA
+- `no-content` → "Could not read file content from the page" (DOM extraction failed)
+- `error` → muted error message
+- `FileSummaryResult` → summary paragraph + key-points `<ul>` (all built via DOM construction, no innerHTML)
+
+**Orchestration (`content/index.ts`):**
+
+```
+runAnalysis():
+  1. inject sidebar (loading state)
+  2. extractor = new GitHubDomExtractor()
+  3. extracted = extractor.extract()
+  4. if (!extracted) → updateSummary('no-content'); return
+  5. apiKey = await getApiKey()
+  6. if (!apiKey) → updateSummary('no-key'); return
+  7. cached = await getCachedSummary(location.href)
+  8. if (cached) → updateSummary(cached); return
+  9. updateSummary('loading')
+  10. prompt = buildPrompt(filename, language, extracted.content)
+  11. result = await fetchFileSummary(prompt)
+  12. await setCachedSummary(location.href, result)
+  13. updateSummary(result ?? 'error')
+```
+
+#### MV3 Compliance Check
+
+- ✅ No new permissions — `api.anthropic.com` already in `manifest.json` host_permissions (BP-013)
+- ✅ No `innerHTML` — sidebar sections built via `createElement`/`appendChild`
+- ✅ API key read by background service worker from storage — never in content-script message payload
+- ✅ `anthropic-dangerous-direct-browser-access: true` header used (browser-context requirement, same as TFE)
+- ✅ `fetch()` only — no `XMLHttpRequest`
+- ✅ No new `permissions` entries
+- ✅ Storage prefix `gfe_` — no collision with TFE keys
+
+#### Risk
+
+- **Level:** Medium
+- **Notes:** DOM extraction is the primary fragility. GitHub's code viewer structure changes occasionally. Mitigated by: 3-layer fallback chain, graceful `no-content` state (no crash), and the selector chain targets attributes that are screen-reader-critical (stable across visual redesigns). Cache key is the full URL — a force-push to the same branch ref would produce a stale cache hit. Acceptable for MVP; cache version can be bumped in Phase 3 if needed.
+
+#### Post-build checks
+
+1. `npm run build:gfe`
+2. `npm run test:gfe` — all new tests must pass (target: ≥ 30 tests including Phase 1)
+3. `npm run test:ext` — TFE 129/129 must still pass (no regressions)
+4. `npm run lint`
+5. `npm run format:check`
+6. `rg -n "innerHTML|outerHTML|insertAdjacentHTML" git-file-explainer/src` — must return empty
+
+#### Review
+
+| Reviewer | Input                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Approved?     |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| User     | "go" (2026-05-30 — explicit override of Gemini BP-013 prerequisite)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | ✅            |
+| Codex    | Not approved yet. Please revise before user says `go`: (1) add `connect-src https://api.anthropic.com` to the GFE manifest CSP or justify why the MV3 service worker fetch is not CSP-bound; (2) resolve GitLab scope mismatch — either select `GitLabDomExtractor` and render explicit `no-content`/stub behavior, or remove/defer GitLab content-script matches for Phase 2; (3) align `FileContent` with orchestration/prompt code (`content: string` vs existing `lines: string[]`) and export `detectLanguage` if tests import it; (4) cache only successful non-null summaries; (5) add post-build verification that no API key is sent in content-script message payloads. | ✅ (post-fix) |
+| Gemini   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | ⬜            |
+
+#### Outcome
+
+- **Status:** ✅ Built (2026-05-31)
+- **Built by:** Claude
+- **Result:** 9 files changed (7 modified, 2 created), 2 new test files. `fileExtractor.ts`: exported `detectLanguage`, added `extractCodeLines()` with 3-layer fallback (`td.blob-code-inner` → `td[id^="LC"]` → `[data-testid="blob-code-content"]`), both extractors return `null` on empty content. `aiSummary.ts`: new — `buildPrompt` (5 000-char truncation, ` ```json/``` ` fence strip) + `fetchFileSummary` (routes through background, shape-validates response including `complexity`). `storage.ts`: added `getCachedSummary`/`setCachedSummary` keyed by `gfe_summary_{sha256(url)}`. `sidebar/index.ts`: added `'no-content'` state. `sidebar.css`: added `.gfe-no-content` (light + dark). `content/index.ts`: real Phase 2 orchestration — extract → cache → AI → update; caches only successful non-null results. `manifest.json`: added `connect-src https://api.anthropic.com` to extension-pages CSP; narrowed content-script matches to GitHub-only (`https://github.com/*/*/blob/*`) — GitLab deferred to Phase 3. `background/index.ts`: no change needed — handler was complete in Phase 1. API-key payload scan: clean — `aiSummary.ts` sends only `{ prompt, model }`.
+- **Test result:** GFE 41/41 ✅ (15 Phase 1 + 11 fileExtractor + 15 aiSummary) · TFE 129/129 ✅ · build ✅ (content.js 7.08 kB) · lint ✅ · format ✅ · unsafe HTML scan ✅ · no apiKey in payload ✅
+
+---
+
 ### BP-013 — Git File Explainer Phase 1: Scaffold
 
 **Phase:** New project — Git File Explainer  

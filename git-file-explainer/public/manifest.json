@@ -16,7 +16,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://github.com/*/*/blob/*", "https://gitlab.com/*/*/-/blob/*"],
+      "matches": ["https://github.com/*/*/blob/*"],
       "js": ["content.js"],
       "css": ["sidebar.css"],
       "run_at": "document_idle"
@@ -36,7 +36,7 @@
     "128": "icons/icon128.png"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'",
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://api.anthropic.com",
     "sandbox": "sandbox allow-scripts; script-src 'self'"
   }
 }

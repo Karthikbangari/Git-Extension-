@@ -1,13 +1,23 @@
 import { isFilePage, isGitHubFilePage, watchForNavigation } from './pageDetector';
 import { GitHubDomExtractor, GitLabDomExtractor } from './fileExtractor';
 import { injectSidebar, updateSidebar, removeSidebar } from './sidebar/index';
-import { isEnabledForHost, getApiKey } from '../utils/storage';
+import { isEnabledForHost, getApiKey, getCachedSummary, setCachedSummary } from '../utils/storage';
+import { buildPrompt, fetchFileSummary } from './aiSummary';
 
 (async function init() {
   const host = location.hostname;
 
   const run = async () => {
     injectSidebar();
+    updateSidebar('loading');
+
+    const extractor = isGitHubFilePage() ? new GitHubDomExtractor() : new GitLabDomExtractor();
+    const fileContent = extractor.extract();
+
+    if (!fileContent || fileContent.lines.length === 0) {
+      updateSidebar('no-content');
+      return;
+    }
 
     const apiKey = await getApiKey();
     if (!apiKey) {
@@ -15,23 +25,22 @@ import { isEnabledForHost, getApiKey } from '../utils/storage';
       return;
     }
 
-    updateSidebar('loading');
-
-    // Phase 1: extractor is a stub — real AI call wired in Phase 2
-    const extractor = isGitHubFilePage() ? new GitHubDomExtractor() : new GitLabDomExtractor();
-    const fileContent = extractor.extract();
-
-    if (!fileContent || fileContent.lines.length === 0) {
-      updateSidebar('error');
+    const cached = await getCachedSummary(location.href);
+    if (cached) {
+      updateSidebar(cached);
       return;
     }
 
-    // Placeholder result until Phase 2 adds the AI fetch
-    updateSidebar({
-      summary: `${fileContent.language} file — ${fileContent.lines.length} lines. AI explanation coming in Phase 2.`,
-      keyPoints: [`Language: ${fileContent.language}`, `Lines: ${fileContent.lines.length}`],
-      complexity: 'low',
-    });
+    const content = fileContent.lines.join('\n');
+    const prompt = buildPrompt(fileContent.filePath, fileContent.language, content);
+    const result = await fetchFileSummary(prompt);
+
+    if (result) {
+      void setCachedSummary(location.href, result);
+      updateSidebar(result);
+    } else {
+      updateSidebar('error');
+    }
   };
 
   try {
@@ -54,9 +63,13 @@ import { isEnabledForHost, getApiKey } from '../utils/storage';
       if (!stillEnabled) return;
 
       navObserver = new MutationObserver((_, obs) => {
-        if (document.querySelector('.blob-code, .blob-content')) {
+        if (
+          document.querySelector(
+            '.blob-code-inner, td[id^="LC"], [data-testid="blob-code-content"]'
+          )
+        ) {
           obs.disconnect();
-          run();
+          void run();
         }
       });
       navObserver.observe(document.body, { childList: true, subtree: true });

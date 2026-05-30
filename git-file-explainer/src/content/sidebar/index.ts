@@ -53,7 +53,9 @@ export function injectSidebar(): void {
   expandBtn.addEventListener('click', () => sidebar.classList.remove('gfe-collapsed'));
 }
 
-export function updateSidebar(state: FileSummaryResult | 'loading' | 'no-key' | 'error'): void {
+export function updateSidebar(
+  state: FileSummaryResult | 'loading' | 'no-key' | 'no-content' | 'error'
+): void {
   const sidebar = document.getElementById(SIDEBAR_ID);
   if (!sidebar) return;
 
@@ -86,6 +88,14 @@ export function updateSidebar(state: FileSummaryResult | 'loading' | 'no-key' | 
     const msg = document.createElement('p');
     msg.className = 'gfe-error';
     msg.textContent = 'Explanation failed. Check your API key in the extension popup, then reload.';
+    body.appendChild(msg);
+    return;
+  }
+
+  if (state === 'no-content') {
+    const msg = document.createElement('p');
+    msg.className = 'gfe-no-content';
+    msg.textContent = 'Could not read file content from this page.';
     body.appendChild(msg);
     return;
   }

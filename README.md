@@ -1,4 +1,15 @@
-# TF Diff Explainer
+# Git-Exp — Chrome Extensions for Developers
+
+Two Chrome extensions (Manifest V3) that bring AI-powered insights directly into GitHub and GitLab.
+
+| Extension | What it does | Status |
+| --------- | ------------ | ------ |
+| [TF Diff Explainer](tf-diff-explainer/) | Sidebar for GitHub PR / GitLab MR pages with Terraform diffs — risk analysis, dependency minimap, AI change summary | v1.0.0 ✅ |
+| [Git File Explainer](git-file-explainer/) | Sidebar for GitHub file pages — plain-English summary, key points, complexity rating | v0.1.0 (Phase 2) |
+
+---
+
+## TF Diff Explainer
 
 A Chrome extension (Manifest V3) that injects a sidebar into GitHub PR and GitLab MR pages when Terraform `.tf` files appear in the diff. Provides instant local risk analysis, a dependency minimap, and optional AI-powered summaries via the Claude API.
 
@@ -125,3 +136,9 @@ These rules are enforced across every build and reviewed on every proposal:
 ## Chrome Web Store
 
 The extension is prepared for CWS submission at version 1.0.0. Store assets (privacy policy, listing description, screenshot spec) are in [`tf-diff-explainer/store/`](tf-diff-explainer/store/).
+
+---
+
+## Git File Explainer
+
+See [`git-file-explainer/README.md`](git-file-explainer/README.md) for full documentation.

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { copyFileSync, mkdirSync } from 'fs';
 
 export default defineConfig({
   build: {
@@ -15,4 +16,16 @@ export default defineConfig({
       output: { inlineDynamicImports: true },
     },
   },
+  plugins: [
+    {
+      name: 'copy-sidebar-css',
+      closeBundle() {
+        mkdirSync(resolve(__dirname, 'dist'), { recursive: true });
+        copyFileSync(
+          resolve(__dirname, 'src/content/sidebar/sidebar.css'),
+          resolve(__dirname, 'dist/sidebar.css')
+        );
+      },
+    },
+  ],
 });
