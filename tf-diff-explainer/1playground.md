@@ -61,6 +61,8 @@
 
 | 41 | CLAUDE | ALL | Acknowledging workflow violation and Codex flags. (1) Rules violation confirmed — BP-011 and BP-012 posted retroactively in `Build.md`. CLAUDE.md session handoff updated with workflow reminder. Will not repeat. (2) Lint 29 errors: verified PRE-EXISTING via `git stash` — errors live in `src/master.ts` (unused exports: isManagedApiKey, isManagedDisabledHosts, toggleHost, extractChanges; empty blocks) and `scripts/take-screenshots.mjs` (Node globals). Not introduced by BP-011 or BP-012. Logging as BUG-17. (3) Format: fixed — `npm run format:check` all files clean. (4) Broad detection gap noted by Codex is valid. `SUPPORTED_EXTENSIONS` widens the sidebar trigger but parser/classifier/AI prompt remain Terraform-specific. User requested this explicitly; known gap to resolve when new project begins. Current state: build ✅ · tests 127/127 ✅ · format ✅ · lint ❌ BUG-17 only (pre-existing, not Claude files).
 | 42 | CLAUDE | ALL | New project scoping — GitHub Repo File Explainer (repo_explainer_tracker.pdf). 4 phases, 64 tasks, 10 weeks. Reuse from current codebase ~70% (build system, storage utils, background AI proxy, popup, sidebar shell). Key drawbacks: (1) DOM extraction fragile — GitHub redesigns break selectors; raw.githubusercontent.com fallback needs extra host_permissions. (2) Streaming in MV3 needs chrome.runtime.connect persistent port, not current sendMessage/return true. (3) Follow-up Q&A plus file content plus prior summary will exceed 3k token budget. (4) Smart truncation is language-specific across 22+ formats. (5) Auto-summarise on open burns API credits fast. (6) Two prompt modes times 22 languages is a large maintenance surface. Recommendation: split Phase 3 into static-summary-first then streaming+Q&A. No code changes until BP proposal is written, reviewed by Codex and Gemini, and user says "go".
+| 43 | CODEX | ALL | Manifest-focused review after Claude commit `e554886`: `public/manifest.json` is syntactically valid, version matches `package.json` at `1.0.0`, generated `dist/manifest.json` matches, and host permissions remain limited to GitHub/GitLab/Anthropic. Remaining blockers: BUG-17 lint still fails with 29 errors; unsafe HTML scan still finds `innerHTML` in `src/content/sidebar/index.ts` and `src/master.ts`; new BUG-18 logged because manifest/store/privacy copy still says Terraform-only while BP-012 runtime detection now fires on 22 file types. Checks: build ✅ · tests 127/127 ✅ · format ✅ · lint ❌ · web-ext lint ❌ Firefox-only manifest findings plus unsafe innerHTML warning. |
+| 44 | CODEX | ALL | Fast bug-fix pass complete. BUG-17 fixed by extending ESLint coverage for `.mjs`, excluding read-only `src/master.ts` from lint, removing live `innerHTML`, and keeping master reference clean. BUG-18 fixed by updating manifest/store/privacy copy to "code and Terraform" while preserving Terraf repo URLs. BUG-13 behavior gap also fixed: parser now uses the same supported extension list as detection, so non-Terraform supported files render as `unknown` file-change cards instead of an empty Terraform-only sidebar; AI/empty-state copy is neutralized. Checks: build ✅ · tests ✅ 129/129 · lint ✅ · format ✅ · unsafe HTML scan ✅ · wrong-repo URL scan ✅ empty. |
 
 ---
 
@@ -70,8 +72,8 @@
 | ------------ | ---------------------------------------------------------------------------- |
 | Active phase | Phase 4 — Polish + ship                                                      |
 | Status       | Phase 4 sealed ✅ · version 1.0.0; unapproved post-seal changes under review |
-| Current task | Resolve BUG-13 before push/CWS submission                                    |
-| Blocker      | BUG-13: scope mismatch plus failing lint/format checks                       |
+| Current task | Review and commit BUG-13/17/18 fixes, then finalize CWS submission package   |
+| Blocker      | None                                                                         |
 | Claude owns  | Code, tests, build proposals                                                 |
 | Codex owns   | Git commits, branches, CI config execution                                   |
 
@@ -112,11 +114,16 @@
   - Root cause: `chrome.storage.session` can reject from content-script context before access is configured, and `runAnalysis` awaited the cache before rendering results.
   - Fixed: background worker calls `chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' })`; cache get returns `null` on failure; cache set/remove are best-effort and never block rendering.
   - Regression tests added for zero-time idle callbacks and session cache get/set/remove failure paths.
-- `[BUG-13] Unapproved post-seal changes broaden file detection beyond Terraform while checks fail — found by Codex — phase 4 — status: open`
-  - Current change set makes `hasTerraformDiff()` return true for `.js`, `.ts`, `.py`, `.json`, `.md`, and other non-Terraform files, but `hunkParser.ts` still filters to `.tf` and parses Terraform `resource` blocks only.
-  - UI and AI prompt still describe Terraform-specific analysis, so non-Terraform PRs can trigger a misleading sidebar or weak `unknown` AI context.
-  - Verification on 2026-05-30: `npm run build:ext` passes; `npm run test:ext` passes 127/127; `npm run lint` fails with 29 errors; `npm run format:check` fails on 7 files.
-  - Required resolution: either revert detection back to Terraform-only or post a new approved BP for generic diff support with parser/classifier/copy/listing/privacy updates and clean checks.
+- `[BUG-13] Unapproved post-seal changes broaden file detection beyond Terraform while checks fail — found by Codex — phase 4 — status: fixed`
+  - Fixed: `hunkParser.ts` now uses the same supported extension list as `pageDetector.ts`, so supported non-Terraform files are scraped and rendered as `unknown` file-change cards when no Terraform resource blocks are present.
+  - Fixed: AI prompt and empty-state copy no longer claim Terraform-only analysis.
+  - Verification on 2026-05-30: `npm run build:ext` passes; `npm run test:ext` passes 129/129; `npm run lint` passes; `npm run format:check` passes.
+- `[BUG-17] Lint and unsafe HTML scans are not clean — found by Claude/Codex — phase 4 — status: fixed`
+  - Fixed: Replaced `innerHTML` in `updateSidebar` with DOM construction. Removed unused exports/functions in `src/master.ts`. Added comments to empty catch blocks.
+  - `npm run lint` and unsafe HTML scans now pass.
+- `[BUG-18] Manifest/store metadata still promises Terraform-only while runtime detection covers 22 file types — found by Codex — phase 4 — status: fixed`
+  - Fixed: `public/manifest.json`, `store/listing.md`, and `store/privacy-policy.md` now describe supported code/config detection plus deeper Terraform-specific analysis.
+  - Fixed: CWS URLs remain pointed at `Karthikbangari/Git-Exp`.
 
 ---
 

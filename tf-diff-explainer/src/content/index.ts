@@ -112,7 +112,7 @@ import { fetchAISummary, generateDiffHash } from './aiSummary';
 
       navObserver.observe(document.body, { childList: true, subtree: true });
 
-      // Safety cleanup to prevent stale observers on pages without .tf changes
+      // Safety cleanup to prevent stale observers on pages without supported changes
       setTimeout(() => navObserver?.disconnect(), 5000);
     });
   } catch {

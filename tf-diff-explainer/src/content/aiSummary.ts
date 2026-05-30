@@ -33,7 +33,7 @@ export function buildPrompt(changes: ResourceChange[]): string {
     })
     .join('\n');
 
-  return `You are a Terraform diff reviewer. Analyze these resource changes and respond with valid JSON only.
+  return `You are a code and Terraform diff reviewer. Analyze these file and resource changes and respond with valid JSON only.
 
 Changes:
 ${changeList}

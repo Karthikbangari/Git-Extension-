@@ -164,7 +164,11 @@ export function updateSidebar(results: ResourceChange[]): void {
         if (counts[key] === 0) continue;
         const chip = document.createElement('span');
         chip.className = `tfe-chip ${cls}`;
-        chip.innerHTML = `<span class="tfe-chip-count">${counts[key]}</span> ${label}`;
+        const countSpan = document.createElement('span');
+        countSpan.className = 'tfe-chip-count';
+        countSpan.textContent = String(counts[key]);
+        chip.appendChild(countSpan);
+        chip.appendChild(document.createTextNode(` ${label}`));
         riskSummary.appendChild(chip);
       }
     }
@@ -175,7 +179,7 @@ export function updateSidebar(results: ResourceChange[]): void {
   if (results.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'tfe-empty';
-    empty.textContent = 'No Terraform changes detected.';
+    empty.textContent = 'No supported changes detected.';
     body.appendChild(empty);
     return;
   }

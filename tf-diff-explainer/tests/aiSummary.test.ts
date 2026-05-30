@@ -130,7 +130,7 @@ describe('aiSummary.buildPrompt', () => {
 
   it('starts with the expected preamble', () => {
     const prompt = buildPrompt([makeChange()]);
-    expect(prompt.startsWith('You are a Terraform diff reviewer.')).toBe(true);
+    expect(prompt.startsWith('You are a code and Terraform diff reviewer.')).toBe(true);
   });
 
   it('returns a prompt containing the JSON schema instruction', () => {

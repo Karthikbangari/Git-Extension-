@@ -11,15 +11,17 @@ _(17 chars)_
 ## Short description (132 char max)
 
 ```
-Understand Terraform diffs at a glance — risk analysis, dependency minimap, and AI summaries directly in GitHub and GitLab.
+Understand code and Terraform diffs at a glance with risk analysis and AI summaries directly in GitHub and GitLab.
 ```
 
-_(123 chars)_
+_(113 chars)_
 
 ## Detailed description
 
 ```
-TF Diff Explainer adds a sidebar to GitHub Pull Requests and GitLab Merge Requests whenever Terraform (.tf) files are part of the diff. No tab switching, no copy-pasting — everything you need to review an infrastructure change appears alongside the diff.
+TF Diff Explainer adds a sidebar to GitHub Pull Requests and GitLab Merge Requests whenever supported code or configuration files are part of the diff. No tab switching, no copy-pasting — review context appears alongside the diff.
+
+Terraform (.tf) changes get the deepest analysis today, including local infrastructure risk classification and dependency mapping.
 
 RISK ANALYSIS
 Every changed resource is scored Low / Medium / High based on the type of change:
@@ -49,7 +51,7 @@ Your API key never leaves your browser. The only external connection is to api.a
 HOW TO SET UP
 1. Install the extension
 2. Click the extension icon and paste your Anthropic API key (get one free at console.anthropic.com)
-3. Open any GitHub PR or GitLab MR that contains .tf files — the sidebar appears automatically
+3. Open any GitHub PR or GitLab MR that contains supported code or configuration files — the sidebar appears automatically
 ```
 
 ## Category
@@ -63,7 +65,7 @@ HOW TO SET UP
 ## Keywords / tags
 
 ```
-terraform, infrastructure, devops, code review, github, gitlab, diff, iac, security, risk analysis
+terraform, infrastructure, devops, code review, github, gitlab, diff, iac, security, risk analysis, code review
 ```
 
 ## Screenshots spec (3 required — 1280×800 each)
@@ -93,7 +95,7 @@ Background: dark (#0d1117 GitHub dark bg) with sidebar UI screenshot cropped to 
 
 Host `store/privacy-policy.md` at one of:
 
-- GitHub raw: `https://raw.githubusercontent.com/Karthikbangari/Terraf/main/tf-diff-explainer/store/privacy-policy.md`
+- GitHub raw: `https://raw.githubusercontent.com/Karthikbangari/Git-Exp/main/tf-diff-explainer/store/privacy-policy.md`
 - GitHub Pages (if enabled): `https://karthikbangari.github.io/Terraf/privacy-policy`
 
 Use the raw URL — it works immediately without any Pages setup.

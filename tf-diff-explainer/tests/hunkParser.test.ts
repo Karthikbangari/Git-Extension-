@@ -200,6 +200,20 @@ describe('hunkParser.extractChanges', () => {
       expect(r.type).toBe('unknown');
       expect(r.action).toBe('unknown');
     });
+
+    it('returns a synthetic change for non-Terraform supported files', () => {
+      const [r] = extractChanges([
+        {
+          filePath: 'src/app.ts',
+          lines: [{ text: 'export const enabled = true;', kind: 'added' }],
+        },
+      ]);
+
+      expect(r.id).toBe('src/app.ts');
+      expect(r.type).toBe('unknown');
+      expect(r.action).toBe('unknown');
+      expect(r.filePath).toBe('src/app.ts');
+    });
   });
 
   describe('empty file record', () => {
@@ -263,5 +277,46 @@ describe('hunkParser.parseDiff', () => {
     const result = await parseDiff();
     expect(result).toHaveLength(2);
     expect(result.map((r) => r.filePath)).toEqual(['one.tf', 'two.tf']);
+  });
+
+  it('scrapes supported non-Terraform GitHub files into unknown changes', async () => {
+    function makeInner(text: string) {
+      return {
+        textContent: text,
+        closest: (selector: string) => (selector === '.blob-code-addition' ? {} : null),
+      };
+    }
+
+    const rows = [
+      {
+        querySelector: (selector: string) =>
+          selector === '.blob-code-inner' ? makeInner('export const enabled = true;') : null,
+      },
+    ];
+
+    vi.stubGlobal('location', {
+      href: 'https://github.com/example/repo/pull/1/files',
+    });
+    vi.stubGlobal('document', {
+      querySelectorAll: (selector: string) =>
+        selector === '.file'
+          ? [
+              {
+                getAttribute: (name: string) => (name === 'data-path' ? 'src/app.ts' : null),
+                querySelector: () => null,
+                querySelectorAll: (rowSelector: string) => (rowSelector === 'tr' ? rows : []),
+              },
+            ]
+          : [],
+    });
+    vi.stubGlobal('requestIdleCallback', (callback: IdleRequestCallback) => {
+      callback({ timeRemaining: () => 50 } as IdleDeadline);
+      return 1;
+    });
+
+    const [result] = await parseDiff();
+    expect(result.filePath).toBe('src/app.ts');
+    expect(result.type).toBe('unknown');
+    expect(result.action).toBe('unknown');
   });
 });

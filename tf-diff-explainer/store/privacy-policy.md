@@ -4,7 +4,7 @@ _Last updated: 2026-05-30_
 
 ## What this extension does
 
-TF Diff Explainer is a Chrome extension that injects a sidebar into GitHub Pull Request and GitLab Merge Request pages when Terraform (`.tf`) files are present in the diff. It provides local risk analysis and, optionally, AI-generated summaries via the Anthropic API.
+TF Diff Explainer is a Chrome extension that injects a sidebar into GitHub Pull Request and GitLab Merge Request pages when supported code or configuration files are present in the diff. Terraform (`.tf`) changes receive local infrastructure risk analysis and, optionally, AI-generated summaries via the Anthropic API.
 
 ## Data stored locally
 
@@ -22,7 +22,7 @@ Enterprise deployments may additionally supply an API key and host restrictions 
 
 When an API key is configured and the extension is enabled, a request is sent to `https://api.anthropic.com` containing:
 
-- A structured summary of the Terraform attribute changes visible in the current diff (resource types, attribute names, and sanitised values — sensitive attributes such as passwords are replaced with `<sensitive>` before transmission)
+- A structured summary of supported parsed changes visible in the current diff. Terraform resource changes include resource types, attribute names, and sanitised values; sensitive attributes such as passwords are replaced with `<sensitive>` before transmission.
 - The Claude model identifier (`claude-haiku-4-5-20251001`)
 
 No personally identifiable information, no GitHub/GitLab credentials, no repository metadata, and no raw source code is ever transmitted.
@@ -44,4 +44,4 @@ All locally stored data (API key, site list, cached summaries) can be cleared at
 
 ## Contact
 
-For questions or concerns, open an issue at <https://github.com/Karthikbangari/Terraf/issues>.
+For questions or concerns, open an issue at <https://github.com/Karthikbangari/Git-Exp/issues>.

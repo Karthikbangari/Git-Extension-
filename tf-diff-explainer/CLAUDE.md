@@ -15,17 +15,17 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                | Value                                                                                   |
-| -------------------- | --------------------------------------------------------------------------------------- |
-| Last active session  | 2026-05-30                                                                              |
-| Active phase         | Phase 4 — complete · new project (GitHub Repo File Explainer) in scoping                |
-| Phase 1–4 status     | All sealed ✅                                                                           |
-| Last commit          | `154178c` — docs: CLAUDE.md session handoff                                             |
-| Last build           | build ✅ · tests 127/127 ✅ · format ✅ · lint ❌ BUG-17 pre-existing only              |
-| Next action (Codex)  | Commit BP-011 + BP-012 changes (11 files uncommitted); CWS submission by user           |
-| Next action (Claude) | Write BP-013 for new GitHub Repo File Explainer Phase 1 scaffold when user says go      |
-| Open bugs            | BUG-17 — pre-existing lint in `master.ts` + `take-screenshots.mjs` (not Claude's files) |
-| Blocked              | No                                                                                      |
+| Field                | Value                                                                              |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| Last active session  | 2026-05-30                                                                         |
+| Active phase         | Phase 4 — complete · new project (GitHub Repo File Explainer) in scoping           |
+| Phase 1–4 status     | All sealed ✅                                                                      |
+| Last commit          | `154178c` — docs: CLAUDE.md session handoff                                        |
+| Last build           | build ✅ · tests 129/129 ✅ · format ✅ · lint ✅                                  |
+| Next action (Codex)  | Review/commit BUG-13/17/18 fixes; CWS submission by user                           |
+| Next action (Claude) | Write BP-013 for new GitHub Repo File Explainer Phase 1 scaffold when user says go |
+| Open bugs            | None                                                                               |
+| Blocked              | No                                                                                 |
 
 ### What was built and confirmed
 
@@ -43,13 +43,13 @@ Every change — even a one-line bug fix — must follow: BP proposal in `Build.
 
 ### CWS submission checklist (user action required)
 
-| Step                | Asset                                                                                                    | Status   |
-| ------------------- | -------------------------------------------------------------------------------------------------------- | -------- |
-| Zip                 | `tf-diff-explainer/web-ext-artifacts/tf_diff_explainer-1.0.0.zip`                                        | ✅ Ready |
-| Screenshots         | `tf-diff-explainer/store/screenshots/` (3 × 1280×800)                                                    | ✅ Ready |
-| Listing copy        | `tf-diff-explainer/store/listing.md`                                                                     | ✅ Ready |
-| Privacy policy URL  | `https://raw.githubusercontent.com/Karthikbangari/Terraf/main/tf-diff-explainer/store/privacy-policy.md` | ✅ Live  |
-| CWS dashboard login | Requires user's Google account                                                                           | ⏳ User  |
+| Step                | Asset                                                                                                     | Status   |
+| ------------------- | --------------------------------------------------------------------------------------------------------- | -------- |
+| Zip                 | `tf-diff-explainer/web-ext-artifacts/tf_diff_explainer-1.0.0.zip`                                         | ✅ Ready |
+| Screenshots         | `tf-diff-explainer/store/screenshots/` (3 × 1280×800)                                                     | ✅ Ready |
+| Listing copy        | `tf-diff-explainer/store/listing.md`                                                                      | ✅ Ready |
+| Privacy policy URL  | `https://raw.githubusercontent.com/Karthikbangari/Git-Exp/main/tf-diff-explainer/store/privacy-policy.md` | ✅ Live  |
+| CWS dashboard login | Requires user's Google account                                                                            | ⏳ User  |
 
 Dashboard: https://chrome.google.com/webstore/devconsole
 

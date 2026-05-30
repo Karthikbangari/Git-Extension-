@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "TF Diff Explainer",
   "version": "1.0.0",
-  "description": "Explains Terraform diffs on GitHub PRs and GitLab MRs with risk analysis and AI summaries",
-  "homepage_url": "https://github.com/Karthikbangari/Terraf",
+  "description": "Explains code and Terraform diffs on GitHub PRs and GitLab MRs with risk analysis and AI summaries",
+  "homepage_url": "https://github.com/Karthikbangari/Git-Exp",
   "minimum_chrome_version": "120",
   "permissions": ["storage", "activeTab"],
   "host_permissions": [

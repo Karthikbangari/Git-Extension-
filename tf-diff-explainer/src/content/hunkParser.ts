@@ -1,4 +1,4 @@
-import { isGitHubPR } from './pageDetector';
+import { isGitHubPR, isSupportedFilePath } from './pageDetector';
 import type { ResourceChange, AttributeChange, ActionType } from './types';
 
 export type LineKind = 'added' | 'removed' | 'context';
@@ -26,7 +26,7 @@ export function scrapeGitHub(): FileRecord[] {
   const allFiles = document.querySelectorAll<HTMLElement>('.file');
   if (allFiles.length === 0) return [];
 
-  const tfContainers: Array<{ container: HTMLElement; filePath: string }> = [];
+  const supportedContainers: Array<{ container: HTMLElement; filePath: string }> = [];
   for (const container of allFiles) {
     // data-path may be on the container, a nested element (older GitHub), or absent entirely
     // (current GitHub). Fall back to the link title and text in .file-header.
@@ -36,11 +36,11 @@ export function scrapeGitHub(): FileRecord[] {
       container.querySelector<HTMLElement>('.file-header a[title]')?.getAttribute('title') ??
       container.querySelector<HTMLElement>('.file-header .Truncate-text')?.textContent?.trim() ??
       '';
-    if (filePath.endsWith('.tf')) tfContainers.push({ container, filePath });
+    if (isSupportedFilePath(filePath)) supportedContainers.push({ container, filePath });
   }
-  if (tfContainers.length === 0) return [];
+  if (supportedContainers.length === 0) return [];
 
-  return tfContainers.flatMap(({ container, filePath }) => {
+  return supportedContainers.flatMap(({ container, filePath }) => {
     if (!filePath) return [];
 
     const lines: LineRecord[] = [];
@@ -64,7 +64,7 @@ export function scrapeGitLab(): FileRecord[] {
   return Array.from(containers).flatMap((container) => {
     const titleEl = container.querySelector<HTMLElement>('.file-title-name');
     const filePath = titleEl?.textContent?.trim() ?? '';
-    if (!filePath.endsWith('.tf')) return [];
+    if (!isSupportedFilePath(filePath)) return [];
 
     const lines: LineRecord[] = [];
     for (const holder of container.querySelectorAll<HTMLElement>('.line_holder')) {

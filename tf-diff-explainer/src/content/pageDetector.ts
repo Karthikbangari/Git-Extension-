@@ -26,7 +26,7 @@ export const SUPPORTED_EXTENSIONS = [
   '.md',
 ];
 
-function hasMatchingExtension(filePath: string): boolean {
+export function isSupportedFilePath(filePath: string): boolean {
   const lower = filePath.toLowerCase();
   return SUPPORTED_EXTENSIONS.some((ext) => lower.endsWith(ext));
 }
@@ -56,12 +56,12 @@ export function hasTerraformDiff(): boolean {
   for (const header of document.querySelectorAll('.file-header')) {
     if (header.querySelector(titleSelector)) return true;
     const text = header.querySelector('.Truncate-text')?.textContent?.trim() ?? '';
-    if (hasMatchingExtension(text)) return true;
+    if (isSupportedFilePath(text)) return true;
   }
 
   // GitLab
   for (const el of document.querySelectorAll('.diff-file-changes .file-title-name')) {
-    if (hasMatchingExtension(el.textContent?.trim() ?? '')) return true;
+    if (isSupportedFilePath(el.textContent?.trim() ?? '')) return true;
   }
   return false;
 }

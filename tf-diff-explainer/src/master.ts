@@ -146,43 +146,27 @@ async function setCachedAnalysis(
       [cacheKey(url)]: { changes, graph: serializeGraph(graph) },
     });
   } catch {
-    // Analysis can still render when the ephemeral cache is unavailable.
+    // Fail-open: Analysis can still render when the ephemeral cache is unavailable.
   }
 }
 
 async function clearCachedAnalysis(url: string): Promise<void> {
   try {
     await chrome.storage.session.remove(cacheKey(url));
-  } catch {}
+  } catch {
+    // Session cache removal is best-effort.
+  }
 }
 
 async function getApiKey(): Promise<string | null> {
   try {
     const { apiKey: managedKey } = await chrome.storage.managed.get('apiKey');
     if (managedKey) return managedKey as string;
-  } catch {
-    // managed storage unavailable
+  } catch (e) {
+    /* Managed storage unavailable or not supported in this environment */
   }
   const { apiKey } = await chrome.storage.local.get('apiKey');
   return (apiKey as string) || null;
-}
-
-async function isManagedApiKey(): Promise<boolean> {
-  try {
-    const { apiKey } = await chrome.storage.managed.get('apiKey');
-    return !!apiKey;
-  } catch {
-    return false;
-  }
-}
-
-async function isManagedDisabledHosts(): Promise<boolean> {
-  try {
-    const { disabledHosts } = await chrome.storage.managed.get('disabledHosts');
-    return Array.isArray(disabledHosts);
-  } catch {
-    return false;
-  }
 }
 
 async function isEnabledForHost(host: string): Promise<boolean> {
@@ -191,16 +175,11 @@ async function isEnabledForHost(host: string): Promise<boolean> {
     if (Array.isArray(managedDisabled)) {
       return !(managedDisabled as string[]).includes(host);
     }
-  } catch {}
+  } catch {
+    // Managed policy lookup failed, falling back to local storage.
+  }
   const { disabledHosts = [] } = await chrome.storage.local.get('disabledHosts');
   return !(disabledHosts as string[]).includes(host);
-}
-
-async function toggleHost(host: string, enabled: boolean): Promise<void> {
-  const { disabledHosts = [] } = await chrome.storage.local.get('disabledHosts');
-  const current = disabledHosts as string[];
-  const updated = enabled ? current.filter((h) => h !== host) : [...new Set([...current, host])];
-  await chrome.storage.local.set({ disabledHosts: updated });
 }
 
 function aiCacheKey(hash: string): string {
@@ -408,12 +387,6 @@ function parseFileRecord(record: FileRecord): ResourceChange[] {
   });
 }
 
-function extractChanges(records: FileRecord[]): ResourceChange[] {
-  const results: ResourceChange[] = [];
-  for (const record of records) results.push(...parseFileRecord(record));
-  return results;
-}
-
 async function parseDiff(): Promise<ResourceChange[]> {
   try {
     const records = isGitHubPR() ? scrapeGitHub() : scrapeGitLab();
@@ -433,7 +406,7 @@ async function parseDiff(): Promise<ResourceChange[]> {
       requestIdleCallback(step);
     });
   } catch {
-    return [];
+    return []; // Return empty on parse failure to prevent sidebar crash
   }
 }
 
@@ -911,7 +884,11 @@ function updateSidebar(results: ResourceChange[]): void {
         if (counts[key] === 0) continue;
         const chip = document.createElement('span');
         chip.className = `tfe-chip ${cls}`;
-        chip.innerHTML = `<span class="tfe-chip-count">${counts[key]}</span> ${label}`;
+        const countSpan = document.createElement('span');
+        countSpan.className = 'tfe-chip-count';
+        countSpan.textContent = String(counts[key]);
+        chip.appendChild(countSpan);
+        chip.appendChild(document.createTextNode(` ${label}`));
         riskSummary.appendChild(chip);
       }
     }
@@ -1195,7 +1172,7 @@ function updateAISummary(state: AISummaryResult | null | 'loading' | 'no-key' | 
       setTimeout(() => navObserver?.disconnect(), 5000);
     });
   } catch {
-    // Swallow silently — errors must not surface to the host PR page
+    /* Error boundary: suppress failures to ensure host page functionality is never impacted */
   }
 })();
 

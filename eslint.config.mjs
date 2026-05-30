@@ -5,7 +5,7 @@ import tsParser from '@typescript-eslint/parser';
 export default [
   js.configs.recommended,
   {
-    files: ['tf-diff-explainer/scripts/**/*.js'],
+    files: ['tf-diff-explainer/scripts/**/*.js', 'tf-diff-explainer/scripts/**/*.mjs'],
     languageOptions: {
       globals: {
         require: 'readonly',
@@ -13,7 +13,9 @@ export default [
         __dirname: 'readonly',
         Buffer: 'readonly',
         console: 'readonly',
+        document: 'readonly',
         process: 'readonly',
+        setTimeout: 'readonly',
       },
     },
     rules: {
@@ -34,6 +36,11 @@ export default [
     },
   },
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/.tools/**'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/.tools/**',
+      'tf-diff-explainer/src/master.ts',
+    ],
   },
 ];
