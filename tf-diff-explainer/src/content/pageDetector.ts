@@ -14,13 +14,18 @@ export function isSupportedPage(url = location.href): boolean {
 }
 
 export function hasTerraformDiff(): boolean {
-  const githubFiles = document.querySelectorAll(
-    '[data-path$=".tf"], .file-header[data-path$=".tf"]'
-  );
-  if (githubFiles.length > 0) return true;
+  // Fast path: data-path attribute present (older GitHub, some GitLab)
+  if (document.querySelector('[data-path$=".tf"], .file-header[data-path$=".tf"]')) return true;
 
-  const gitlabFiles = document.querySelectorAll('.diff-file-changes .file-title-name');
-  for (const el of gitlabFiles) {
+  // Current GitHub: filename lives in a[title] or .Truncate-text inside .file-header
+  for (const header of document.querySelectorAll('.file-header')) {
+    if (header.querySelector('a[title$=".tf"]')) return true;
+    const text = header.querySelector('.Truncate-text')?.textContent?.trim() ?? '';
+    if (text.endsWith('.tf')) return true;
+  }
+
+  // GitLab
+  for (const el of document.querySelectorAll('.diff-file-changes .file-title-name')) {
     if (el.textContent?.trim().endsWith('.tf')) return true;
   }
   return false;
