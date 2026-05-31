@@ -250,6 +250,9 @@ export async function fetchRawGitHubContent(
   const match = pathname.match(/^\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/);
   if (!match) return null;
   const [, owner, repo, branch, path] = match;
+  if (isBinaryExtension(path)) {
+    return { filePath: path, language: detectLanguage(path), lines: [], isBinary: true };
+  }
   const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
 
   return new Promise((resolve) => {

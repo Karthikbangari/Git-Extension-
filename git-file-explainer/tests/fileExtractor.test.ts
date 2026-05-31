@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   detectLanguage,
   estimateTokens,
+  fetchRawGitHubContent,
   GitHubDomExtractor,
   GitLabDomExtractor,
 } from '../src/content/fileExtractor';
@@ -227,6 +228,34 @@ describe('GitHubDomExtractor.extract', () => {
 
     const result = new GitHubDomExtractor().extract();
     expect(result?.language).toBe('Terraform');
+  });
+});
+
+describe('fetchRawGitHubContent', () => {
+  it('marks binary raw-fallback paths without fetching bytes', async () => {
+    const originalChrome = globalThis.chrome;
+    let sentMessage = false;
+    globalThis.chrome = {
+      runtime: {
+        sendMessage: () => {
+          sentMessage = true;
+        },
+      },
+    } as unknown as typeof chrome;
+
+    const result = await fetchRawGitHubContent(
+      'https://github.com/owner/repo/blob/main/image.png',
+      '/owner/repo/blob/main/image.png'
+    );
+
+    expect(result).toEqual({
+      filePath: 'image.png',
+      language: 'PNG',
+      lines: [],
+      isBinary: true,
+    });
+    expect(sentMessage).toBe(false);
+    globalThis.chrome = originalChrome;
   });
 });
 
