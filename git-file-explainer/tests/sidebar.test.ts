@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   injectSidebar,
   removeSidebar,
+  setModeChangeHandler,
+  setSidebarModeToggle,
   updateQAAnswer,
   updateSidebar,
 } from '../src/content/sidebar';
@@ -115,5 +117,147 @@ describe('sidebar Q&A UI', () => {
     injectSidebar();
     updateSidebar('no-key');
     expect(document.querySelector('.gfe-share-btn')).toBeNull();
+  });
+});
+
+describe('sidebar mode toggle', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('renders Developer button as active by default', () => {
+    injectSidebar();
+    const devBtn = document.querySelector('.gfe-mode-dev');
+    const bizBtn = document.querySelector('.gfe-mode-biz');
+    expect(devBtn?.classList.contains('gfe-mode-active')).toBe(true);
+    expect(bizBtn?.classList.contains('gfe-mode-active')).toBe(false);
+  });
+
+  it('clicking Business button makes it active and deactivates Developer', () => {
+    injectSidebar();
+    document.querySelector<HTMLElement>('.gfe-mode-biz')!.click();
+    expect(document.querySelector('.gfe-mode-biz')?.classList.contains('gfe-mode-active')).toBe(
+      true
+    );
+    expect(document.querySelector('.gfe-mode-dev')?.classList.contains('gfe-mode-active')).toBe(
+      false
+    );
+    expect(
+      document.querySelector('.gfe-mode-toggle')?.classList.contains('gfe-mode-biz-active')
+    ).toBe(true);
+  });
+
+  it('fires the registered mode-change handler with the new audience', () => {
+    injectSidebar();
+    let fired: string | null = null;
+    setModeChangeHandler((aud) => {
+      fired = aud;
+    });
+    document.querySelector<HTMLElement>('.gfe-mode-biz')!.click();
+    expect(fired).toBe('non-technical');
+  });
+
+  it('setSidebarModeToggle reflects stored audience in the toggle', () => {
+    injectSidebar();
+    setSidebarModeToggle('non-technical');
+    expect(document.querySelector('.gfe-mode-biz')?.classList.contains('gfe-mode-active')).toBe(
+      true
+    );
+    expect(
+      document.querySelector('.gfe-mode-toggle')?.classList.contains('gfe-mode-biz-active')
+    ).toBe(true);
+    setSidebarModeToggle('developer');
+    expect(document.querySelector('.gfe-mode-dev')?.classList.contains('gfe-mode-active')).toBe(
+      true
+    );
+    expect(
+      document.querySelector('.gfe-mode-toggle')?.classList.contains('gfe-mode-biz-active')
+    ).toBe(false);
+  });
+
+  it('mode toggle persists across updateSidebar calls', () => {
+    injectSidebar();
+    document.querySelector<HTMLElement>('.gfe-mode-biz')!.click();
+    updateSidebar({ summary: 'x', keyPoints: [], complexity: 'low' }, () => {});
+    expect(document.querySelector('.gfe-mode-biz')?.classList.contains('gfe-mode-active')).toBe(
+      true
+    );
+  });
+});
+
+describe('sidebar accordion', () => {
+  const noop = () => {};
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('Summary accordion is open by default', () => {
+    injectSidebar();
+    updateSidebar(
+      { summary: 'Handles auth.', keyPoints: ['Validates JWT'], complexity: 'low' },
+      noop
+    );
+    const accItems = document.querySelectorAll('.gfe-acc');
+    expect(accItems[0]?.classList.contains('gfe-acc-open')).toBe(true);
+  });
+
+  it('Key Points accordion is closed by default', () => {
+    injectSidebar();
+    updateSidebar({ summary: 'x', keyPoints: ['point one'], complexity: 'low' }, noop);
+    const accItems = document.querySelectorAll('.gfe-acc');
+    expect(accItems[1]?.classList.contains('gfe-acc-open')).toBe(false);
+  });
+
+  it('clicking a closed accordion header opens it', () => {
+    injectSidebar();
+    updateSidebar({ summary: 'x', keyPoints: ['point one'], complexity: 'low' }, noop);
+    const kpAcc = document.querySelectorAll('.gfe-acc')[1] as HTMLElement;
+    (kpAcc.querySelector('.gfe-acc-head') as HTMLElement).click();
+    expect(kpAcc.classList.contains('gfe-acc-open')).toBe(true);
+  });
+
+  it('clicking an open accordion header closes it', () => {
+    injectSidebar();
+    updateSidebar({ summary: 'x', keyPoints: [], complexity: 'low' }, noop);
+    const sumAcc = document.querySelector('.gfe-acc') as HTMLElement;
+    (sumAcc.querySelector('.gfe-acc-head') as HTMLElement).click();
+    expect(sumAcc.classList.contains('gfe-acc-open')).toBe(false);
+  });
+});
+
+describe('sidebar quick actions', () => {
+  const noop = () => {};
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('renders four quick action buttons', () => {
+    injectSidebar();
+    updateSidebar({ summary: 'x', keyPoints: [], complexity: 'low' }, noop);
+    expect(document.querySelectorAll('.gfe-quick-btn').length).toBe(4);
+  });
+
+  it('Find Bugs button fills the Q&A input', () => {
+    injectSidebar();
+    updateSidebar({ summary: 'x', keyPoints: [], complexity: 'low' }, noop);
+    const findBugsBtn = Array.from(document.querySelectorAll<HTMLElement>('.gfe-quick-btn')).find(
+      (b) => b.textContent?.includes('Find Bugs')
+    )!;
+    findBugsBtn.click();
+    const input = document.querySelector<HTMLTextAreaElement>('.gfe-qa-input');
+    expect(input?.value).toBe('Find bugs and issues in this file');
+  });
+
+  it('Security Scan button fills the Q&A input', () => {
+    injectSidebar();
+    updateSidebar({ summary: 'x', keyPoints: [], complexity: 'low' }, noop);
+    const secBtn = Array.from(document.querySelectorAll<HTMLElement>('.gfe-quick-btn')).find((b) =>
+      b.textContent?.includes('Security Scan')
+    )!;
+    secBtn.click();
+    const input = document.querySelector<HTMLTextAreaElement>('.gfe-qa-input');
+    expect(input?.value).toBe('Are there any security vulnerabilities in this file?');
   });
 });

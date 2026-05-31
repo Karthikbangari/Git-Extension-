@@ -6,6 +6,9 @@ import {
   updateQAAnswer,
   appendQAChunk,
   removeSidebar,
+  setModeChangeHandler,
+  setRerunHandler,
+  setSidebarModeToggle,
 } from './sidebar/index';
 import {
   isEnabledForHost,
@@ -14,6 +17,7 @@ import {
   getCachedSummaryWithMeta,
   setCachedSummary,
   getAudience,
+  setAudience,
   getAutoTrigger,
   getCustomGitLabDomain,
 } from '../utils/storage';
@@ -70,6 +74,7 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, streamQAAnswer } from './
       return;
     }
     const audience = await getAudience();
+    setSidebarModeToggle(audience);
 
     // Streaming Q&A with prior summary context
     let currentSummaryText: string | undefined;
@@ -181,6 +186,17 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, streamQAAnswer } from './
     if (!enabled || !repoEnabled) return;
 
     const autoTrigger = await getAutoTrigger();
+
+    // Register mode-change and rerun handlers for this page's run() closure
+    setModeChangeHandler(async (newAudience) => {
+      await setAudience(newAudience);
+      removeSidebar();
+      void run();
+    });
+    setRerunHandler(() => {
+      removeSidebar();
+      void run();
+    });
 
     let triggered = false;
     const triggerExplain = () => {

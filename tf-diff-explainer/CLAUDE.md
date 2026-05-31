@@ -19,8 +19,8 @@ No exceptions.
 | -------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Last active session  | 2026-05-31                                                                                                 |
 | Active phase         | GFE Maintenance / CWS submission (TFE archived)                                                            |
-| Last commit          | `e0bc5ef` — Codex (feat: add GFE token estimate and Claude.ai share)                                       |
-| Last build           | GFE realtime file-type screenshots verified ✅ · GFE tests 113/113 ✅ · TFE archived/background            |
+| Last commit          | `a5a82b3` — Codex (docs: update GFE auto trigger verification)                                             |
+| Last build           | BP-024 built by Claude; awaiting Codex commit/smoke ✅ · GFE tests 125/125 ✅ · TFE tests 191/191 ✅       |
 | Lint / format        | ✅ clean                                                                                                   |
 | Uncommitted          | None — working tree clean                                                                                  |
 | Next action (Codex)  | Chrome Web Store packaging/submission support if user asks; commit any new docs/assets from other agents   |
@@ -33,14 +33,14 @@ No exceptions.
 ### What was built this session
 
 - **GFE Project Pivot (2026-05-31) ✅**: Git File Explainer (GFE) is now the sole primary extension; TF Diff Explainer (TFE) is archived.
-- **GFE realtime file-type screenshots verified ✅**: Codex opened all 22 real GitHub sample blob URLs with `git-file-explainer/dist` loaded, captured screenshots into `git-file-explainer/realtime-screenshots/supported-file-types/`, and fixed Markdown preview pages by allowing the raw GitHub fallback in CSP. Result: 22 pass, 0 warn, 0 fail. GFE tests 113/113.
+- **BP-024 built by Claude ✅**: Git Repo Genius side-panel visual redesign for GFE. Dark canvas/glass header, 480px panel, mode toggle, accordion explanation sections, quick actions, chat-bubble Q&A styling, and handler wiring. Google Fonts remote import was removed; system fonts are used. Codex verification so far: GFE tests 125/125 ✅, TFE tests 191/191 ✅, GFE build ✅, lint ✅. Awaiting Codex commit/push and the 10-step smoke checklist.
+- **GFE realtime file-type screenshots verified ✅**: Codex opened all 22 real GitHub sample blob URLs with `git-file-explainer/dist` loaded, captured screenshots into `git-file-explainer/realtime-screenshots/supported-file-types/`, and fixed Markdown preview pages via raw GitHub fallback. Result: 22 pass, 0 warn, 0 fail. GFE tests 113/113 before BP-024.
 - **BP-023 built and tested ✅**: GFE Final Gaps. Token estimate chip (`~N tokens`) in sidebar; "↗ Open in Claude.ai" share button copies prompt and opens Claude.ai via `window.open` (addressing Codex security feedback).
 - **BP-017 built, committed, pushed, and smoke-tested ✅**: TFE interactive 5-step UX flow. New `stepper.ts` (fixed bottom bar, 5 steps, Back/Next). Full sidebar rewrite: `showSetupPanel` (step 2 — API key + site toggle inline), `showAnalyzing` (step 3 — compact header + skeleton), `showRiskMap` (step 4 — compact header + gradient risk bar + redesigned diff cards), `showAIReview` (step 5 — inline HIGH/MEDIUM badges). Orchestrator rewritten as step state machine. Added `setApiKey` to storage. 62 new tests. TFE 191/191 · GFE 81/81 · build ✅ · lint ✅ · format ✅. Committed in `dbc7a9a`, log updates in `4926acd` and `f6558c2`.
 - **GFE BP-018..BP-022 built, committed, and smoke-tested at baseline ✅**: content foundation, cache/fallback, dual-mode rich cards, streaming Q&A plumbing, copy/export, token meter, and self-hosted GitLab support are included in `dbc7a9a`. Basic live GFE smoke passed on GitHub blob page: sidebar injected, `package.json` / `JSON` header rendered, current GitHub `code-cell` DOM detected, no-key state shown. Deeper API-key-dependent live checks remain optional/manual: streaming Q&A, copy buttons after a successful summary, token meter after API use, and binary skip on a binary blob target.
 - **BP-016 sealed ✅**: GFE Chrome Web Store prep. Committed `793db47`. GFE 79/79 · TFE 129/129.
 - **BP-015 sealed ✅**: GFE Phase 3 — GitLab blob activation/extraction + Q&A sidebar. Committed `e5ec584`. Gemini live DOM smoke passed (GitHub + GitLab blob pages, entry #65). GFE 73/73 · TFE 129/129 · build ✅ · lint ✅ · format ✅.
 - **BP-016 sealed ✅**: GFE Phase 4 — Polish + Ship. Committed `793db47`. `manifest.json` v1.0.0, `"tabs"` dropped, `managed_schema.json` added, `store/listing.md` + `store/privacy-policy.md` created, `popup.test.ts` regression added, idempotent `web-ext:build:gfe` script with `--overwrite-dest`. GFE 79/79 · TFE 129/129 · zip `git_file_explainer-1.0.0.zip` ✅.
-- **README docs updated** (uncommitted — awaiting Codex commit): root `README.md` now lists 22 TFE formats with Terraform-specific callouts, GFE v1.0.0 ✅, test count 129. `git-file-explainer/README.md` updated to v1.0.0, adds Q&A + enterprise policy, GitLab support table, GitLab extraction section, all 4 phases ✅ Done, correct test file list.
 
 ### GFE Phase 1 key facts (for Phase 2 planning)
 
@@ -169,7 +169,7 @@ tf-diff-explainer/dist/
 
 - Extension pages: `script-src 'self'; object-src 'self'` — no `unsafe-eval`, no `unsafe-inline`
 - No inline `<script>` blocks in HTML — all JS referenced by `src` attribute
-- Before Phase 3: add `connect-src https://api.anthropic.com` to manifest CSP block
+- CSP must include `connect-src https://api.anthropic.com https://raw.githubusercontent.com`
 
 ### 3. Service Worker Rules
 
@@ -201,7 +201,7 @@ tf-diff-explainer/dist/
 
 ### 7. External API Calls (Phase 3+)
 
-- Calls to `api.anthropic.com` from content script via `fetch()` — key read from storage at call time
+- Calls to `api.anthropic.com` and `raw.githubusercontent.com` proxied through background service worker
 - Implement: rate limiting, error states (auth failure, timeout, rate limit), response cache per diff hash
 - Token budget: keep prompts under 2k tokens
 
