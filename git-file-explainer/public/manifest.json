@@ -9,7 +9,8 @@
   "host_permissions": [
     "https://github.com/*",
     "https://gitlab.com/*",
-    "https://api.anthropic.com/*"
+    "https://api.anthropic.com/*",
+    "https://raw.githubusercontent.com/*"
   ],
   "background": {
     "service_worker": "background.js"

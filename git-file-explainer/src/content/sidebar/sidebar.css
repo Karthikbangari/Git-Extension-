@@ -402,3 +402,185 @@
     border-color: #4a1a1a;
   }
 }
+
+/* ── File meta (filename + language badge in header) ─── */
+
+.gfe-title-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.gfe-file-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gfe-filename {
+  font-size: 11px;
+  color: #c9d1d9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.gfe-lang-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.gfe-collapsed .gfe-title-group {
+  display: none;
+}
+
+/* ── Notices ─────────────────────────────────────────── */
+
+.gfe-truncated-notice {
+  font-size: 11px;
+  color: #9a6700;
+  background: #fff8c5;
+  border: 1px solid #eac54f;
+  border-radius: 5px;
+  padding: 5px 8px;
+  line-height: 1.4;
+}
+
+.gfe-cached-badge {
+  font-size: 10px;
+  color: #1a7f37;
+  background: #dafbe1;
+  border-radius: 10px;
+  padding: 2px 8px;
+  align-self: flex-start;
+}
+
+/* ── Rich cards ──────────────────────────────────────── */
+
+.gfe-analogy {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #0550ae;
+  background: #ddf4ff;
+  border: 1px solid #b6e3ff;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-style: italic;
+}
+
+.gfe-watchout-item {
+  color: #9a3412;
+}
+
+/* ── Suggested question chips ────────────────────────── */
+
+.gfe-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.gfe-question-chip {
+  font-size: 11px;
+  padding: 3px 10px;
+  border: 1px solid #d0d7de;
+  border-radius: 12px;
+  background: #f6f8fa;
+  color: #24292f;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  white-space: nowrap;
+}
+
+.gfe-question-chip:hover {
+  background: #e8f0fe;
+  border-color: #0969da;
+  color: #0969da;
+}
+
+/* ── Copy buttons ────────────────────────────────────── */
+
+.gfe-copy-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.gfe-copy-btn {
+  font-size: 11px;
+  padding: 4px 10px;
+  border: 1px solid #d0d7de;
+  border-radius: 5px;
+  background: #f6f8fa;
+  color: #24292f;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.gfe-copy-btn:hover {
+  background: #e8f0fe;
+  border-color: #0969da;
+  color: #0969da;
+}
+
+/* ── Dark mode additions ─────────────────────────────── */
+
+@media (prefers-color-scheme: dark) {
+  .gfe-truncated-notice {
+    background: #2d2000;
+    color: #e3b341;
+    border-color: #5a3e00;
+  }
+
+  .gfe-cached-badge {
+    background: #0d2a1a;
+    color: #3fb950;
+  }
+
+  .gfe-analogy {
+    background: #0c2d48;
+    color: #79c0ff;
+    border-color: #1158a7;
+  }
+
+  .gfe-watchout-item {
+    color: #f0883e;
+  }
+
+  .gfe-question-chip {
+    background: #21262d;
+    border-color: #30363d;
+    color: #e6edf3;
+  }
+
+  .gfe-question-chip:hover {
+    background: #1f3a5f;
+    border-color: #388bfd;
+    color: #79c0ff;
+  }
+
+  .gfe-copy-btn {
+    background: #21262d;
+    border-color: #30363d;
+    color: #e6edf3;
+  }
+
+  .gfe-copy-btn:hover {
+    background: #1f3a5f;
+    border-color: #388bfd;
+    color: #79c0ff;
+  }
+}

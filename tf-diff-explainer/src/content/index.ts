@@ -2,75 +2,79 @@ import {
   isEnabledForHost,
   getCachedAnalysis,
   setCachedAnalysis,
-  clearCachedAnalysis,
   getApiKey,
+  setApiKey,
   getCachedAISummary,
   setCachedAISummary,
+  toggleHost,
 } from '../utils/storage';
 import { isSupportedPage, hasTerraformDiff, watchForNavigation } from './pageDetector';
 import {
   injectSidebar,
-  updateSidebar,
-  updateMinimap,
+  showSetupPanel,
+  showAnalyzing,
+  showRiskMap,
+  showAIReview,
   removeSidebar,
-  updateAISummary,
 } from './sidebar/index';
+import { injectStepper, setStepperStep, removeStepper } from './stepper';
 import { parseDiff } from './hunkParser';
 import { classifyRisks } from './riskClassifier';
 import { buildDependencyGraph } from './refParser';
 import { fetchAISummary, generateDiffHash } from './aiSummary';
+import type { ResourceChange } from './types';
 
 (async function init() {
   const host = location.hostname;
+
+  type Step = 1 | 2 | 3 | 4 | 5;
+  let currentStep: Step = 1;
   let generation = 0;
+  let analysisResults: ResourceChange[] = [];
+  let analysisComplete = false;
 
-  const runAnalysis = async () => {
-    const gen = ++generation;
-
-    if (!hasTerraformDiff()) {
-      await clearCachedAnalysis(location.href);
-      return;
-    }
-
-    injectSidebar();
-
+  async function runAnalysis(gen: number): Promise<void> {
+    showAnalyzing();
     const cached = await getCachedAnalysis(location.href);
-    let changes, graph;
-
+    let changes: ResourceChange[];
     if (cached) {
-      ({ changes, graph } = cached);
+      changes = cached.changes;
     } else {
       changes = classifyRisks(await parseDiff());
-      graph = buildDependencyGraph(changes);
+      const graph = buildDependencyGraph(changes);
       await setCachedAnalysis(location.href, changes, graph);
     }
-
     if (gen !== generation) return;
-    updateSidebar(changes);
-    updateMinimap(changes, graph);
+    analysisResults = changes;
+    analysisComplete = true;
+    if (currentStep === 3) {
+      currentStep = 4;
+      renderStep();
+    }
+  }
 
-    // BUG-9: skip AI call when there are no parsed resource changes
-    if (changes.length === 0) return;
-
-    const apiKey = await getApiKey();
-    if (!apiKey) {
-      updateAISummary('no-key');
+  async function fetchAndShowAI(gen: number): Promise<void> {
+    showAIReview(analysisResults, 'loading');
+    if (analysisResults.length === 0) {
+      showAIReview(analysisResults, 'error');
       return;
     }
-
+    const apiKey = await getApiKey();
+    if (!apiKey) {
+      if (gen !== generation) return;
+      showAIReview(analysisResults, 'no-key');
+      return;
+    }
     if (gen !== generation) return;
-    const hash = await generateDiffHash(changes);
+    const hash = await generateDiffHash(analysisResults);
     const cachedAI = await getCachedAISummary(hash);
     if (cachedAI) {
       if (gen !== generation) return;
-      updateAISummary(cachedAI);
+      showAIReview(analysisResults, cachedAI);
       return;
     }
-
     if (gen !== generation) return;
-    updateAISummary('loading');
-    const aiResult = await fetchAISummary(changes);
-
+    const aiResult = await fetchAISummary(analysisResults);
     if (gen !== generation) return;
     if (aiResult) {
       try {
@@ -79,41 +83,110 @@ import { fetchAISummary, generateDiffHash } from './aiSummary';
         console.warn('TFE: Failed to cache AI summary', error);
       }
     }
-    updateAISummary(aiResult ?? 'error');
-  };
+    showAIReview(analysisResults, aiResult ?? 'error');
+  }
+
+  async function renderStep(): Promise<void> {
+    switch (currentStep) {
+      case 1: {
+        const gen = ++generation;
+        void gen;
+        removeSidebar();
+        setStepperStep(1, 0);
+        break;
+      }
+      case 2: {
+        ++generation;
+        const apiKey = await getApiKey();
+        const siteEnabled = await isEnabledForHost(host);
+        injectSidebar();
+        showSetupPanel(
+          host,
+          async (key) => setApiKey(key),
+          async (enabled) => toggleHost(host, enabled),
+          apiKey,
+          siteEnabled
+        );
+        setStepperStep(2, 1);
+        break;
+      }
+      case 3: {
+        const gen = ++generation;
+        analysisComplete = false;
+        setStepperStep(3, 2);
+        runAnalysis(gen);
+        break;
+      }
+      case 4: {
+        ++generation;
+        showRiskMap(analysisResults);
+        setStepperStep(4, 3);
+        break;
+      }
+      case 5: {
+        const gen = ++generation;
+        setStepperStep(5, 4);
+        fetchAndShowAI(gen);
+        break;
+      }
+    }
+  }
+
+  function advanceStep(): void {
+    if (currentStep === 5) return;
+    if (currentStep === 3 && !analysisComplete) return;
+    currentStep = (currentStep + 1) as Step;
+    renderStep();
+  }
+
+  function goBack(): void {
+    if (currentStep === 1) return;
+    currentStep = (currentStep - 1) as Step;
+    renderStep();
+  }
+
+  function startFlow(): void {
+    injectStepper(advanceStep, goBack);
+    setStepperStep(1, 0);
+  }
+
+  function teardown(): void {
+    removeSidebar();
+    removeStepper();
+    ++generation;
+    currentStep = 1;
+    analysisComplete = false;
+    analysisResults = [];
+  }
 
   try {
     if (!isSupportedPage()) return;
 
-    const enabled = await isEnabledForHost(host);
-    if (!enabled) return;
+    if (hasTerraformDiff()) {
+      startFlow();
+    }
 
-    await runAnalysis();
+    let diffObserver: MutationObserver | null = null;
 
-    let navObserver: MutationObserver | null = null;
-
-    // GitHub uses Turbo/pjax; GitLab uses Vue router — both mutate DOM without a full reload
     watchForNavigation(async (newUrl: string) => {
-      removeSidebar();
-      if (navObserver) navObserver.disconnect();
+      teardown();
+      if (diffObserver) diffObserver.disconnect();
 
       if (!isSupportedPage(newUrl)) return;
 
-      const stillEnabled = await isEnabledForHost(host);
-      if (!stillEnabled) return;
+      if (hasTerraformDiff()) {
+        startFlow();
+        return;
+      }
 
-      // Use MutationObserver to wait for the diff container to populate/stabilize
-      navObserver = new MutationObserver((_, obs) => {
+      diffObserver = new MutationObserver((_, obs) => {
         if (hasTerraformDiff()) {
           obs.disconnect();
-          runAnalysis();
+          startFlow();
         }
       });
-
-      navObserver.observe(document.body, { childList: true, subtree: true });
-
-      // Safety cleanup to prevent stale observers on pages without supported changes
-      setTimeout(() => navObserver?.disconnect(), 5000);
+      diffObserver.observe(document.body, { childList: true, subtree: true });
+      setTimeout(() => diffObserver?.disconnect(), 5000);
     });
   } catch {
     // Swallow silently — errors must not surface to the host PR page

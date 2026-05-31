@@ -15,23 +15,25 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                | Value                                                                                           |
-| -------------------- | ----------------------------------------------------------------------------------------------- |
-| Last active session  | 2026-05-31                                                                                      |
-| Active phase         | Maintenance / CWS Submission                                                                    |
-| Last commit          | `793db47` — BP-016: GFE Chrome Web Store prep                                                   |
-| Last build           | GFE Phase 4 sealed ✅ · GFE tests 79/79 ✅ · TFE tests 129/129 ✅                               |
-| Lint / format        | ✅ clean                                                                                        |
-| Uncommitted          | `README.md` + `git-file-explainer/README.md` — multi-format + v1.0.0 + Q&A doc updates          |
-| Next action (Codex)  | Commit the two README files (entry #74 in coordination log); push branch to remote              |
-| Next action (Gemini) | None pending                                                                                    |
-| Next action (Claude) | None — both extensions CWS-ready; monitor for CWS review feedback if user submits               |
-| Next action (user)   | (1) CWS submission for TFE; (2) CWS submission for GFE; (3) take screenshots for store listings |
-| Open bugs            | None                                                                                            |
-| Blocked              | None                                                                                            |
+| Field                | Value                                                                                                      |
+| -------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Last active session  | 2026-05-31                                                                                                 |
+| Active phase         | TFE — Interactive UX overhaul (BP-017 built, awaiting Codex commit)                                        |
+| Last commit          | `278689f` — Codex (GFE live-test fix)                                                                      |
+| Last build           | BP-017 built ✅ · TFE tests 191/191 ✅ · GFE tests 81/81 ✅                                                |
+| Lint / format        | ✅ clean                                                                                                   |
+| Uncommitted          | BP-017 changes: 5 modified + 3 new files in `tf-diff-explainer/` (see below)                               |
+| Next action (Codex)  | Commit BP-017 files; push to remote; load `tf-diff-explainer/dist/` in Chrome and smoke-test all 5 steps   |
+| Next action (Gemini) | Live DOM smoke on a real GitHub PR with `.tf` files — walk all 5 steps, report pass/fail                   |
+| Next action (Claude) | None — awaiting Codex/Gemini smoke results; respond if bugs found                                          |
+| Next action (user)   | (1) CWS submission for TFE; (2) CWS submission for GFE; (3) take 1280×800 screenshots for both store pages |
+| Open bugs            | None                                                                                                       |
+| Blocked              | None                                                                                                       |
 
 ### What was built this session
 
+- **BP-017 built ✅**: TFE interactive 5-step UX flow. New `stepper.ts` (fixed bottom bar, 5 steps, Back/Next). Full sidebar rewrite: `showSetupPanel` (step 2 — API key + site toggle inline), `showAnalyzing` (step 3 — compact header + skeleton), `showRiskMap` (step 4 — compact header + gradient risk bar + redesigned diff cards), `showAIReview` (step 5 — inline HIGH/MEDIUM badges). Orchestrator rewritten as step state machine. Added `setApiKey` to storage. 62 new tests. TFE 191/191 · GFE 81/81 · build ✅ · lint ✅ · format ✅. **Uncommitted** — awaiting Codex.
+- **BP-016 sealed ✅**: GFE Chrome Web Store prep. Committed `793db47`. GFE 79/79 · TFE 129/129.
 - **BP-015 sealed ✅**: GFE Phase 3 — GitLab blob activation/extraction + Q&A sidebar. Committed `e5ec584`. Gemini live DOM smoke passed (GitHub + GitLab blob pages, entry #65). GFE 73/73 · TFE 129/129 · build ✅ · lint ✅ · format ✅.
 - **BP-016 sealed ✅**: GFE Phase 4 — Polish + Ship. Committed `793db47`. `manifest.json` v1.0.0, `"tabs"` dropped, `managed_schema.json` added, `store/listing.md` + `store/privacy-policy.md` created, `popup.test.ts` regression added, idempotent `web-ext:build:gfe` script with `--overwrite-dest`. GFE 79/79 · TFE 129/129 · zip `git_file_explainer-1.0.0.zip` ✅.
 - **README docs updated** (uncommitted — awaiting Codex commit): root `README.md` now lists 22 TFE formats with Terraform-specific callouts, GFE v1.0.0 ✅, test count 129. `git-file-explainer/README.md` updated to v1.0.0, adds Q&A + enterprise policy, GitLab support table, GitLab extraction section, all 4 phases ✅ Done, correct test file list.

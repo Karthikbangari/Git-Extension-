@@ -6,28 +6,28 @@ import {
 } from '../src/content/fileExtractor';
 
 describe('detectLanguage', () => {
-  it('maps ts to typescript', () => {
-    expect(detectLanguage('src/index.ts')).toBe('typescript');
+  it('maps ts to TypeScript', () => {
+    expect(detectLanguage('src/index.ts')).toBe('TypeScript');
   });
 
-  it('maps py to python', () => {
-    expect(detectLanguage('app.py')).toBe('python');
+  it('maps py to Python', () => {
+    expect(detectLanguage('app.py')).toBe('Python');
   });
 
-  it('maps tf to terraform', () => {
-    expect(detectLanguage('main.tf')).toBe('terraform');
+  it('maps tf to Terraform', () => {
+    expect(detectLanguage('main.tf')).toBe('Terraform');
   });
 
-  it('maps yml to yaml', () => {
-    expect(detectLanguage('config.yml')).toBe('yaml');
+  it('maps yml to YAML', () => {
+    expect(detectLanguage('config.yml')).toBe('YAML');
   });
 
-  it('returns the raw extension for unrecognised types', () => {
-    expect(detectLanguage('schema.xyz')).toBe('xyz');
+  it('returns the uppercased extension for unrecognised types', () => {
+    expect(detectLanguage('schema.xyz')).toBe('XYZ');
   });
 
-  it('returns the lowercased name when there is no dot separator', () => {
-    expect(detectLanguage('Makefile')).toBe('makefile');
+  it('returns Makefile for a file named Makefile', () => {
+    expect(detectLanguage('Makefile')).toBe('Makefile');
   });
 });
 
@@ -66,7 +66,7 @@ describe('GitHubDomExtractor.extract', () => {
     const result = new GitHubDomExtractor().extract();
     expect(result).not.toBeNull();
     expect(result?.filePath).toBe('src/index.ts');
-    expect(result?.language).toBe('typescript');
+    expect(result?.language).toBe('TypeScript');
     expect(result?.lines).toEqual(['const x = 1;', 'export default x;']);
   });
 
@@ -88,7 +88,7 @@ describe('GitHubDomExtractor.extract', () => {
 
     const result = new GitHubDomExtractor().extract();
     expect(result?.lines).toEqual(['def hello():', '    print("hi")']);
-    expect(result?.language).toBe('python');
+    expect(result?.language).toBe('Python');
   });
 
   it('falls back to [data-testid="blob-code-content"] when layers 1 and 2 yield nothing', () => {
@@ -104,7 +104,7 @@ describe('GitHubDomExtractor.extract', () => {
 
     const result = new GitHubDomExtractor().extract();
     expect(result?.lines).toContain('package main');
-    expect(result?.language).toBe('go');
+    expect(result?.language).toBe('Go');
   });
 
   it('falls back to current GitHub React code cells', () => {
@@ -123,7 +123,7 @@ describe('GitHubDomExtractor.extract', () => {
     const result = new GitHubDomExtractor().extract();
     expect(result?.filePath).toBe('package.json');
     expect(result?.lines).toEqual(['{', '  "name": "terraf"', '}']);
-    expect(result?.language).toBe('json');
+    expect(result?.language).toBe('JSON');
   });
 
   it('falls back to the current GitHub file-content textarea', () => {
@@ -140,7 +140,7 @@ describe('GitHubDomExtractor.extract', () => {
 
     const result = new GitHubDomExtractor().extract();
     expect(result?.lines).toEqual(['# Project', '', 'Hello']);
-    expect(result?.language).toBe('markdown');
+    expect(result?.language).toBe('Markdown');
   });
 
   it('returns the correct language inferred from the file path', () => {
@@ -155,7 +155,7 @@ describe('GitHubDomExtractor.extract', () => {
     document.body.appendChild(td);
 
     const result = new GitHubDomExtractor().extract();
-    expect(result?.language).toBe('terraform');
+    expect(result?.language).toBe('Terraform');
   });
 });
 
@@ -182,7 +182,7 @@ describe('GitLabDomExtractor.extract', () => {
 
     const result = new GitLabDomExtractor().extract();
     expect(result?.filePath).toBe('src/main.go');
-    expect(result?.language).toBe('go');
+    expect(result?.language).toBe('Go');
     expect(result?.lines).toEqual(['package main', 'func main() {}']);
   });
 
@@ -217,7 +217,7 @@ describe('GitLabDomExtractor.extract', () => {
 
     const result = new GitLabDomExtractor().extract();
     expect(result?.lines).toEqual(['def greet', '  puts "hi"', 'end']);
-    expect(result?.language).toBe('ruby');
+    expect(result?.language).toBe('Ruby');
   });
 
   it('returns null when no file path element is found', () => {

@@ -27,14 +27,14 @@ describe('buildPrompt', () => {
     expect(prompt).toContain('package main');
   });
 
-  it('truncates content exceeding 5000 chars and adds a truncation marker', () => {
-    const longContent = 'a'.repeat(6000);
+  it('truncates content exceeding 12 000 chars and adds a truncation marker', () => {
+    const longContent = 'a'.repeat(13000);
     const prompt = buildPrompt('file.ts', 'typescript', longContent);
     expect(prompt).toContain('(truncated)');
-    expect(prompt.includes('a'.repeat(5001))).toBe(false);
+    expect(prompt.includes('a'.repeat(12001))).toBe(false);
   });
 
-  it('does not truncate content within the 5000-char limit', () => {
+  it('does not truncate content within the 12 000-char limit', () => {
     const content = 'const x = 1;';
     const prompt = buildPrompt('file.ts', 'typescript', content);
     expect(prompt).not.toContain('(truncated)');
@@ -134,7 +134,8 @@ describe('fetchQAAnswer', () => {
 
   it('sends only prompt and model in the Q&A message payload', async () => {
     respond({ content: [{ text: 'It initializes the app.' }] });
-    await fetchQAAnswer('What does this do?', 'const app = createApp();');
+    const prompt = 'What does this do? const app = createApp();';
+    await fetchQAAnswer(prompt);
 
     expect(mockSendMessage).toHaveBeenCalledWith(
       {
@@ -151,18 +152,18 @@ describe('fetchQAAnswer', () => {
 
   it('returns a trimmed answer on a valid Q&A response', async () => {
     respond({ content: [{ text: '  It validates user input.  ' }] });
-    expect(await fetchQAAnswer('What happens?', 'function validate() {}')).toBe(
+    expect(await fetchQAAnswer('What happens? function validate() {}')).toBe(
       'It validates user input.'
     );
   });
 
   it('returns null when the Q&A response has an error field', async () => {
     respond({ error: 'Missing API key' });
-    expect(await fetchQAAnswer('Why?', 'const x = 1;')).toBeNull();
+    expect(await fetchQAAnswer('Why?')).toBeNull();
   });
 
   it('returns null when the Q&A content text is absent', async () => {
     respond({ content: [{}] });
-    expect(await fetchQAAnswer('Why?', 'const x = 1;')).toBeNull();
+    expect(await fetchQAAnswer('Why?')).toBeNull();
   });
 });

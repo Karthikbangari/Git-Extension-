@@ -32,14 +32,14 @@ describe('buildQAPrompt', () => {
     expect(prompt).toContain('package main');
   });
 
-  it('truncates content exceeding 5000 chars and adds marker', () => {
-    const longContent = 'x'.repeat(6000);
+  it('truncates content exceeding 12 000 chars and adds marker', () => {
+    const longContent = 'x'.repeat(13000);
     const prompt = buildQAPrompt('?', 'file.ts', 'typescript', longContent);
     expect(prompt).toContain('(truncated)');
-    expect(prompt.includes('x'.repeat(5001))).toBe(false);
+    expect(prompt.includes('x'.repeat(12001))).toBe(false);
   });
 
-  it('does not truncate content within the 5000-char limit', () => {
+  it('does not truncate content within the 12 000-char limit', () => {
     const content = 'const ok = true;';
     const prompt = buildQAPrompt('?', 'file.ts', 'typescript', content);
     expect(prompt).not.toContain('(truncated)');

@@ -6,11 +6,22 @@ export function isGitHubFilePage(url = location.href): boolean {
 }
 
 export function isGitLabFilePage(url = location.href): boolean {
-  return GITLAB_FILE_RE.test(url);
+  if (GITLAB_FILE_RE.test(url)) return true;
+  // Support custom GitLab domains stored in the extension
+  return false;
 }
 
-export function isFilePage(url = location.href): boolean {
-  return isGitHubFilePage(url) || isGitLabFilePage(url);
+export function isCustomGitLabFilePage(url = location.href, customDomain?: string | null): boolean {
+  if (!customDomain) return false;
+  const escaped = customDomain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`^https?://${escaped}/.+/-/blob/`);
+  return re.test(url);
+}
+
+export function isFilePage(url = location.href, customDomain?: string | null): boolean {
+  return (
+    isGitHubFilePage(url) || isGitLabFilePage(url) || isCustomGitLabFilePage(url, customDomain)
+  );
 }
 
 export function watchForNavigation(callback: (url: string) => void): MutationObserver {

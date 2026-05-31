@@ -194,3 +194,145 @@ input[type='checkbox']:checked + .toggle-switch::after {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* ── Divider ────────────────────────────────────────── */
+
+.divider {
+  border: none;
+  border-top: 1px solid #d0d7de;
+  margin: 2px 0;
+}
+
+/* ── Segmented control (audience mode) ──────────────── */
+
+.segmented-control {
+  display: flex;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.seg-btn {
+  flex: 1;
+  padding: 5px 0;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  background: #f6f8fa;
+  color: #57606a;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.seg-btn:not(:last-child) {
+  border-right: 1px solid #d0d7de;
+}
+
+.seg-btn.active {
+  background: #0969da;
+  color: #ffffff;
+}
+
+.seg-btn:hover:not(.active) {
+  background: #e8f0fe;
+  color: #0969da;
+}
+
+/* ── Token meter ─────────────────────────────────────── */
+
+.token-meter {
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.token-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.token-label {
+  color: #57606a;
+}
+
+.token-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #1f2328;
+}
+
+.token-total {
+  border-top: 1px solid #d0d7de;
+  padding-top: 5px;
+  margin-top: 2px;
+}
+
+.token-total .token-label,
+.token-total .token-value {
+  color: #0969da;
+}
+
+.reset-btn {
+  font-size: 11px;
+  padding: 3px 10px;
+  border: 1px solid #d0d7de;
+  border-radius: 5px;
+  background: #f6f8fa;
+  color: #57606a;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.15s;
+}
+
+.reset-btn:hover {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #cf222e;
+}
+
+/* ── text input (GitLab domain) ──────────────────────── */
+
+input[type='text'] {
+  flex: 1;
+  padding: 6px 9px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: ui-monospace, 'SFMono-Regular', monospace;
+  background: #f6f8fa;
+  color: #1f2328;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+input[type='text']:focus {
+  outline: none;
+  border-color: #0969da;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.12);
+}
+
+button#save-gitlab {
+  padding: 6px 13px;
+  background: #0969da;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+button#save-gitlab:hover {
+  background: #0860ca;
+}

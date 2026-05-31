@@ -116,3 +116,7 @@ export async function getCachedAISummary(hash: string): Promise<AISummaryResult 
 export async function setCachedAISummary(hash: string, result: AISummaryResult): Promise<void> {
   await chrome.storage.local.set({ [aiCacheKey(hash)]: result });
 }
+
+export async function setApiKey(key: string): Promise<void> {
+  await chrome.storage.local.set({ apiKey: key });
+}

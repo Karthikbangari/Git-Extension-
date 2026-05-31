@@ -804,3 +804,803 @@
     color: #e6edf3;
   }
 }
+
+/* ── Sidebar max-height adjustment for stepper bar ─────────────────── */
+
+#tf-diff-explainer-sidebar {
+  max-height: calc(100vh - 116px); /* 60px top offset + 56px stepper */
+}
+
+/* ── Step 2: Full header ────────────────────────────────────────────── */
+
+.tfe-header-full {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+}
+
+.tfe-version {
+  font-size: 11px;
+  color: #8b949e;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Compact header (steps 3–5) ─────────────────────────────────────── */
+
+.tfe-header-compact {
+  padding: 9px 12px 8px;
+  gap: 4px;
+}
+
+.tfe-compact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tfe-compact-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f0f6fc;
+}
+
+.tfe-compact-icon {
+  font-size: 9px;
+  color: #a78bfa;
+}
+
+.tfe-compact-url {
+  font-size: 11px;
+  color: #8b949e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+/* ── Step 2: Setup panel ────────────────────────────────────────────── */
+
+.tfe-setup-banner {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 11px 13px;
+  margin-bottom: 14px;
+}
+
+.tfe-setup-banner-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #166534;
+  margin: 0 0 7px;
+}
+
+.tfe-setup-steps {
+  padding-left: 18px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tfe-setup-steps li {
+  font-size: 12px;
+  color: #1f2328;
+  line-height: 1.5;
+}
+
+.tfe-setup-steps a {
+  color: #0969da;
+}
+
+.tfe-setup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.tfe-setup-field label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #57606a;
+}
+
+.tfe-setup-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.tfe-setup-key-input {
+  flex: 1;
+  padding: 6px 9px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: ui-monospace, 'SFMono-Regular', monospace;
+  background: #f6f8fa;
+  color: #1f2328;
+  transition: border-color 0.15s;
+}
+
+.tfe-setup-key-input:focus {
+  outline: none;
+  border-color: #0969da;
+  background: #ffffff;
+}
+
+.tfe-setup-save-btn {
+  padding: 6px 13px;
+  background: #0969da;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.tfe-setup-save-btn:hover {
+  background: #0860ca;
+}
+
+.tfe-setup-hint {
+  font-size: 11px;
+  color: #57606a;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.tfe-setup-hint-success {
+  color: #1a7f37;
+}
+
+.tfe-setup-toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.tfe-setup-toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.tfe-setup-toggle-switch {
+  width: 36px;
+  height: 20px;
+  background: #d0d7de;
+  border-radius: 10px;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.tfe-setup-toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left 0.2s;
+}
+
+.tfe-setup-toggle-input:checked + .tfe-setup-toggle-switch {
+  background: #0969da;
+}
+
+.tfe-setup-toggle-input:checked + .tfe-setup-toggle-switch::after {
+  left: 18px;
+}
+
+.tfe-setup-status {
+  font-size: 11px;
+  color: #1a7f37;
+  margin: 4px 0 0;
+}
+
+.tfe-setup-status::before {
+  content: '● ';
+}
+
+/* ── Step 3: Analyzing ──────────────────────────────────────────────── */
+
+.tfe-analyzing-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #57606a;
+  letter-spacing: 0.06em;
+  margin: 0 0 12px;
+}
+
+/* ── Risk bar (steps 4–5) ───────────────────────────────────────────── */
+
+.tfe-risk-bar-wrap {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+  z-index: 1;
+}
+
+.tfe-risk-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 7px;
+}
+
+.tfe-bar-seg {
+  display: block;
+}
+
+.tfe-bar-high {
+  background: #cf222e;
+}
+
+.tfe-bar-medium {
+  background: #bf8700;
+}
+
+.tfe-bar-low {
+  background: #1a7f37;
+}
+
+.tfe-risk-chips {
+  display: flex;
+  gap: 8px;
+}
+
+.tfe-risk-chip {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tfe-risk-chip.tfe-chip-high {
+  color: #cf222e;
+}
+
+.tfe-risk-chip.tfe-chip-high::before {
+  content: '● ';
+}
+
+.tfe-risk-chip.tfe-chip-medium {
+  color: #bf8700;
+}
+
+.tfe-risk-chip.tfe-chip-medium::before {
+  content: '● ';
+}
+
+.tfe-risk-chip.tfe-chip-low {
+  color: #1a7f37;
+}
+
+.tfe-risk-chip.tfe-chip-low::before {
+  content: '● ';
+}
+
+/* ── Section heading row ────────────────────────────────────────────── */
+
+.tfe-section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 10px;
+}
+
+.tfe-section-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #57606a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tfe-section-label::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 12px;
+  background: #a78bfa;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.tfe-section-count {
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.tfe-model-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #57606a;
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 10px;
+  padding: 2px 8px;
+  letter-spacing: 0.02em;
+}
+
+/* ── Redesigned card (step 4) ───────────────────────────────────────── */
+
+.tfe-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.tfe-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.tfe-card-type {
+  font-size: 10px;
+  color: #8b949e;
+  font-family: ui-monospace, 'SFMono-Regular', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tfe-card-name {
+  font-weight: 600;
+  font-size: 12.5px;
+  color: #1f2328;
+  word-break: break-all;
+  line-height: 1.3;
+}
+
+/* ── Diff lines ─────────────────────────────────────────────────────── */
+
+.tfe-diff-lines {
+  margin: 5px 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tfe-diff-line {
+  font-family: ui-monospace, 'SFMono-Regular', monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tfe-diff-update {
+  color: #0969da;
+  background: rgba(9, 105, 218, 0.06);
+}
+
+.tfe-diff-add {
+  color: #1a7f37;
+  background: rgba(26, 127, 55, 0.06);
+}
+
+.tfe-diff-delete {
+  color: #cf222e;
+  background: rgba(207, 34, 46, 0.06);
+}
+
+/* ── Card risk reasons (new style) ──────────────────────────────────── */
+
+.tfe-card-reasons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tfe-card-reason-text {
+  font-size: 11px;
+  color: #57606a;
+  font-style: italic;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── AI review: inline risk badges ──────────────────────────────────── */
+
+.tfe-risk-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+.tfe-risk-badge {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+.tfe-risk-badge-high {
+  background: #cf222e;
+  color: #ffffff;
+}
+
+.tfe-risk-badge-medium {
+  background: #bf8700;
+  color: #ffffff;
+}
+
+.tfe-risk-badge-low {
+  background: #1a7f37;
+  color: #ffffff;
+}
+
+.tfe-risk-item-text {
+  font-size: 12px;
+  color: #57606a;
+  line-height: 1.55;
+}
+
+/* ── Stepper bar ────────────────────────────────────────────────────── */
+
+#tfe-stepper {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: #ffffff;
+  border-top: 1px solid #d0d7de;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 2000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+}
+
+.tfe-stepper-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.tfe-stepper-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.tfe-stepper-line {
+  width: 40px;
+  height: 1px;
+  background: #d0d7de;
+  margin: 0 4px;
+  align-self: flex-start;
+  margin-top: 11px;
+}
+
+.tfe-stepper-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+
+.tfe-stepper-label {
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tfe-step-pending .tfe-stepper-circle {
+  background: #f6f8fa;
+  border: 1.5px solid #d0d7de;
+  color: #8b949e;
+}
+
+.tfe-step-pending .tfe-stepper-label {
+  color: #8b949e;
+}
+
+.tfe-step-active .tfe-stepper-circle {
+  background: #0969da;
+  border: 1.5px solid #0969da;
+  color: #ffffff;
+}
+
+.tfe-step-active .tfe-stepper-label {
+  color: #0969da;
+  font-weight: 600;
+}
+
+.tfe-step-complete .tfe-stepper-circle {
+  background: #0969da;
+  border: 1.5px solid #0969da;
+  color: #ffffff;
+}
+
+.tfe-step-complete .tfe-stepper-label {
+  color: #57606a;
+}
+
+.tfe-step-complete + .tfe-stepper-line {
+  background: #0969da;
+}
+
+.tfe-stepper-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tfe-stepper-btn {
+  padding: 6px 16px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tfe-stepper-back {
+  background: #f6f8fa;
+  color: #57606a;
+  border: 1px solid #d0d7de;
+}
+
+.tfe-stepper-back:hover:not(:disabled) {
+  background: #e1e4e8;
+  color: #1f2328;
+}
+
+.tfe-stepper-back:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tfe-stepper-next {
+  background: #0969da;
+  color: #ffffff;
+  border: 1px solid #0969da;
+}
+
+.tfe-stepper-next:hover:not(:disabled) {
+  background: #0860ca;
+}
+
+.tfe-stepper-next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Dark mode additions ────────────────────────────────────────────── */
+
+@media (prefers-color-scheme: dark) {
+  #tf-diff-explainer-sidebar {
+    max-height: calc(100vh - 116px);
+  }
+
+  .tfe-risk-bar-wrap {
+    background: #161b22;
+  }
+
+  .tfe-setup-banner {
+    background: #0d2a1a;
+    border-color: #1a4a2a;
+  }
+
+  .tfe-setup-banner-title {
+    color: #3fb950;
+  }
+
+  .tfe-setup-steps li {
+    color: #e6edf3;
+  }
+
+  .tfe-setup-steps a {
+    color: #58a6ff;
+  }
+
+  .tfe-setup-key-input {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
+  }
+
+  .tfe-setup-key-input:focus {
+    border-color: #58a6ff;
+    background: #161b22;
+  }
+
+  .tfe-setup-save-btn {
+    background: #1f6feb;
+  }
+
+  .tfe-setup-save-btn:hover {
+    background: #388bfd;
+  }
+
+  .tfe-setup-hint {
+    color: #8b949e;
+  }
+
+  .tfe-setup-hint-success {
+    color: #3fb950;
+  }
+
+  .tfe-setup-toggle-switch {
+    background: #30363d;
+  }
+
+  .tfe-setup-toggle-input:checked + .tfe-setup-toggle-switch {
+    background: #1f6feb;
+  }
+
+  .tfe-setup-status {
+    color: #3fb950;
+  }
+
+  .tfe-analyzing-label {
+    color: #8b949e;
+  }
+
+  .tfe-bar-high {
+    background: #f85149;
+  }
+
+  .tfe-bar-medium {
+    background: #d29922;
+  }
+
+  .tfe-bar-low {
+    background: #3fb950;
+  }
+
+  .tfe-risk-chip.tfe-chip-high {
+    color: #f85149;
+  }
+
+  .tfe-risk-chip.tfe-chip-medium {
+    color: #d29922;
+  }
+
+  .tfe-risk-chip.tfe-chip-low {
+    color: #3fb950;
+  }
+
+  .tfe-section-label {
+    color: #8b949e;
+  }
+
+  .tfe-section-count {
+    color: #6e7681;
+  }
+
+  .tfe-model-badge {
+    background: #21262d;
+    border-color: #30363d;
+    color: #8b949e;
+  }
+
+  .tfe-card-type {
+    color: #6e7681;
+  }
+
+  .tfe-card-name {
+    color: #e6edf3;
+  }
+
+  .tfe-diff-update {
+    color: #58a6ff;
+    background: rgba(88, 166, 255, 0.08);
+  }
+
+  .tfe-diff-add {
+    color: #3fb950;
+    background: rgba(63, 185, 80, 0.08);
+  }
+
+  .tfe-diff-delete {
+    color: #f85149;
+    background: rgba(248, 81, 73, 0.08);
+  }
+
+  .tfe-card-reason-text {
+    color: #8b949e;
+  }
+
+  .tfe-risk-item-text {
+    color: #8b949e;
+  }
+
+  .tfe-version {
+    color: #6e7681;
+  }
+
+  .tfe-compact-url {
+    color: #6e7681;
+  }
+
+  #tfe-stepper {
+    background: #161b22;
+    border-top-color: #30363d;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .tfe-stepper-line {
+    background: #30363d;
+  }
+
+  .tfe-step-pending .tfe-stepper-circle {
+    background: #21262d;
+    border-color: #30363d;
+    color: #6e7681;
+  }
+
+  .tfe-step-pending .tfe-stepper-label {
+    color: #6e7681;
+  }
+
+  .tfe-step-complete .tfe-stepper-label {
+    color: #8b949e;
+  }
+
+  .tfe-stepper-back {
+    background: #21262d;
+    color: #8b949e;
+    border-color: #30363d;
+  }
+
+  .tfe-stepper-back:hover:not(:disabled) {
+    background: #30363d;
+    color: #e6edf3;
+  }
+
+  .tfe-stepper-next {
+    background: #1f6feb;
+    border-color: #1f6feb;
+  }
+
+  .tfe-stepper-next:hover:not(:disabled) {
+    background: #388bfd;
+  }
+}

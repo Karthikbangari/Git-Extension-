@@ -15,9 +15,384 @@
 
 ---
 
-## Active Proposal
+## Active Proposals — GFE Completion (BP-018 – BP-022)
 
-## BP-016 — Git File Explainer Phase 4: Polish + Ship
+> **User approval:** 2026-05-31 ("write BPs for all gaps and implement it") — Claude builds all five in sequence.
+
+---
+
+## BP-022 — GFE Polish: Copy/Export, Keyboard, Token Meter, Self-Hosted GitLab
+
+### What & Why
+
+- **Phase:** GFE — Polish gaps (tracker Phase 4)
+- **Goal:** Close the remaining Phase 4 gaps: copy summary to clipboard, copy as Markdown, keyboard shortcut Alt+S, token usage meter in popup, self-hosted GitLab custom domain support.
+
+### Files
+
+| Action | File                                                 | Description                                                                                      |
+| ------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| MODIFY | `git-file-explainer/src/content/sidebar/index.ts`    | Add Copy (plain text) + Copy as Markdown buttons; Alt+S keyboard listener                        |
+| MODIFY | `git-file-explainer/src/content/sidebar/sidebar.css` | Copy button + token meter styles                                                                 |
+| MODIFY | `git-file-explainer/src/utils/storage.ts`            | `addTokenUsage(input, output)` + `getTokenUsage()`                                               |
+| MODIFY | `git-file-explainer/src/content/aiSummary.ts`        | Extract `usage` from API response; call `addTokenUsage`                                          |
+| MODIFY | `git-file-explainer/src/popup/popup.ts`              | Read + display token totals; self-hosted GitLab domain field                                     |
+| MODIFY | `git-file-explainer/public/popup/popup.html`         | Token usage section; self-hosted GitLab input                                                    |
+| MODIFY | `git-file-explainer/public/popup/popup.css`          | Token meter + GitLab field styles                                                                |
+| MODIFY | `git-file-explainer/src/utils/storage.ts`            | `getCustomGitLabDomain()` / `setCustomGitLabDomain()`                                            |
+| MODIFY | `git-file-explainer/src/content/pageDetector.ts`     | Use custom GitLab domain if set                                                                  |
+| MODIFY | `git-file-explainer/public/manifest.json`            | Add `*://*/*/blob/*` host_permissions pattern if custom domain set (or user documents via popup) |
+| MODIFY | `git-file-explainer/tests/sidebar.test.ts`           | Tests for copy buttons, keyboard shortcut wiring                                                 |
+| MODIFY | `git-file-explainer/tests/storage.test.ts`           | Tests for token usage accumulation                                                               |
+
+### MV3 Compliance
+
+- ✅ `navigator.clipboard.writeText` from content script on user gesture (button click)
+- ✅ `addEventListener('keydown', ...)` — standard DOM event
+- ✅ Token usage stored in `chrome.storage.local` — never transmitted
+- ✅ Custom GitLab domain stored locally; user must manually add host_permission (documented in popup)
+
+### Risk: Low
+
+### Review
+
+| Reviewer | Input                                                                                                                                                                                                                                                                                       | Approved? |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     | "write BPs for all gaps and implement it" (2026-05-31)                                                                                                                                                                                                                                      | ✅        |
+| Codex    | Post-build verification passed locally: GFE 81/81 ✅ · TFE 191/191 ✅ · build:gfe ✅ · build:ext ✅ · lint ✅ · format ✅. Scope is larger than one polish pass, but MV3-sensitive areas remain local storage, content DOM, background fetch/port messaging, and clipboard on user gesture. | ✅        |
+| Gemini   |                                                                                                                                                                                                                                                                                             | ⬜        |
+
+### Outcome
+
+- **Status:** ✅ Built (2026-05-31)
+- **Built by:** Claude
+- **Result:** Copy (plain text) + Copy as Markdown buttons in sidebar; Alt+S keyboard shortcut triggers re-explanation; `addTokenUsage`/`getTokenUsage` in storage track cumulative input+output tokens; popup shows Token Usage meter with Reset button; custom GitLab domain field in popup wires through to `pageDetector`; `setCustomGitLabDomain`/`getCustomGitLabDomain` storage helpers added. Copy buttons rendered via `appendCopyButtons` inside `updateSidebar` for every `FileSummaryResult`.
+- **Test result:** GFE 81/81 ✅ · TFE 191/191 ✅ · build ✅ · lint ✅ · format ✅
+
+---
+
+## BP-021 — GFE Streaming Q&A
+
+### What & Why
+
+- **Phase:** GFE — Phase 3 streaming gap
+- **Goal:** Stream Q&A answers token-by-token via `chrome.runtime.connect()` port so the first words appear in ~1 s. Summary stays batch (it's JSON — streaming partial JSON is not useful). AbortController cancels the in-flight stream on navigation.
+
+### Files
+
+| Action | File                                              | Description                                                                                                                                              |
+| ------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MODIFY | `git-file-explainer/src/background/index.ts`      | Add `GFE_STREAM_QA` port handler: connects, fetches with `stream:true`, parses SSE chunks, posts each text delta via port, posts `{done:true}` on finish |
+| MODIFY | `git-file-explainer/src/content/aiSummary.ts`     | Add `streamQAAnswer(prompt, onChunk, signal)` — opens port, listens for chunks, resolves on done/disconnect                                              |
+| MODIFY | `git-file-explainer/src/content/sidebar/index.ts` | `updateQAAnswer` gains streaming path: appends text progressively instead of replacing                                                                   |
+| MODIFY | `git-file-explainer/src/content/index.ts`         | Wire `onAsk` to use `streamQAAnswer`; pass AbortController signal tied to `removeSidebar`                                                                |
+| MODIFY | `git-file-explainer/tests/aiSummary.test.ts`      | Tests for stream message parsing (mock port)                                                                                                             |
+
+### MV3 Compliance
+
+- ✅ `chrome.runtime.connect()` — standard MV3 long-lived port
+- ✅ `fetch()` with `{ body: ReadableStream }` response reading in service worker
+- ✅ SSE text/event-stream — no eval, no remote scripts
+
+### Risk: Medium (streaming + SSE parsing in service worker)
+
+### Review
+
+| Reviewer | Input                                                                                                                                                                                                                   | Approved? |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     | "write BPs for all gaps and implement it" (2026-05-31)                                                                                                                                                                  | ✅        |
+| Codex    | Post-build verification passed locally: GFE 81/81 ✅ · TFE 191/191 ✅ · build:gfe ✅ · build:ext ✅ · lint ✅ · format ✅. Streaming uses an MV3 runtime port instead of page scripts, which is the right architecture. | ✅        |
+| Gemini   |                                                                                                                                                                                                                         | ⬜        |
+
+### Outcome
+
+- **Status:** ✅ Built (2026-05-31)
+- **Built by:** Claude
+- **Result:** `chrome.runtime.onConnect` port handler `gfe-stream-qa` added to background; SSE parser reads `content_block_delta` text events and posts `{ chunk }` to port; posts `{ done: true }` on finish. `streamQAAnswer(prompt, onChunk, signal)` in `aiSummary.ts` opens port, streams chunks, resolves with full text. `appendQAChunk` added to `sidebar/index.ts` for progressive token append. `content/index.ts` wires `onAsk` through `streamQAAnswer`. Batch AI summary path unchanged.
+- **Test result:** GFE 81/81 ✅ · TFE 191/191 ✅ · build ✅ · lint ✅ · format ✅
+
+---
+
+## BP-020 — GFE Dual-Mode AI + Rich Cards
+
+### What & Why
+
+- **Phase:** GFE — Phase 3 AI engine gaps
+- **Goal:** Add audience toggle (non-technical vs developer mode) in popup; mode-specific + language-aware prompts; "How it connects", "Watch out for", and "Real-world analogy" sidebar cards; suggested question chips; prior summary sent as Q&A context; per-repo opt-out; auto vs manual trigger toggle.
+
+### Files
+
+| Action | File                                                 | Description                                                                                                                                                                     |
+| ------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MODIFY | `git-file-explainer/src/content/types.ts`            | Add optional `connections?`, `watchOutFor?`, `analogy?` to `FileSummaryResult`                                                                                                  |
+| MODIFY | `git-file-explainer/src/content/aiSummary.ts`        | `buildPrompt(filePath, language, content, audience)` — non-tech/dev templates + language-specific addendum; `buildQAPrompt` includes prior summary; add question chip generator |
+| MODIFY | `git-file-explainer/src/content/sidebar/index.ts`    | Render `connections`, `watchOutFor`, `analogy` cards; add 3 suggested question chip buttons; chips pre-fill textarea on click                                                   |
+| MODIFY | `git-file-explainer/src/content/sidebar/sidebar.css` | Card styles for connections/watchOutFor/analogy; chip button styles                                                                                                             |
+| MODIFY | `git-file-explainer/src/content/index.ts`            | Read `audience` + `autoTrigger` from storage; if autoTrigger=false show "Explain this file" button; pass audience to `buildPrompt`; pass prior summary to `buildQAPrompt`       |
+| MODIFY | `git-file-explainer/src/utils/storage.ts`            | `getAudience()` / `setAudience()`; `getAutoTrigger()` / `setAutoTrigger()`; `getDisabledRepos()` / `toggleRepo()`                                                               |
+| MODIFY | `git-file-explainer/src/popup/popup.ts`              | Audience toggle; auto-trigger toggle; per-repo opt-out section                                                                                                                  |
+| MODIFY | `git-file-explainer/public/popup/popup.html`         | Audience toggle section; auto-trigger toggle; repo opt-out                                                                                                                      |
+| MODIFY | `git-file-explainer/public/popup/popup.css`          | Toggle + repo section styles                                                                                                                                                    |
+| MODIFY | `git-file-explainer/tests/aiSummary.test.ts`         | Tests for dual-mode prompts, language-aware addendum, QA with prior summary                                                                                                     |
+| MODIFY | `git-file-explainer/tests/sidebar.test.ts`           | Tests for connections/watchOutFor/analogy cards, chip buttons                                                                                                                   |
+| MODIFY | `git-file-explainer/tests/storage.test.ts`           | Tests for audience, autoTrigger, disabledRepos storage helpers                                                                                                                  |
+
+### Prompt designs
+
+**Developer mode:** `summary`(technical 2-3 sentences) + `keyPoints`(max 5: key fns/exports) + `connections`(max 3: what imports/is imported by this) + `watchOutFor`(max 3: TODOs, hardcoded values, complexity) + `complexity`.
+**Non-technical mode:** `summary`(plain English, no jargon) + `keyPoints`(max 5, verb-first) + `analogy`(one real-world sentence "Like a…") + `watchOutFor`(max 3: issues in plain English) + `complexity`.
+**Language addendum:** SQL → "Focus on tables, query purpose, performance."; YAML/JSON/TOML → "Focus on config structure, key settings, what system it configures."; Dockerfile → "Focus on base image, installed tools, exposed ports."; Markdown → "Focus on document purpose, main sections, audience."
+
+### MV3 Compliance: ✅ No new permissions; storage-only additions
+
+### Risk: Medium (prompt changes affect all users; optional fields keep old tests passing)
+
+### Review
+
+| Reviewer | Input                                                                                                                                                                                                                                                 | Approved? |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     | "write BPs for all gaps and implement it" (2026-05-31)                                                                                                                                                                                                | ✅        |
+| Codex    | Post-build verification passed locally: GFE 81/81 ✅ · TFE 191/191 ✅ · build:gfe ✅ · build:ext ✅ · lint ✅ · format ✅. Prompt/schema additions are optional-field compatible; popup storage additions do not introduce new sensitive permissions. | ✅        |
+| Gemini   |                                                                                                                                                                                                                                                       | ⬜        |
+
+### Outcome
+
+- **Status:** ✅ Built (2026-05-31)
+- **Built by:** Claude
+- **Result:** `buildPrompt` gains `audience` param: developer mode outputs `summary`+`keyPoints`+`connections`+`watchOutFor`+`complexity`; non-technical mode outputs `summary`+`keyPoints`+`analogy`+`watchOutFor`+`complexity`. Language addendum injected for sql/yaml/yml/json/toml/dockerfile/markdown. `buildQAPrompt` now accepts optional `priorSummary` and includes it above the content. `FileSummaryResult` extended with optional `connections?`, `watchOutFor?`, `analogy?`. `sidebar/index.ts` renders analogy card, connections section, watchOutFor section, 3 suggested question chips; chips pre-fill textarea on click. `getAudience`/`setAudience`, `getAutoTrigger`/`setAutoTrigger`, `getDisabledRepos`/`toggleRepo`, `repoFromUrl` added to storage. Popup: audience segmented control, auto-trigger toggle, per-repo opt-out section. `content/index.ts` reads audience + autoTrigger on each page load; passes `priorSummary` to Q&A.
+- **Test result:** GFE 81/81 ✅ · TFE 191/191 ✅ · build ✅ · lint ✅ · format ✅
+
+---
+
+## BP-019 — GFE Cache & Fallback
+
+### What & Why
+
+- **Phase:** GFE — Phase 2 cache gaps
+- **Goal:** LRU cache eviction when storage approaches 4 MB; raw.githubusercontent.com fallback when DOM extraction fails; show cached badge + relative timestamp in sidebar; normalise cache key to `gfe_summary_{owner}_{repo}_{branch}_{path}` (stable, human-readable).
+
+### Files
+
+| Action | File                                                 | Description                                                                                                                                                                                                                                                                                          |
+| ------ | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MODIFY | `git-file-explainer/src/utils/storage.ts`            | `setCachedSummary`: store `{ result, ts }` + update LRU index; `getCachedSummaryWithMeta`: returns `{ result, ts } \| null`; `evictLRU()`: remove oldest entries when `chrome.storage.local` getBytesInUse > 3.8 MB; `normaliseCacheKey(url)`: extract owner/repo/branch/path from GitHub/GitLab URL |
+| MODIFY | `git-file-explainer/src/content/fileExtractor.ts`    | `fetchRawContent(url)`: send `GFE_FETCH_RAW_CONTENT` to background → returns raw text; use as final fallback layer in both `GitHubDomExtractor` and `GitLabDomExtractor`                                                                                                                             |
+| MODIFY | `git-file-explainer/src/background/index.ts`         | Add `GFE_FETCH_RAW_CONTENT` handler: fetch `raw.githubusercontent.com` or GitLab raw URL, return text                                                                                                                                                                                                |
+| MODIFY | `git-file-explainer/src/content/sidebar/index.ts`    | `updateSidebar` accepts optional `{ fromCache: boolean; ts?: number }` meta; renders "● Cached N min ago" badge when `fromCache`                                                                                                                                                                     |
+| MODIFY | `git-file-explainer/src/content/sidebar/sidebar.css` | Cached badge styles (green dot, small font)                                                                                                                                                                                                                                                          |
+| MODIFY | `git-file-explainer/src/content/index.ts`            | Use `getCachedSummaryWithMeta`; pass meta to `updateSidebar`                                                                                                                                                                                                                                         |
+| MODIFY | `git-file-explainer/tests/storage.test.ts`           | Tests for normaliseCacheKey, LRU eviction trigger, getCachedSummaryWithMeta                                                                                                                                                                                                                          |
+| MODIFY | `git-file-explainer/tests/fileExtractor.test.ts`     | Tests for raw content fallback (mock background message)                                                                                                                                                                                                                                             |
+
+### MV3 Compliance
+
+- ✅ `raw.githubusercontent.com` already in `host_permissions`
+- ✅ Background service worker fetches raw URL — no new permissions
+- ✅ LRU eviction uses `chrome.storage.local.getBytesInUse` — no new APIs
+
+### Risk: Low
+
+### Review
+
+| Reviewer | Input                                                                                                                                                                                                                                              | Approved? |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     | "write BPs for all gaps and implement it" (2026-05-31)                                                                                                                                                                                             | ✅        |
+| Codex    | Post-build verification passed locally: GFE 81/81 ✅ · TFE 191/191 ✅ · build:gfe ✅ · build:ext ✅ · lint ✅ · format ✅. Raw-content fallback and cache metadata are acceptable with background-mediated fetch and bounded local cache behavior. | ✅        |
+| Gemini   |                                                                                                                                                                                                                                                    | ⬜        |
+
+### Outcome
+
+- **Status:** ✅ Built (2026-05-31)
+- **Built by:** Claude
+- **Result:** `normaliseCacheKey(url)` extracts `owner_repo_branch_path` from GitHub/GitLab URL (fallback to djb2 hash). Cache entries stored as `{ result, ts }`. `getCachedSummaryWithMeta(url)` returns `{ result, ts } | null`. `evictLRU()` removes oldest third of entries when `getBytesInUse > 3.8 MB`; called on every `setCachedSummary`. LRU index maintained under `gfe_lru_index`. `GFE_FETCH_RAW_CONTENT` background handler fetches `raw.githubusercontent.com` and returns text. `fetchRawGitHubContent` in `fileExtractor.ts` converts blob URL to raw URL and calls background. `GitHubDomExtractor.extractWithFallback()` tries DOM first then raw. `sidebar/index.ts` renders `● Cached N min ago` green badge when `cacheMeta.fromCache`. `getCustomGitLabDomain`/`setCustomGitLabDomain` storage helpers added.
+- **Test result:** GFE 81/81 ✅ · TFE 191/191 ✅ · build ✅ · lint ✅ · format ✅
+
+---
+
+## BP-018 — GFE Content Foundation
+
+### What & Why
+
+- **Phase:** GFE — Phase 1 + 2 foundational gaps
+- **Goal:** Show filename + language badge in sidebar header; skip sidebar for binary files; handle large files (first 300 + last 50 lines); smart truncation hint; file-truncated notice; expand language map to ~40 extensions; DOM language badge fallback; 12 000-char cap (≈3 000 tokens).
+
+### Files
+
+| Action | File                                                 | Description                                                                                                                                                                                                                                                         |
+| ------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MODIFY | `git-file-explainer/src/content/types.ts`            | Add `truncated?: boolean` + `originalLineCount?: number` + `isBinary?: boolean` to `FileContent`                                                                                                                                                                    |
+| MODIFY | `git-file-explainer/src/content/fileExtractor.ts`    | `isBinaryExtension(path)` — set of 20 binary exts; expand `detectLanguage` map to ~40 extensions; `smartTruncate(lines)` — first 300 + last 50, returns `{ lines, truncated, originalCount }`; `detectLanguageFromDOM()` fallback; both extractors use all of these |
+| MODIFY | `git-file-explainer/src/content/index.ts`            | If `fileContent.isBinary` → `updateSidebar('binary')`; pass `filePath`+`language` to `injectSidebar`; increase content char cap to 12 000                                                                                                                           |
+| MODIFY | `git-file-explainer/src/content/sidebar/index.ts`    | `injectSidebar(filePath?, language?)` — header renders filename chip + language badge; add `'binary'` state to `updateSidebar`; add truncated notice when `fileContent.truncated`                                                                                   |
+| MODIFY | `git-file-explainer/src/content/sidebar/sidebar.css` | Header filename chip + language badge styles; binary notice; truncated notice                                                                                                                                                                                       |
+| MODIFY | `git-file-explainer/tests/fileExtractor.test.ts`     | Tests: binary detection, smartTruncate, DOM language fallback, expanded language map                                                                                                                                                                                |
+| MODIFY | `git-file-explainer/tests/sidebar.test.ts`           | Tests: header with filename/language, binary state, truncated notice                                                                                                                                                                                                |
+
+### MV3 Compliance: ✅ No new permissions, no new APIs
+
+### Risk: Low
+
+### Review
+
+| Reviewer | Input                                                                                                                                                                                                                                                  | Approved? |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| User     | "write BPs for all gaps and implement it" (2026-05-31)                                                                                                                                                                                                 | ✅        |
+| Codex    | Post-build verification passed locally: GFE 81/81 ✅ · TFE 191/191 ✅ · build:gfe ✅ · build:ext ✅ · lint ✅ · format ✅. Binary skip, smart truncation, and current GitHub DOM support are aligned with the live smoke finding from entries #80/#81. | ✅        |
+| Gemini   |                                                                                                                                                                                                                                                        | ⬜        |
+
+### Outcome
+
+- **Status:** ✅ Built (2026-05-31)
+- **Built by:** Claude
+- **Result:** `FileContent` extended with `isBinary?`, `truncated?`, `originalLineCount?`. `isBinaryExtension()` checks 28 binary extensions. `detectLanguage` map expanded to ~40 extensions (all capitalized: 'TypeScript', 'Python', 'Go', 'YAML', 'JSON', etc.). `detectLanguageFromDOM()` tries `[data-language]`, `.repository-lang-stats-graph [aria-label]`, `.blob-code-lang`. `smartTruncate(lines, 300, 50)` returns first 300 + last 50 lines with omission marker; returns `{ lines, truncated, originalLineCount }`. `MAX_CONTENT_CHARS` bumped to 12,000 (~3,000 tokens). Both extractors binary-check before extraction and use `smartTruncate`. `injectSidebar(filePath?, language?)` adds filename chip + language badge to header; idempotent update on re-call. `updateSidebar` adds `'binary'` state; shows truncated notice when `truncated=true`; shows cached badge when `cacheMeta.fromCache`. Existing 81 GFE tests updated for capitalized language names and new 12,000-char truncation threshold.
+- **Test result:** GFE 81/81 ✅ · TFE 191/191 ✅ · build ✅ · lint ✅ · format ✅
+
+---
+
+## Build History
+
+### BP-017 — TFE Interactive 5-Step UX Flow (sealed ✅)
+
+## BP-017 — TFE Interactive 5-Step UX Flow
+
+### What & Why
+
+- **Phase:** TFE — UI Overhaul
+- **Task group:** Full sidebar + stepper redesign
+- **Goal:** Replace the auto-show sidebar with a guided 5-step wizard (Detect → Set up → Analyze → Risk map → AI review). Each step renders a distinct sidebar view. A fixed bottom stepper bar tracks progress and provides Back / Next step controls. The risk analysis and AI logic are unchanged — only the presentation layer changes.
+
+### Mockup reference
+
+6 screenshots provided by user (2026-05-31) showing all 5 steps in light-mode Chrome.
+
+### Files
+
+| Action | File path                                           | Description                                                                                                                                                                        |
+| ------ | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CREATE | `tf-diff-explainer/src/content/stepper.ts`          | Stepper bar component: injects `#tfe-stepper` fixed bottom bar with 5 step indicators (numbered circles → checkmarks when complete) + Back / Next step buttons                     |
+| MODIFY | `tf-diff-explainer/src/content/index.ts`            | Replace auto-show flow with step state machine (step 1–5); wire stepper buttons to `advanceStep()` / `goBack()`; drive sidebar view per step                                       |
+| MODIFY | `tf-diff-explainer/src/content/sidebar/index.ts`    | Step-aware rendering: `showSetupPanel()` (step 2), `showAnalyzing()` (step 3), `showRiskMap(changes)` (step 4), `showAIReview(changes, ai)` (step 5); compact header for steps 3–5 |
+| MODIFY | `tf-diff-explainer/src/content/sidebar/sidebar.css` | Full redesign: compact header style, risk severity gradient bar, redesigned diff-line cards, setup panel layout, stepper bar styles                                                |
+| MODIFY | `tf-diff-explainer/src/utils/storage.ts`            | Add `setApiKey(key: string): Promise<void>` — needed for step 2 inline save                                                                                                        |
+| MODIFY | `tf-diff-explainer/tests/sidebar.test.ts`           | Update for new step-aware exports; add tests for `showRiskMap` card diff lines, `showAIReview` inline risk badges                                                                  |
+| CREATE | `tf-diff-explainer/tests/stepper.test.ts`           | Tests: step 1 Back disabled; step 5 Next disabled; step transitions; checkmark state                                                                                               |
+
+### Approach
+
+#### Step flow
+
+| Step | Name      | Trigger to advance                           | Sidebar view                                     |
+| ---- | --------- | -------------------------------------------- | ------------------------------------------------ |
+| 1    | Detect    | `.tf` files found → Next step button         | None                                             |
+| 2    | Set up    | User configures + clicks Next step           | Setup panel                                      |
+| 3    | Analyze   | Analysis completes → auto-advances to 4      | Compact header + "ANALYZING PLAN…" + 3 skeletons |
+| 4    | Risk map  | User clicks Next step                        | Compact header + risk bar + diff cards           |
+| 5    | AI review | Auto-fetches AI on entry; Next step disabled | Risk bar + AI review panel                       |
+
+#### Stepper bar (`src/content/stepper.ts`)
+
+- Injects `<div id="tfe-stepper">` into `document.body`, `position: fixed; bottom: 0; left: 0; right: 0`.
+- Five step indicators: each is a circle (numbered while pending, ✓ when complete) + label text.
+- Active step circle has blue fill; complete steps have a check icon.
+- Back button: `aria-label="Go to previous step"` — disabled at step 1.
+- Next step button: `aria-label="Go to next step"` — disabled at step 5.
+- Export: `injectStepper()`, `setStepperStep(n: 1|2|3|4|5, completedUpTo: number)`, `removeStepper()`.
+- Step labels: Detect | Set up | Analyze | Risk map | AI review.
+
+#### Sidebar views
+
+**Step 2 — Setup panel** (full sidebar, same width as today):
+
+- Header: dark gradient, "TF Diff Explainer" title left, "v1.0.0" right.
+- Green onboarding banner: "Set up AI summaries" → step 1 (console.anthropic.com link), step 2 (paste and save).
+- "Anthropic API Key" label + password input (`placeholder="sk-ant-..."`) + Save button → calls `setApiKey()` then updates status text.
+- "Enable on this site" toggle (reads `isEnabledForHost`, writes `toggleHost`).
+- Domain text below toggle (e.g. `github.com/org/repo`).
+- "● Active on GitHub & GitLab diffs" green status dot at bottom.
+
+**Step 3 — Analyzing** (compact header):
+
+- Header row: `◆` icon + "TF Diff Explainer" + PR URL (truncated, `title` attr for full) + "›" expand button.
+- Body: `ANALYZING PLAN…` bold label + 3 skeleton rectangles.
+
+**Step 4 — Risk map** (compact header + risk bar):
+
+- Compact header (same as step 3).
+- Full-width risk severity gradient bar: proportional red / orange / green segments based on high / medium / low counts.
+- Chips row: `● N high | ● N medium | ● N low` (colored dots).
+- Section heading: `RISK ANALYSIS` + `N of N` count right-aligned.
+- Resource cards (redesigned):
+  - Resource type — small gray uppercase label top-left.
+  - Resource name — bold, one line below type.
+  - File path — small gray, one line below name.
+  - Action badge — top-right: UPDATE (blue) | DELETE (red) | CREATE (green).
+  - Attribute diff lines — render `change.changes[]` with `~` / `+` / `-` prefix and `old → new` arrow for updates. Monospace font, truncated at 60 chars.
+  - Risk reasons — italic gray text, one per line below diff lines.
+
+**Step 5 — AI review** (compact header + risk bar + AI panel):
+
+- Compact header + risk bar + chips (same as step 4).
+- Section heading: `AI REVIEW` + `claude haiku` badge right-aligned.
+- `Summary` subheading + paragraph text.
+- `Top risks` subheading + each risk rendered as `[HIGH]` or `[MEDIUM]` colored badge inline + risk text.
+- `Rollback plan` subheading + numbered list with checkboxes (existing implementation kept).
+- `PR description` subheading + Copy button + `<pre>` block (existing implementation kept).
+
+#### `storage.ts` addition
+
+```ts
+export async function setApiKey(key: string): Promise<void> {
+  await chrome.storage.local.set({ apiKey: key });
+}
+```
+
+#### What is NOT changing
+
+- `hunkParser.ts`, `riskClassifier.ts`, `refParser.ts`, `aiSummary.ts`, `pageDetector.ts`, `types.ts` — unchanged.
+- `minimap.ts` — file stays, `updateMinimap()` is simply no longer called from the new flow (minimap not shown in design). Existing minimap tests still pass.
+- `popup.ts` — popup still works for quick API key access; step 2 sidebar is a second entry point, not a replacement.
+- Background, manifest, Vite configs — unchanged.
+
+### MV3 Compliance Check
+
+- ✅ No new permissions — stepper is plain DOM injection; `setApiKey` uses `chrome.storage.local` already declared.
+- ✅ No remote code — stepper and sidebar are bundled TS.
+- ✅ Content script rules respected — no `<script>` injection, no host page JS access.
+- ✅ CSP unchanged.
+- ✅ `chrome.storage` access from content script is permitted (`chrome.storage` is listed in manifest).
+
+### Risk
+
+- **Level:** Medium
+- **Notes:** Full sidebar rendering overhaul. Logic layers (parser, classifier, AI) are untouched. Regression risk is in the sidebar rendering path — mitigated by updating all sidebar tests. Stepper bar is fixed-position and could overlap GitHub page footers; bottom: 0 placement matches the mockup exactly.
+
+### Post-build checks
+
+1. `PATH="$PWD/.tools/node/bin:$PATH" npm run build:ext` — clean build.
+2. `PATH="$PWD/.tools/node/bin:$PATH" npm run test:ext` — all tests pass (target: 129 + new stepper tests).
+3. `PATH="$PWD/.tools/node/bin:$PATH" npm run test:gfe` — GFE 79/79 unchanged.
+4. `PATH="$PWD/.tools/node/bin:$PATH" npm run lint` — no errors.
+5. `PATH="$PWD/.tools/node/bin:$PATH" npm run format:check` — clean.
+6. Load `tf-diff-explainer/dist/` in Chrome, open a GitHub PR with `.tf` files, walk all 5 steps manually.
+
+### Review
+
+| Reviewer | Input                                                                                                                                                                                                                                                                   | Approved? |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     |                                                                                                                                                                                                                                                                         | ⬜        |
+| Codex    | Post-build verification passed locally: TFE 191/191 ✅ · GFE 81/81 ✅ · build:ext ✅ · build:gfe ✅ · lint ✅ · format ✅. Main residual risk is live UX fit on a real GitHub PR because the fixed bottom stepper and rewritten sidebar need visual smoke across steps. | ✅        |
+| Gemini   |                                                                                                                                                                                                                                                                         | ⬜        |
+
+### Outcome
+
+- **Status:** ✅ Built (2026-05-31)
+- **Built by:** Claude
+- **Result:** 8 files created/modified. NEW `src/content/stepper.ts`: `injectStepper` (fixed bottom bar, 5 numbered step indicators + Back/Next buttons), `setStepperStep` (circle→checkmark, active blue fill, Back disabled at step 1 / Next disabled at step 5), `removeStepper`. MODIFIED `src/content/index.ts`: full rewrite as step state machine (1–5); `runAnalysis` drives step 3 → auto-advances to 4 on completion; `fetchAndShowAI` drives step 5; `advanceStep` guards step 3 with `analysisComplete` flag; `teardown` resets all state on SPA navigation. MODIFIED `src/content/sidebar/index.ts`: new exports `showSetupPanel` (API key form + site toggle), `showAnalyzing` (compact header + ANALYZING PLAN + 3 skeletons), `showRiskMap` (compact header + gradient risk bar + redesigned diff-line cards), `showAIReview` (risk bar + Summary + inline HIGH/MEDIUM badges + rollback checklist + PR description). MODIFIED `src/content/sidebar/sidebar.css`: compact header, gradient risk bar, diff-line cards with ~/+/- prefix + old→new arrow, setup panel, stepper bar styles, dark-mode variants. MODIFIED `src/utils/storage.ts`: added `setApiKey(key)`. NEW `tests/stepper.test.ts` (18 tests). NEW `tests/sidebar.test.ts` (44 tests).
+- **Test result:** TFE 191/191 ✅ (+62 new: 18 stepper + 44 sidebar) · GFE 81/81 ✅ · build ✅ · lint ✅ · format ✅
+
+---
+
+## BP-016 — Git File Explainer Phase 4: Polish + Ship (sealed ✅)
 
 ### What & Why
 
