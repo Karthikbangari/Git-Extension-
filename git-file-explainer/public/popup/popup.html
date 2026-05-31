@@ -8,7 +8,7 @@
   </head>
   <body>
     <header>
-      <h1>Git File Explainer</h1>
+      <h1><span class="gfe-logo">◈</span> Git File Explainer</h1>
     </header>
 
     <main>
@@ -25,96 +25,100 @@
         </ol>
       </section>
 
-      <section class="field">
-        <label for="api-key">Anthropic API Key</label>
-        <div class="input-row">
-          <input
-            type="password"
-            id="api-key"
-            placeholder="sk-ant-..."
-            autocomplete="off"
-            spellcheck="false"
-          />
-          <button id="save-key">Save</button>
-        </div>
-        <p class="hint" id="key-status"></p>
-      </section>
-
-      <section class="field">
-        <label class="toggle-label">
-          <span>Enable on this site</span>
-          <input type="checkbox" id="site-toggle" />
-          <span class="toggle-switch"></span>
-        </label>
-        <p class="hint" id="site-hint"></p>
-      </section>
-
-      <section class="field" id="repo-section" style="display: none">
-        <label class="toggle-label">
-          <span>Enable for this repo</span>
-          <input type="checkbox" id="repo-toggle" />
-          <span class="toggle-switch"></span>
-        </label>
-        <p class="hint" id="repo-hint"></p>
-      </section>
-
-      <hr class="divider" />
-
-      <section class="field">
-        <label>Explanation mode</label>
-        <div class="segmented-control">
-          <button class="seg-btn active" id="mode-dev" data-mode="developer">Developer</button>
-          <button class="seg-btn" id="mode-nontech" data-mode="non-technical">Non-technical</button>
-        </div>
-        <p class="hint">Developer: technical details. Non-technical: plain English + analogy.</p>
-      </section>
-
-      <section class="field">
-        <label class="toggle-label">
-          <span>Auto-explain on open</span>
-          <input type="checkbox" id="auto-trigger" checked />
-          <span class="toggle-switch"></span>
-        </label>
-        <p class="hint">When off, shows a button to trigger explanations manually.</p>
-      </section>
-
-      <hr class="divider" />
-
-      <section class="field">
-        <label for="gitlab-domain">Custom GitLab domain</label>
-        <div class="input-row">
-          <input
-            type="text"
-            id="gitlab-domain"
-            placeholder="gitlab.mycompany.com"
-            autocomplete="off"
-            spellcheck="false"
-          />
-          <button id="save-gitlab">Save</button>
-        </div>
-        <p class="hint" id="gitlab-status">Self-hosted GitLab instance domain (no https://).</p>
-      </section>
-
-      <hr class="divider" />
-
-      <section class="field" id="token-section">
-        <label>Token usage</label>
-        <div class="token-meter">
-          <div class="token-row">
-            <span class="token-label">Input</span>
-            <span class="token-value" id="token-input">—</span>
+      <div class="gfe-card">
+        <section class="field">
+          <label for="api-key">Anthropic API Key</label>
+          <div class="input-row">
+            <input
+              type="password"
+              id="api-key"
+              placeholder="sk-ant-..."
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button id="save-key">Save</button>
           </div>
-          <div class="token-row">
-            <span class="token-label">Output</span>
-            <span class="token-value" id="token-output">—</span>
+          <p class="hint" id="key-status"></p>
+        </section>
+      </div>
+
+      <div class="gfe-card">
+        <section class="field">
+          <label class="toggle-label">
+            <span>Enable on this site</span>
+            <input type="checkbox" id="site-toggle" />
+            <span class="toggle-switch"></span>
+          </label>
+          <p class="hint" id="site-hint"></p>
+        </section>
+
+        <section class="field" id="repo-section" style="display: none">
+          <label class="toggle-label">
+            <span>Enable for this repo</span>
+            <input type="checkbox" id="repo-toggle" />
+            <span class="toggle-switch"></span>
+          </label>
+          <p class="hint" id="repo-hint"></p>
+        </section>
+      </div>
+
+      <div class="gfe-card">
+        <section class="field">
+          <label>Explanation mode</label>
+          <div class="segmented-control">
+            <button class="seg-btn active" id="mode-dev" data-mode="developer">Developer</button>
+            <button class="seg-btn" id="mode-nontech" data-mode="non-technical">Non-technical</button>
           </div>
-          <div class="token-row token-total">
-            <span class="token-label">Total</span>
-            <span class="token-value" id="token-total">—</span>
+          <p class="hint">Developer: technical details. Non-technical: plain English + analogy.</p>
+        </section>
+
+        <section class="field">
+          <label class="toggle-label">
+            <span>Auto-explain on open</span>
+            <input type="checkbox" id="auto-trigger" checked />
+            <span class="toggle-switch"></span>
+          </label>
+          <p class="hint">When off, shows a button to trigger explanations manually.</p>
+        </section>
+      </div>
+
+      <div class="gfe-card">
+        <section class="field">
+          <label for="gitlab-domain">Custom GitLab domain</label>
+          <div class="input-row">
+            <input
+              type="text"
+              id="gitlab-domain"
+              placeholder="gitlab.mycompany.com"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button id="save-gitlab">Save</button>
           </div>
-        </div>
-        <button class="reset-btn" id="reset-tokens">Reset counter</button>
-      </section>
+          <p class="hint" id="gitlab-status">Self-hosted GitLab instance domain (no https://).</p>
+        </section>
+      </div>
+
+      <div class="gfe-card">
+        <section class="field" id="token-section">
+          <label>Token usage</label>
+          <div class="token-meter">
+            <div class="token-row">
+              <span class="token-label">Input</span>
+              <span class="token-value" id="token-input">—</span>
+            </div>
+            <div class="token-row">
+              <span class="token-label">Output</span>
+              <span class="token-value" id="token-output">—</span>
+            </div>
+            <div class="token-row token-total">
+              <span class="token-label">Total</span>
+              <span class="token-value" id="token-total">—</span>
+            </div>
+          </div>
+          <button class="reset-btn" id="reset-tokens">Reset counter</button>
+        </section>
+      </div>
     </main>
 
     <script src="./popup.js"></script>

@@ -6,16 +6,16 @@
 
 body {
   width: 300px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   font-size: 13px;
-  color: #1f2328;
-  background: #ffffff;
+  color: #e6edf3;
+  background: #0d1117;
 }
 
 header {
   padding: 13px 16px 12px;
   background: linear-gradient(135deg, #1b1f27 0%, #0d1117 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 h1 {
@@ -28,17 +28,28 @@ h1 {
   letter-spacing: 0.01em;
 }
 
-h1::before {
-  content: '◈';
+.gfe-logo {
   font-size: 9px;
   color: #34d399;
 }
 
 main {
-  padding: 14px 16px;
+  padding: 10px 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 7px;
+}
+
+/* ── Glass card ─────────────────────────────────────── */
+
+.gfe-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 11px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
 }
 
 .field {
@@ -50,66 +61,84 @@ main {
 label {
   font-weight: 500;
   font-size: 12px;
-  color: #57606a;
+  color: #8b949e;
 }
+
+/* ── Inputs ──────────────────────────────────────────── */
 
 .input-row {
   display: flex;
   gap: 6px;
 }
 
-input[type='password'] {
+input[type='password'],
+input[type='text'] {
   flex: 1;
   padding: 6px 9px;
-  border: 1px solid #d0d7de;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
   font-size: 12px;
   font-family: ui-monospace, 'SFMono-Regular', monospace;
-  background: #f6f8fa;
-  color: #1f2328;
+  background: #161b22;
+  color: #e6edf3;
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
 }
 
-input[type='password']:focus {
-  outline: none;
-  border-color: #0969da;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.12);
+input[type='password']::placeholder,
+input[type='text']::placeholder {
+  color: #484f58;
 }
 
-button#save-key {
+input[type='password']:focus,
+input[type='text']:focus {
+  outline: none;
+  border-color: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15);
+}
+
+/* ── Buttons ─────────────────────────────────────────── */
+
+button#save-key,
+button#save-gitlab {
   padding: 6px 13px;
-  background: #0969da;
-  color: #ffffff;
-  border: none;
+  background: rgba(52, 211, 153, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.3);
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
-button#save-key:hover {
-  background: #0860ca;
+button#save-key:hover,
+button#save-gitlab:hover {
+  background: rgba(52, 211, 153, 0.22);
+  border-color: rgba(52, 211, 153, 0.5);
 }
+
+/* ── Hint text ───────────────────────────────────────── */
 
 .hint {
   font-size: 11px;
-  color: #8b949e;
+  color: #6e7681;
   line-height: 1.5;
 }
 
 .hint.success {
-  color: #1a7f37;
-}
-.hint.error {
-  color: #cf222e;
+  color: #34d399;
 }
 
-/* ── Site Toggle ────────────────────────────────────── */
+.hint.error {
+  color: #f87171;
+}
+
+/* ── Toggle switch ───────────────────────────────────── */
 
 .toggle-label {
   display: flex;
@@ -118,7 +147,7 @@ button#save-key:hover {
   cursor: pointer;
   font-weight: 500;
   font-size: 12px;
-  color: #1f2328;
+  color: #c9d1d9;
   gap: 10px;
 }
 
@@ -130,7 +159,7 @@ button#save-key:hover {
   position: relative;
   width: 34px;
   height: 20px;
-  background: #d0d7de;
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   transition: background 0.2s;
   flex-shrink: 0;
@@ -146,29 +175,30 @@ button#save-key:hover {
   background: white;
   border-radius: 50%;
   transition: left 0.2s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 input[type='checkbox']:checked + .toggle-switch {
-  background: #1a7f37;
+  background: #34d399;
 }
+
 input[type='checkbox']:checked + .toggle-switch::after {
   left: 17px;
 }
 
-/* ── Onboarding Banner ──────────────────────────────── */
+/* ── Onboarding banner ───────────────────────────────── */
 
 #onboarding-banner {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
+  background: rgba(52, 211, 153, 0.08);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 10px;
   padding: 11px 13px;
 }
 
 .onboarding-title {
   font-size: 12px;
   font-weight: 600;
-  color: #065f46;
+  color: #34d399;
   margin-bottom: 7px;
   display: flex;
   align-items: center;
@@ -178,38 +208,33 @@ input[type='checkbox']:checked + .toggle-switch::after {
 .onboarding-title::before {
   content: '✦';
   font-size: 9px;
-  color: #10b981;
+  color: #34d399;
 }
 
 .onboarding-steps {
   padding-left: 16px;
   list-style: decimal;
   font-size: 11.5px;
-  color: #064e3b;
+  color: #86efac;
   line-height: 1.75;
 }
 
 .onboarding-steps a {
-  color: #047857;
+  color: #4ade80;
   text-decoration: underline;
   text-underline-offset: 2px;
-}
-
-/* ── Divider ────────────────────────────────────────── */
-
-.divider {
-  border: none;
-  border-top: 1px solid #d0d7de;
-  margin: 2px 0;
 }
 
 /* ── Segmented control (audience mode) ──────────────── */
 
 .segmented-control {
   display: flex;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
   overflow: hidden;
+  padding: 2px;
+  gap: 2px;
 }
 
 .seg-btn {
@@ -218,34 +243,31 @@ input[type='checkbox']:checked + .toggle-switch::after {
   font-size: 12px;
   font-weight: 500;
   border: none;
-  background: #f6f8fa;
-  color: #57606a;
+  background: transparent;
+  color: #6e7681;
   cursor: pointer;
+  border-radius: 5px;
   transition:
     background 0.15s,
     color 0.15s;
 }
 
-.seg-btn:not(:last-child) {
-  border-right: 1px solid #d0d7de;
-}
-
 .seg-btn.active {
-  background: #0969da;
-  color: #ffffff;
+  background: linear-gradient(135deg, #34d399 0%, #58a6ff 50%, #a78bfa 100%);
+  color: #0d1117;
 }
 
 .seg-btn:hover:not(.active) {
-  background: #e8f0fe;
-  color: #0969da;
+  background: rgba(255, 255, 255, 0.08);
+  color: #c9d1d9;
 }
 
 /* ── Token meter ─────────────────────────────────────── */
 
 .token-meter {
-  background: #f6f8fa;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 7px;
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
@@ -259,80 +281,43 @@ input[type='checkbox']:checked + .toggle-switch::after {
 }
 
 .token-label {
-  color: #57606a;
+  color: #6e7681;
 }
 
 .token-value {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: #1f2328;
+  color: #c9d1d9;
 }
 
 .token-total {
-  border-top: 1px solid #d0d7de;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 5px;
   margin-top: 2px;
 }
 
 .token-total .token-label,
 .token-total .token-value {
-  color: #0969da;
+  color: #34d399;
 }
 
 .reset-btn {
   font-size: 11px;
   padding: 3px 10px;
-  border: 1px solid #d0d7de;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 5px;
-  background: #f6f8fa;
-  color: #57606a;
+  background: rgba(255, 255, 255, 0.04);
+  color: #6e7681;
   cursor: pointer;
   align-self: flex-start;
-  transition: background 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .reset-btn:hover {
-  background: #fff1f2;
-  border-color: #fecdd3;
-  color: #cf222e;
-}
-
-/* ── text input (GitLab domain) ──────────────────────── */
-
-input[type='text'] {
-  flex: 1;
-  padding: 6px 9px;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
-  font-size: 12px;
-  font-family: ui-monospace, 'SFMono-Regular', monospace;
-  background: #f6f8fa;
-  color: #1f2328;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-}
-
-input[type='text']:focus {
-  outline: none;
-  border-color: #0969da;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.12);
-}
-
-button#save-gitlab {
-  padding: 6px 13px;
-  background: #0969da;
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s;
-}
-
-button#save-gitlab:hover {
-  background: #0860ca;
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #f87171;
 }
