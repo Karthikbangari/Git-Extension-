@@ -32,6 +32,56 @@ describe('detectLanguage', () => {
   });
 });
 
+describe('supported code file types', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  const supportedTypes: Array<[string, string, string]> = [
+    ['main.tf', 'Terraform', 'resource "aws_s3_bucket" "demo" {}'],
+    ['index.ts', 'TypeScript', 'const value: string = "hello";'],
+    ['index.js', 'JavaScript', 'const value = "hello";'],
+    ['app.py', 'Python', 'print("hello")'],
+    ['main.go', 'Go', 'package main'],
+    ['App.java', 'Java', 'class App {}'],
+    ['app.rb', 'Ruby', 'puts "hello"'],
+    ['Program.cs', 'C#', 'class Program {}'],
+    ['main.cpp', 'C++', '#include <iostream>'],
+    ['main.c', 'C', '#include <stdio.h>'],
+    ['App.tsx', 'TypeScript', 'export function App() { return <div />; }'],
+    ['App.jsx', 'JavaScript', 'export function App() { return <div />; }'],
+    ['index.php', 'PHP', '<?php echo "hello";'],
+    ['package.json', 'JSON', '{ "name": "demo" }'],
+    ['config.yaml', 'YAML', 'name: demo'],
+    ['config.yml', 'YAML', 'name: demo'],
+    ['layout.xml', 'XML', '<root />'],
+    ['query.sql', 'SQL', 'select * from users;'],
+    ['index.html', 'HTML', '<main>Hello</main>'],
+    ['style.css', 'CSS', 'body { color: black; }'],
+    ['style.scss', 'SCSS', '$color: #000;'],
+    ['README.md', 'Markdown', '# Demo'],
+  ];
+
+  it.each(supportedTypes)('extracts and labels %s as %s', (fileName, language, code) => {
+    const pathEl = document.createElement('span');
+    pathEl.setAttribute('data-testid', 'breadcrumbs-filename');
+    pathEl.textContent = fileName;
+    document.body.appendChild(pathEl);
+
+    const line = document.createElement('div');
+    line.setAttribute('data-testid', 'code-cell');
+    line.textContent = code;
+    document.body.appendChild(line);
+
+    const result = new GitHubDomExtractor().extract();
+    expect(result).not.toBeNull();
+    expect(result?.filePath).toBe(fileName);
+    expect(result?.language).toBe(language);
+    expect(result?.lines).toEqual([code]);
+    expect(result?.isBinary).not.toBe(true);
+  });
+});
+
 describe('estimateTokens', () => {
   it('returns 0 for 0 chars', () => {
     expect(estimateTokens(0)).toBe(0);

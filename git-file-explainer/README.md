@@ -146,7 +146,7 @@ If all selectors fail (binary files, images, empty files), the sidebar shows a b
 
 ## Tech
 
-- TypeScript, Vite (three separate IIFE bundles), Vitest (90 GFE tests)
+- TypeScript, Vite (three separate IIFE bundles), Vitest (112 GFE tests)
 - No extension runtime dependencies
 - AI calls proxied through the background service worker (model: `claude-haiku-4-5-20251001`)
 - File content capped around 12,000 characters before sending to the API
