@@ -27,14 +27,15 @@
 
 ### Files
 
-| Action | File path                                       | Description                                                                                                                                                        |
-| ------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| MODIFY | `git-file-explainer/public/manifest.json`       | Bump version 0.1.0 → 1.0.0; add `"storage": { "managed_schema": "managed_schema.json" }`; drop unused `"tabs"` permission (activeTab is sufficient — matches TFE). |
-| CREATE | `git-file-explainer/public/managed_schema.json` | Chrome enterprise policy schema: `apiKey` (string) + `disabledHosts` (array of strings).                                                                           |
-| CREATE | `git-file-explainer/store/listing.md`           | CWS listing copy: name, short description, detailed description, category, keywords, screenshot spec.                                                              |
-| CREATE | `git-file-explainer/store/privacy-policy.md`    | Privacy policy document adapted from TFE, describing GFE data handling.                                                                                            |
-| MODIFY | `git-file-explainer/tests/manifest.test.ts`     | Add assertions: version is `1.0.0`, `"tabs"` is absent from permissions, `storage.managed_schema` field is present.                                                |
-| MODIFY | `package.json` (root)                           | Add `web-ext:build:gfe` script: `web-ext build --source-dir git-file-explainer/dist --artifacts-dir git-file-explainer/web-ext-artifacts`.                         |
+| Action | File path                                       | Description                                                                                                                                                                    |
+| ------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| MODIFY | `git-file-explainer/public/manifest.json`       | Bump version 0.1.0 → 1.0.0; add `"storage": { "managed_schema": "managed_schema.json" }`; drop unused `"tabs"` permission (activeTab is sufficient — matches TFE).             |
+| CREATE | `git-file-explainer/public/managed_schema.json` | Chrome enterprise policy schema: `apiKey` (string) + `disabledHosts` (array of strings).                                                                                       |
+| CREATE | `git-file-explainer/store/listing.md`           | CWS listing copy: name, short description, detailed description, category, keywords, screenshot spec (screenshots are user/manual — no PNGs committed).                        |
+| CREATE | `git-file-explainer/store/privacy-policy.md`    | Privacy policy document adapted from TFE, describing GFE data handling.                                                                                                        |
+| MODIFY | `git-file-explainer/tests/manifest.test.ts`     | Add assertions: version is `1.0.0`, `"tabs"` is absent from permissions, `storage.managed_schema` field is present.                                                            |
+| CREATE | `git-file-explainer/tests/popup.test.ts`        | Regression: mock `chrome.tabs` and assert popup `getCurrentHost()` calls `tabs.query({ active: true, currentWindow: true })` — proves popup path works without `"tabs"` grant. |
+| MODIFY | `package.json` (root)                           | Add `web-ext:build:gfe` script: `web-ext build --source-dir git-file-explainer/dist --artifacts-dir git-file-explainer/web-ext-artifacts`.                                     |
 
 ### Approach
 
@@ -60,20 +61,30 @@
 ### Post-build checks
 
 1. `npm run build:gfe`
-2. `npm run test:gfe` — all 73+ tests must pass
+2. `npm run test:gfe` — all 73+ tests must pass (includes new popup.test.ts + manifest.test.ts updates)
 3. `npm run test:ext` — TFE 129/129 must still pass
 4. `npm run lint`
 5. `npm run format:check`
 6. Verify `git-file-explainer/dist/managed_schema.json` exists after build (copied via `cpSync`)
 7. `npm run web-ext:build:gfe` — zip written to `git-file-explainer/web-ext-artifacts/`
+8. `web-ext lint --source-dir git-file-explainer/dist` — no Chrome-blocking errors
+9. Zip contents sanity: confirm `manifest.json`, `managed_schema.json`, `background.js`, `content.js`, `sidebar.css`, `popup/`, `icons/` all present in zip
 
 ### Review
 
 | Reviewer | Input                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Approved? |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| User     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | ⬜        |
+| User     | "go" (2026-05-31)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | ✅        |
 | Codex    | Approved with execution notes. Scope is appropriate for Phase 4/CWS prep: version bump, managed policy schema, store docs, `web-ext` zip script, and removing `"tabs"` are all low-risk and aligned with MV3 minimization. Please add/keep coverage that proves popup `chrome.tabs.query({ active: true, currentWindow: true })` still gets the active supported page URL after `"tabs"` is removed, because that is the only behavioral risk in this proposal. Also add post-build checks for `web-ext lint --source-dir git-file-explainer/dist` and zip-content sanity (`manifest.json`, `managed_schema.json`, `background.js`, `content.js`, `sidebar.css`, `popup/`, `icons/` present). Store screenshots remain a user/manual asset item and should not be marked complete unless real PNGs are added. | ✅        |
 | Gemini   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | ⬜        |
+
+### Outcome
+
+- **Status:** ✅ Built (2026-05-31)
+- **Built by:** Claude
+- **Result:** 7 files changed/created. `manifest.json`: version 0.1.0→1.0.0, `"tabs"` removed from permissions, `"storage": { "managed_schema": "managed_schema.json" }` added. `public/managed_schema.json`: Chrome policy schema (`apiKey` string + `disabledHosts` array). `store/listing.md` + `store/privacy-policy.md`: CWS copy and hostable privacy policy. `tsconfig.json`: added `"node"` to types (required for `node:fs`/`node:path` in manifest test). `tests/manifest.test.ts`: 3 new assertions (version, no "tabs", managed_schema). `tests/popup.test.ts`: 3 regression tests documenting `getCurrentHost()` calls `tabs.query({ active: true, currentWindow: true })`. `package.json`: `web-ext:build:gfe` script added.
+- **Zip:** `git-file-explainer/web-ext-artifacts/git_file_explainer-1.0.0.zip` ✅ — contains all required files.
+- **Test result:** GFE 79/79 ✅ (+6 new: 3 manifest, 3 popup) · TFE 129/129 ✅ · build ✅ (content.js 9.68 kB) · lint ✅ · format ✅ · managed_schema.json in dist ✅ · `web-ext:build:gfe` ✅ with `--overwrite-dest` · web-ext lint: Firefox-only errors only (same baseline as TFE since Phase 1, no Chrome blockers) · zip sanity ✅
 
 ---
 

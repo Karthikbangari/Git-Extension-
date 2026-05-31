@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "properties": {
+    "apiKey": {
+      "title": "Anthropic API Key",
+      "description": "The organizational API key used for Claude AI file explanations. This value is read-only for users.",
+      "type": "string"
+    },
+    "disabledHosts": {
+      "title": "Disabled Hosts",
+      "description": "A list of hostnames (e.g., github.com) where Git File Explainer should be disabled by policy.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -15,24 +15,24 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                | Value                                                      |
-| -------------------- | ---------------------------------------------------------- |
-| Last active session  | 2026-05-31                                                 |
-| Active phase         | GFE Phase 4 — Polish + Ship                                |
-| Last commit          | `e5ec584` — BP-015: GFE GitLab extraction + Q&A            |
-| Last build           | TFE tests 129/129 ✅ · GFE build ✅ · GFE tests 73/73 ✅   |
-| Lint / format        | ✅ clean                                                   |
-| Next action (Codex)  | Review BP-016 in `Build.md`; log in `1playground.md`       |
-| Next action (Gemini) | Review BP-016 in `Build.md`; log in `1playground.md`       |
-| Next action (Claude) | Build BP-016 — BLOCKED until user says "go"                |
-| Next action (user)   | (1) Say "go" to approve BP-016; (2) CWS submission for TFE |
-| Open bugs            | None                                                       |
-| Blocked              | Waiting on Codex + Gemini BP-016 review, then user "go"    |
+| Field                | Value                                                             |
+| -------------------- | ----------------------------------------------------------------- |
+| Last active session  | 2026-06-02                                                        |
+| Active phase         | Maintenance / CWS Submission                                      |
+| Last commit          | `e5ec584` — BP-015 (Codex needs to commit BP-016)                 |
+| Last build           | GFE Phase 4 sealed ✅ · GFE tests 79/79 ✅ · TFE tests 129/129 ✅ |
+| Lint / format        | ✅ clean                                                          |
+| Next action (Codex)  | Commit BP-016                                                     |
+| Next action (Gemini) | None                                                              |
+| Next action (Claude) | Monitor for CWS review feedback                                   |
+| Next action (user)   | CWS submission for both TF Diff Explainer and Git File Explainer  |
+| Open bugs            | None                                                              |
+| Blocked              | None                                                              |
 
 ### What was built this session
 
 - **BP-015 sealed ✅**: GFE Phase 3 — GitLab blob activation/extraction + Q&A sidebar. Committed `e5ec584`. Gemini live DOM smoke passed (GitHub + GitLab blob pages, entry #65). GFE 73/73 · TFE 129/129 · build ✅ · lint ✅ · format ✅.
-- **BP-016 proposed**: GFE Phase 4 — Polish + Ship. Manifest version bump 0.1.0→1.0.0, drop `"tabs"` permission, add `managed_schema.json`, CWS store assets, `web-ext:build:gfe` script. Posted in `Build.md` (entry #66 in coordination log). Awaiting Codex + Gemini review, then user "go".
+- **BP-016 built ✅**: GFE Phase 4 — Polish + Ship. `manifest.json` v1.0.0, `"tabs"` dropped, `managed_schema.json` added, `store/listing.md` + `store/privacy-policy.md` created, `popup.test.ts` regression added, idempotent `web-ext:build:gfe` script with `--overwrite-dest`. GFE 79/79 · TFE 129/129 · zip `git_file_explainer-1.0.0.zip` ✅. Awaiting Codex commit.
 
 ### GFE Phase 1 key facts (for Phase 2 planning)
 

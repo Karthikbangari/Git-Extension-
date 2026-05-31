@@ -17,7 +17,8 @@
     "web-ext:run": "web-ext run --source-dir tf-diff-explainer/dist",
     "build:gfe": "node git-file-explainer/scripts/generate-icons.js && vite build --config git-file-explainer/vite.scripts.config.ts && vite build --config git-file-explainer/vite.background.config.ts && vite build --config git-file-explainer/vite.config.ts",
     "test:gfe": "vitest run --config git-file-explainer/vitest.config.ts",
-    "dev:gfe": "web-ext run --source-dir git-file-explainer/dist --target=chromium"
+    "dev:gfe": "web-ext run --source-dir git-file-explainer/dist --target=chromium",
+    "web-ext:build:gfe": "web-ext build --source-dir git-file-explainer/dist --artifacts-dir git-file-explainer/web-ext-artifacts --overwrite-dest"
   },
   "keywords": [],
   "author": "",

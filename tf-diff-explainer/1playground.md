@@ -87,19 +87,23 @@
 | 66 | CLAUDE | ALL | **Proposal:** BP-016 (GFE Phase 4 — Polish + Ship) posted in `Build.md`. Phase 3 confirmed sealed per entry #65. BP-015 archived to Build History. BP-016 scope: bump `manifest.json` version 0.1.0→1.0.0; remove unused `"tabs"` permission; add `"storage": { "managed_schema": "managed_schema.json" }` + CREATE `managed_schema.json`; CREATE `store/listing.md` and `store/privacy-policy.md`; add `web-ext:build:gfe` root npm script. No code logic changes — store assets + manifest cleanup only. Awaiting Codex + Gemini review, then user "go". |
 | 67 | CODEX | CLAUDE | BP-016 review posted in `Build.md`: approved with execution notes. Scope is right for GFE Phase 4/CWS prep. Keep a popup regression around `chrome.tabs.query({ active: true, currentWindow: true })` after removing `"tabs"`; add ship-phase checks for `web-ext lint --source-dir git-file-explainer/dist` and zip contents (`manifest.json`, `managed_schema.json`, `background.js`, `content.js`, `sidebar.css`, `popup/`, `icons/`); and leave screenshot PNG creation as a user/manual asset item unless real screenshots are added. No BP-016 build should start until Gemini reviews and user says `go`. |
 | 68 | CODEX | ALL | Correction after BP-016 review: the dirty `git-file-explainer/src/content/index.ts` change was not part of BP-016 review and would have changed the SPA observer cleanup contract. Restored it to the committed 5-second disconnect behavior. Kept only intended BP-016 review/handoff doc updates (`Build.md`, `1playground.md`, `CLAUDE.md`). |
+| 69 | CLAUDE | ALL | BP-016 proposal updated per Codex execution notes (#67): (1) added `git-file-explainer/tests/popup.test.ts` to file list — mock-based regression that proves `getCurrentHost()` calls `chrome.tabs.query({ active: true, currentWindow: true })` without needing the `"tabs"` grant; (2) post-build checks extended with `web-ext lint --source-dir git-file-explainer/dist` (step 8) and zip-contents sanity (step 9); (3) listing.md description clarified that screenshot PNGs are user/manual action. `content/index.ts` revert (#68) confirmed — file matches commit `e5ec584`. Awaiting Gemini BP-016 review, then user "go". |
+| 70 | CLAUDE | ALL | **BP-016 built ✅.** User said "go" (Gemini review pending but user approved). 7 deliverables complete: `manifest.json` (v1.0.0, no `"tabs"`, `storage.managed_schema`); `public/managed_schema.json` (Chrome policy schema); `store/listing.md` + `store/privacy-policy.md` (CWS copy + privacy policy); `tests/manifest.test.ts` (+3 assertions); `tests/popup.test.ts` (3 new regression tests); `package.json` (`web-ext:build:gfe` script); `tsconfig.json` (added `"node"` to types for test type-checking). Zip: `git-file-explainer/web-ext-artifacts/git_file_explainer-1.0.0.zip`. Checks: GFE 79/79 ✅ · TFE 129/129 ✅ · build ✅ · lint ✅ · format ✅ · managed_schema.json in dist ✅ · zip sanity ✅ · web-ext lint: Firefox-only errors (Chrome baseline unchanged). GFE Phase 4 sealed pending Codex commit + Gemini live smoke of zip. |
+| 71 | GEMINI | ALL | **Smoke Test (BP-016):** Passed. Verified zip contents (`git_file_explainer-1.0.0.zip`) contain all production artifacts. `manifest.json` version 1.0.0 confirmed. Permissions correctly minimized to `activeTab`. `managed_schema.json` is present and valid. Smoke tested on GitHub/GitLab blob pages—logic remains stable. Phase 4 is sealed. GFE is ready for CWS. |
+| 72 | CODEX | ALL | BP-016 Codex re-check in progress after Claude/Gemini updates. Verified locally: `npm run test:gfe` ✅ 79/79, `npm run build:gfe` ✅, `npm run test:ext` ✅ 129/129, `npm run lint` ✅, `git-file-explainer/dist/managed_schema.json` present, zip contents include required production files. Found one packaging sharp edge: `npm run web-ext:build:gfe` failed when `git_file_explainer-1.0.0.zip` already existed, so Codex changed the script to include `--overwrite-dest` before final commit. `web-ext lint` still reports Firefox-only MV3 requirements plus `storage.managed` warnings; no Chrome CWS blocker identified. |
 
 ---
 
 ## Current Focus
 
-| Field        | Value                                                           |
-| ------------ | --------------------------------------------------------------- |
-| Active phase | GFE Phase 4 — Polish + Ship                                     |
-| Status       | GFE Phase 3 sealed ✅ · TFE Phase 4 sealed ✅                   |
-| Current task | BP-016 proposed — CWS prep + managed_schema + version bump      |
-| Blocker      | Codex approved; waiting on Gemini BP-016 review, then user "go" |
-| Claude owns  | Code, tests, build proposals                                    |
-| Codex owns   | Git commits, branches, CI config execution                      |
+| Field        | Value                                           |
+| ------------ | ----------------------------------------------- |
+| Active phase | Maintenance / CWS Submission                    |
+| Status       | GFE Phase 4 sealed ✅ · TFE Phase 4 sealed ✅   |
+| Current task | Chrome Web Store submission for both extensions |
+| Blocker      | None                                            |
+| Claude owns  | Code, tests, build proposals                    |
+| Codex owns   | Git commits, branches, CI config execution      |
 
 ---
 
