@@ -139,10 +139,10 @@ Replace current flat section list with 4 `.gfe-acc` accordion items:
 
 ### Outcome
 
-- **Status:** ✅ Built (2026-05-31)
+- **Status:** ✅ Built + Codex smoke passed (2026-05-31)
 - **Built by:** Claude
 - **Result:** Dark canvas design system applied to GFE side panel. Google Fonts @import removed by linter (system font stack used instead — addresses Codex concern). All 90 original tests preserved; 35 new tests added for accordion, mode toggle, quick actions. New exports: `setModeChangeHandler`, `setRerunHandler`, `setSidebarModeToggle`. Width 340→480px. No new permissions.
-- **Test result:** GFE 125/125 ✅ · TFE 191/191 ✅
+- **Test result:** GFE 127/127 ✅ · TFE 191/191 ✅ · BP-024 10-step browser smoke 10/10 ✅
 
 ---
 
