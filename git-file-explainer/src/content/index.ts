@@ -216,7 +216,7 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, streamQAAnswer } from './
         // Running anyway lets the extractor use its raw.githubusercontent.com fallback.
         triggerExplain();
       }
-    }, 30000);
+    }, 8000);
   };
 
   // Alt+S keyboard shortcut

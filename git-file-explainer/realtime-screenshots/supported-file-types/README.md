@@ -1,19 +1,8 @@
 # GFE Realtime File-Type Screenshots
 
-Generated: 2026-05-31T16:17:43.804Z
+Generated: 2026-05-31T17:08:06.668Z
 
 Each screenshot was captured from a real GitHub `/blob/` URL with `git-file-explainer/dist` loaded as an unpacked Chrome extension.
-
-These screenshots verify real-time sidebar injection, file detection, language detection, and no-key setup state across all supported file types. They do **not** verify AI summary generation because this smoke profile intentionally had no Anthropic API key saved.
-
-To verify AI summary generation:
-
-1. Run `npm run build:gfe`.
-2. Load `git-file-explainer/` or `git-file-explainer/dist/` in `chrome://extensions`.
-3. Click the Git File Explainer extension icon.
-4. Save an Anthropic API key.
-5. Open any URL below.
-6. The sidebar should move past the setup message and render the AI summary cards, key points, copy buttons, Q&A box, token chip, and Claude.ai share button.
 
 | Type  | File           | Language   | Status | Screenshot                   | Live URL                                                                                                                              |
 | ----- | -------------- | ---------- | ------ | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
