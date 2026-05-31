@@ -18,21 +18,22 @@ No exceptions.
 | Field                | Value                                                                                                      |
 | -------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Last active session  | 2026-05-31                                                                                                 |
-| Active phase         | TFE — Interactive UX overhaul (BP-017 built, awaiting Codex commit)                                        |
-| Last commit          | `278689f` — Codex (GFE live-test fix)                                                                      |
-| Last build           | BP-017 built ✅ · TFE tests 191/191 ✅ · GFE tests 81/81 ✅                                                |
+| Active phase         | Maintenance / CWS submission                                                                               |
+| Last commit          | `f6558c2` — Codex (live extension smoke-test log)                                                          |
+| Last build           | BP-017 + GFE BP-018..BP-022 built, committed, pushed, and smoke-tested ✅                                  |
 | Lint / format        | ✅ clean                                                                                                   |
-| Uncommitted          | BP-017 changes: 5 modified + 3 new files in `tf-diff-explainer/` (see below)                               |
-| Next action (Codex)  | Commit BP-017 files; push to remote; load `tf-diff-explainer/dist/` in Chrome and smoke-test all 5 steps   |
-| Next action (Gemini) | Live DOM smoke on a real GitHub PR with `.tf` files — walk all 5 steps, report pass/fail                   |
-| Next action (Claude) | None — awaiting Codex/Gemini smoke results; respond if bugs found                                          |
+| Uncommitted          | None — working tree clean                                                                                  |
+| Next action (Codex)  | Chrome Web Store packaging/submission support if user asks; commit any new docs/assets from other agents   |
+| Next action (Gemini) | Optional deeper live smoke for GFE streaming Q&A, copy buttons, token meter, and binary skip with API key  |
+| Next action (Claude) | None — respond if Codex/Gemini/user finds bugs in the live smoke gaps                                      |
 | Next action (user)   | (1) CWS submission for TFE; (2) CWS submission for GFE; (3) take 1280×800 screenshots for both store pages |
 | Open bugs            | None                                                                                                       |
 | Blocked              | None                                                                                                       |
 
 ### What was built this session
 
-- **BP-017 built ✅**: TFE interactive 5-step UX flow. New `stepper.ts` (fixed bottom bar, 5 steps, Back/Next). Full sidebar rewrite: `showSetupPanel` (step 2 — API key + site toggle inline), `showAnalyzing` (step 3 — compact header + skeleton), `showRiskMap` (step 4 — compact header + gradient risk bar + redesigned diff cards), `showAIReview` (step 5 — inline HIGH/MEDIUM badges). Orchestrator rewritten as step state machine. Added `setApiKey` to storage. 62 new tests. TFE 191/191 · GFE 81/81 · build ✅ · lint ✅ · format ✅. **Uncommitted** — awaiting Codex.
+- **BP-017 built, committed, pushed, and smoke-tested ✅**: TFE interactive 5-step UX flow. New `stepper.ts` (fixed bottom bar, 5 steps, Back/Next). Full sidebar rewrite: `showSetupPanel` (step 2 — API key + site toggle inline), `showAnalyzing` (step 3 — compact header + skeleton), `showRiskMap` (step 4 — compact header + gradient risk bar + redesigned diff cards), `showAIReview` (step 5 — inline HIGH/MEDIUM badges). Orchestrator rewritten as step state machine. Added `setApiKey` to storage. 62 new tests. TFE 191/191 · GFE 81/81 · build ✅ · lint ✅ · format ✅. Committed in `dbc7a9a`, log updates in `4926acd` and `f6558c2`.
+- **GFE BP-018..BP-022 built, committed, and smoke-tested at baseline ✅**: content foundation, cache/fallback, dual-mode rich cards, streaming Q&A plumbing, copy/export, token meter, and self-hosted GitLab support are included in `dbc7a9a`. Basic live GFE smoke passed on GitHub blob page: sidebar injected, `package.json` / `JSON` header rendered, current GitHub `code-cell` DOM detected, no-key state shown. Deeper API-key-dependent live checks remain optional/manual: streaming Q&A, copy buttons after a successful summary, token meter after API use, and binary skip on a binary blob target.
 - **BP-016 sealed ✅**: GFE Chrome Web Store prep. Committed `793db47`. GFE 79/79 · TFE 129/129.
 - **BP-015 sealed ✅**: GFE Phase 3 — GitLab blob activation/extraction + Q&A sidebar. Committed `e5ec584`. Gemini live DOM smoke passed (GitHub + GitLab blob pages, entry #65). GFE 73/73 · TFE 129/129 · build ✅ · lint ✅ · format ✅.
 - **BP-016 sealed ✅**: GFE Phase 4 — Polish + Ship. Committed `793db47`. `manifest.json` v1.0.0, `"tabs"` dropped, `managed_schema.json` added, `store/listing.md` + `store/privacy-policy.md` created, `popup.test.ts` regression added, idempotent `web-ext:build:gfe` script with `--overwrite-dest`. GFE 79/79 · TFE 129/129 · zip `git_file_explainer-1.0.0.zip` ✅.
