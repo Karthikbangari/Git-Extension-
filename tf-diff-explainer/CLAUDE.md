@@ -19,13 +19,13 @@ No exceptions.
 | -------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Last active session  | 2026-05-31                                                                                                 |
 | Active phase         | Maintenance / CWS submission                                                                               |
-| Last commit          | `04e61a6` — Codex (extension verification smoke script + screenshots)                                      |
-| Last build           | BP-017 + GFE BP-018..BP-022 built, committed, pushed, and smoke-tested ✅                                  |
+| Last commit          | `d458747` — Codex (README refresh + BP-023 review)                                                         |
+| Last build           | BP-017..BP-022 + extension verifier built, committed, and pushed ✅                                        |
 | Lint / format        | ✅ clean                                                                                                   |
 | Uncommitted          | None — working tree clean                                                                                  |
 | Next action (Codex)  | Chrome Web Store packaging/submission support if user asks; commit any new docs/assets from other agents   |
 | Next action (Gemini) | Optional deeper live smoke for GFE streaming Q&A, copy buttons, token meter, and binary skip with API key  |
-| Next action (Claude) | None — respond if Codex/Gemini/user finds bugs in the live smoke gaps                                      |
+| Next action (Claude) | Refine BP-023 (Share to Claude.ai) to address Codex review (use window.open vs tabs permission)            |
 | Next action (user)   | (1) CWS submission for TFE; (2) CWS submission for GFE; (3) take 1280×800 screenshots for both store pages |
 | Open bugs            | None                                                                                                       |
 | Blocked              | None                                                                                                       |
@@ -73,16 +73,6 @@ Dashboard: https://chrome.google.com/webstore/devconsole
 - **Gemini + Codex** both run final phase E2E tests — not Codex alone
 - **Claude tests after every subphase** (task group), not just end of phase
 
-### Confirmed decisions (do not re-litigate)
-
-- **TypeScript** — all source files are `.ts`
-- **Single root `package.json`** at `/Terraf/` — no inner `package.json`
-- **Vite now** — three separate single-entry configs (Vite 8 prohibits IIFE + multiple entries)
-- **Gemini + Codex** both run final phase E2E tests — not Codex alone
-- **Claude tests after every subphase** (task group), not just end of phase
-- **Coordination log is mandatory** — every agent review, code/doc change, blocker, approval, or verification result must update `1playground.md` in the same turn
-- **CLAUDE.md is the session handoff file** — no new `.md` files for this purpose
-
 ### Known gotchas (discovered during BP-002)
 
 - **Vite 8 IIFE limitation:** `lib` mode with multiple entries + IIFE format is blocked. Must use one Vite config per entry point.
@@ -126,13 +116,14 @@ Neither acts outside its lane without explicit user instruction.
 
 All commands run from `/Terraf/` with `PATH="$PWD/.tools/node/bin:$PATH"`.
 
-| Command             | What it does                                                                        |
-| ------------------- | ----------------------------------------------------------------------------------- |
-| `npm run build:ext` | Icons → content bundle → background bundle → popup bundle → copies public/ to dist/ |
-| `npm run test:ext`  | Runs Vitest against `tf-diff-explainer/tests/**/*.test.ts`                          |
-| `npm run dev:ext`   | Loads `tf-diff-explainer/dist/` in Chrome via web-ext                               |
-| `npm run lint`      | ESLint v10 flat config (JS files only; TS lint added Phase 2+)                      |
-| `npm run format`    | Prettier across project                                                             |
+| Command                     | What it does                                                                        |
+| --------------------------- | ----------------------------------------------------------------------------------- |
+| `npm run build:ext`         | Icons → content bundle → background bundle → popup bundle → copies public/ to dist/ |
+| `npm run test:ext`          | Runs Vitest against `tf-diff-explainer/tests/**/*.test.ts`                          |
+| `npm run dev:ext`           | Loads `tf-diff-explainer/dist/` in Chrome via web-ext                               |
+| `npm run verify:extensions` | Runs Playwright smoke script against built extensions in `dist/`                    |
+| `npm run lint`              | ESLint v10 flat config (JS files only; TS lint added Phase 2+)                      |
+| `npm run format`            | Prettier across project                                                             |
 
 ### Build pipeline (three sequential Vite calls)
 
