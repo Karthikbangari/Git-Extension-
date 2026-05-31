@@ -10,6 +10,7 @@ export default [
       'tf-diff-explainer/scripts/**/*.mjs',
       'git-file-explainer/scripts/**/*.js',
       'scripts/**/*.mjs',
+      'verify-extensions.mjs',
     ],
     languageOptions: {
       globals: {
