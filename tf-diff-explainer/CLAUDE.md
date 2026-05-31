@@ -19,7 +19,7 @@ No exceptions.
 | -------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Last active session  | 2026-05-31                                                                                                 |
 | Active phase         | Maintenance / CWS submission                                                                               |
-| Last commit          | `f6558c2` — Codex (live extension smoke-test log)                                                          |
+| Last commit          | `04e61a6` — Codex (extension verification smoke script + screenshots)                                      |
 | Last build           | BP-017 + GFE BP-018..BP-022 built, committed, pushed, and smoke-tested ✅                                  |
 | Lint / format        | ✅ clean                                                                                                   |
 | Uncommitted          | None — working tree clean                                                                                  |
