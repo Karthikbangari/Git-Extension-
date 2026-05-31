@@ -36,7 +36,9 @@ Then in Chrome:
 
 1. Go to `chrome://extensions`
 2. Enable **Developer mode**
-3. Click **Load unpacked** → select `git-file-explainer/dist/`
+3. Click **Load unpacked** → select `git-file-explainer/`
+
+You can also select `git-file-explainer/dist/`; `dist/` is the canonical built extension folder and the root folder includes a manifest shim for easier manual loading.
 
 Navigate to any `github.com/*/blob/*` or `gitlab.com/*/-/blob/*` file page — the sidebar injects automatically on the right side of the page.
 
@@ -88,6 +90,7 @@ git-file-explainer/
 │   ├── managed_schema.json   # Chrome enterprise policy schema
 │   ├── icons/
 │   └── popup/
+├── manifest.json             # Load-unpacked shim pointing to dist/ assets
 └── dist/                     # Built extension — load this in Chrome
 ```
 

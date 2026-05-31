@@ -7,6 +7,9 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, fetchQAAnswer } from './a
 (async function init() {
   const host = location.hostname;
 
+  const SELECTORS =
+    '.blob-code-inner, td[id^="LC"], [data-testid="blob-code-content"], .blob-content .line, .blob-content td.line_content';
+
   const run = async () => {
     injectSidebar();
     updateSidebar('loading');
@@ -51,37 +54,38 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, fetchQAAnswer } from './a
     }
   };
 
-  try {
-    if (!isFilePage()) return;
+  let navObserver: MutationObserver | null = null;
+
+  const handlePageChange = async (url: string) => {
+    removeSidebar();
+    if (navObserver) navObserver.disconnect();
+
+    if (!isFilePage(url)) return;
 
     const enabled = await isEnabledForHost(host);
     if (!enabled) return;
 
-    await run();
+    // Wait for the code container to be present in the DOM
+    navObserver = new MutationObserver((_, obs) => {
+      if (document.querySelector(SELECTORS)) {
+        obs.disconnect();
+        void run();
+      }
+    });
 
-    let navObserver: MutationObserver | null = null;
+    navObserver.observe(document.body, { childList: true, subtree: true });
 
-    watchForNavigation(async (newUrl: string) => {
-      removeSidebar();
-      if (navObserver) navObserver.disconnect();
+    // Fallback: stop observing after 5s if elements never appear
+    setTimeout(() => navObserver?.disconnect(), 5000);
+  };
 
-      if (!isFilePage(newUrl)) return;
+  try {
+    // Handle the current page state immediately
+    await handlePageChange(location.href);
 
-      const stillEnabled = await isEnabledForHost(host);
-      if (!stillEnabled) return;
-
-      navObserver = new MutationObserver((_, obs) => {
-        if (
-          document.querySelector(
-            '.blob-code-inner, td[id^="LC"], [data-testid="blob-code-content"], .blob-content .line, .blob-content td.line_content'
-          )
-        ) {
-          obs.disconnect();
-          void run();
-        }
-      });
-      navObserver.observe(document.body, { childList: true, subtree: true });
-      setTimeout(() => navObserver?.disconnect(), 5000);
+    // Always watch for SPA transitions, even if we didn't start on a file page
+    watchForNavigation((newUrl: string) => {
+      void handlePageChange(newUrl);
     });
   } catch {
     // Errors must not surface to the host page

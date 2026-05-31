@@ -142,3 +142,5 @@ The extension is prepared for CWS submission at version 1.0.0. Store assets (pri
 ## Git File Explainer
 
 See [`git-file-explainer/README.md`](git-file-explainer/README.md) for full documentation.
+
+For local Chrome testing, run `npm run build:gfe`, then **Load unpacked** using either `git-file-explainer/` or `git-file-explainer/dist/`. The root folder includes a manifest shim that points Chrome at the built `dist/` assets.
