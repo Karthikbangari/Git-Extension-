@@ -4,12 +4,16 @@ A Chrome extension (Manifest V3) that injects an AI-powered sidebar into GitHub 
 
 ## What it does
 
-- **File summary** — 2-3 sentence plain-English description of what the file does
+- **File summary** — 2-3 sentence plain-English or developer-focused description of what the file does
 - **Key points** — up to 5 verb-led bullets covering the file's main responsibilities
+- **Rich cards** — optional connections, watch-outs, analogy, suggested question chips, and language-aware prompts
 - **Complexity chip** — Low / Medium / High rating so you can gauge review effort at a glance
-- **Interactive Q&A** — ask follow-up questions about the file directly in the sidebar; answers are generated in context (280-character question limit)
-- **URL-keyed cache** — summary is stored in `chrome.storage.local` per file URL; revisiting the same file is instant with no extra API call
-- **No-content state** — gracefully handles pages where file content cannot be extracted (binary files, images, empty files)
+- **Streaming Q&A** — ask follow-up questions about the file directly in the sidebar; answers stream through an MV3 runtime port (280-character question limit)
+- **Copy/export** — copy the rendered summary as plain text or Markdown from the sidebar
+- **Token meter** — popup tracks cumulative input/output token usage with a reset control
+- **Stable cache + raw fallback** — summaries use normalized cache keys with metadata, LRU eviction, and raw-content fallback when DOM extraction fails
+- **Binary skip / large-file handling** — skips binary extensions and smart-truncates large files (first 300 + last 50 lines)
+- **Custom GitLab support** — popup can store a self-hosted GitLab domain for file-page detection
 - **Enterprise org policy** — IT admins can deploy an API key and host restrictions via `chrome.storage.managed`; popup shows read-only fields when a managed policy is active
 
 AI features require an Anthropic API key (`sk-ant-…`), set via the extension popup. The key is stored in `chrome.storage.local` and never touches the page DOM.
@@ -48,11 +52,12 @@ To enable AI summaries, open the extension popup and paste an Anthropic API key 
 
 All commands run from the repo root (`/Git-Exp`).
 
-| Command             | What it does                                       |
-| ------------------- | -------------------------------------------------- |
-| `npm run build:gfe` | Full production build → `git-file-explainer/dist/` |
-| `npm run test:gfe`  | Run Vitest unit tests                              |
-| `npm run dev:gfe`   | Launch Chrome with extension loaded via web-ext    |
+| Command                     | What it does                                                                     |
+| --------------------------- | -------------------------------------------------------------------------------- |
+| `npm run build:gfe`         | Full production build → `git-file-explainer/dist/`                               |
+| `npm run test:gfe`          | Run Vitest unit tests                                                            |
+| `npm run dev:gfe`           | Launch Chrome with extension loaded via web-ext                                  |
+| `npm run verify:extensions` | Playwright smoke verification for TFE + GFE, with screenshots in `verify-shots/` |
 
 ## Project structure
 
@@ -61,12 +66,12 @@ git-file-explainer/
 ├── src/
 │   ├── content/
 │   │   ├── index.ts          # Orchestrator: detect → extract → cache → AI → render
-│   │   ├── fileExtractor.ts  # DOM extraction (3-layer fallback for GitHub blob pages)
+│   │   ├── fileExtractor.ts  # DOM/raw extraction, binary skip, smart truncation
 │   │   ├── aiSummary.ts      # Prompt builder + background-proxied Claude API fetch
 │   │   ├── pageDetector.ts   # URL route matching (GitHub/GitLab blob views)
 │   │   ├── types.ts          # FileSummaryResult, FileContent, FileExtractor interface
 │   │   └── sidebar/
-│   │       ├── index.ts      # Sidebar DOM, summary/key-points/complexity rendering
+│   │       ├── index.ts      # Sidebar DOM, rich cards, Q&A, copy/export rendering
 │   │       └── sidebar.css   # Sidebar styles + dark mode + shimmer skeleton
 │   ├── background/
 │   │   └── index.ts          # MV3 service worker — proxies GFE_FETCH_AI_SUMMARY to Anthropic
@@ -96,11 +101,14 @@ git-file-explainer/
 
 ## DOM extraction
 
-**GitHub** — 3-layer fallback:
+**GitHub** — current fallback chain:
 
 1. `td.blob-code-inner` — standard GitHub code table cells
 2. `td[id^="LC"]` — line-content cells by ID prefix
 3. `[data-testid="blob-code-content"]` — data-testid attribute (newer GitHub markup)
+4. `[data-testid="code-cell"]` — current GitHub React code view
+5. `[data-testid="read-only-cursor-text-area"][aria-label="file content"]` — accessibility textarea fallback
+6. Raw file fetch through the background service worker when DOM extraction fails
 
 **GitLab** — 3-layer fallback:
 
@@ -108,7 +116,7 @@ git-file-explainer/
 2. `.blob-content .line` — line divs in the blob content container
 3. `#blob-content-holder` — fallback content holder element
 
-If all selectors fail (binary files, images, empty files), the sidebar shows a `no-content` state.
+If all selectors fail (binary files, images, empty files), the sidebar shows a binary/no-content state instead of sending unusable content to AI.
 
 ## Security guardrails (MV3 compliance)
 
@@ -123,17 +131,17 @@ If all selectors fail (binary files, images, empty files), the sidebar shows a `
 
 ## Roadmap
 
-| Phase             | Status  | Deliverable                                                                         |
-| ----------------- | ------- | ----------------------------------------------------------------------------------- |
-| 1 — Scaffold      | ✅ Done | Extension shell, route detection, provider interface, sidebar shell                 |
-| 2 — Core          | ✅ Done | GitHub DOM extraction, AI summary, URL cache, no-content state                      |
-| 3 — GitLab + Q&A  | ✅ Done | GitLab DOM extraction (3-layer fallback), interactive Q&A sidebar, onboarding badge |
-| 4 — Polish + ship | ✅ Done | `managed_schema.json`, enterprise policy, CWS store assets, v1.0.0, submission zip  |
+| Phase             | Status  | Deliverable                                                                                         |
+| ----------------- | ------- | --------------------------------------------------------------------------------------------------- |
+| 1 — Scaffold      | ✅ Done | Extension shell, route detection, provider interface, sidebar shell                                 |
+| 2 — Core          | ✅ Done | GitHub DOM extraction, AI summary, URL cache, no-content state                                      |
+| 3 — GitLab + Q&A  | ✅ Done | GitLab DOM extraction (3-layer fallback), interactive Q&A sidebar, onboarding badge                 |
+| 4 — Polish + ship | ✅ Done | Enterprise policy, CWS store assets, streaming Q&A, copy/export, token meter, custom GitLab, v1.0.0 |
 
 ## Tech
 
-- TypeScript, Vite (three separate IIFE bundles), Vitest (79 tests)
-- No runtime dependencies
+- TypeScript, Vite (three separate IIFE bundles), Vitest (81 GFE tests)
+- No extension runtime dependencies
 - AI calls proxied through the background service worker (model: `claude-haiku-4-5-20251001`)
-- File content truncated to 5,000 characters before sending to the API
+- File content capped around 12,000 characters before sending to the API
 - Q&A questions capped at 280 characters

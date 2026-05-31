@@ -2,10 +2,10 @@
 
 Two Chrome extensions (Manifest V3) that bring AI-powered insights directly into GitHub and GitLab.
 
-| Extension                                 | What it does                                                                                                                                             | Status    |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| [TF Diff Explainer](tf-diff-explainer/)   | Sidebar for GitHub PR / GitLab MR diffs — activates on 22 file formats; Terraform `.tf` files get deep risk analysis, dependency minimap, and AI summary | v1.0.0 ✅ |
-| [Git File Explainer](git-file-explainer/) | Sidebar for GitHub and GitLab file views — AI-powered plain-English summary, key points, complexity rating, and interactive Q&A                          | v1.0.0 ✅ |
+| Extension                                 | What it does                                                                                                                                     | Status    |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| [TF Diff Explainer](tf-diff-explainer/)   | Guided 5-step sidebar for GitHub PR / GitLab MR diffs — activates on 22 file formats; Terraform `.tf` files get deep risk analysis and AI review | v1.0.0 ✅ |
+| [Git File Explainer](git-file-explainer/) | Sidebar for GitHub and GitLab file views — AI summary, rich cards, streaming Q&A, copy/export actions, token meter, and custom GitLab support    | v1.0.0 ✅ |
 
 ---
 
@@ -15,6 +15,7 @@ A Chrome extension (Manifest V3) that injects a sidebar into GitHub PR and GitLa
 
 ## What it does
 
+- **Guided 5-step flow** — Detect → Set up → Analyze → Risk map → AI review, with a fixed bottom stepper and Back / Next controls
 - **Risk sidebar** _(Terraform only)_ — classifies each changed resource as Low / Medium / High based on local rules: IAM wildcard actions/principals, open security group ingress/egress, `force_destroy`, resource deletions
 - **Dependency minimap** _(Terraform only)_ — SVG graph showing which changed resources reference each other, laid out in a two-column dependent → target layout
 - **Relationship highlighting** — hover any resource card to dim unrelated resources and edges
@@ -52,13 +53,14 @@ To enable AI features, open the extension popup and paste an Anthropic API key (
 
 All commands run from the repo root (`/Terraf`).
 
-| Command                | What it does                                      |
-| ---------------------- | ------------------------------------------------- |
-| `npm run build:ext`    | Full production build → `tf-diff-explainer/dist/` |
-| `npm run test:ext`     | Run Vitest unit + integration tests               |
-| `npm run lint`         | ESLint                                            |
-| `npm run format`       | Prettier (write)                                  |
-| `npm run format:check` | Prettier (check only)                             |
+| Command                     | What it does                                                                           |
+| --------------------------- | -------------------------------------------------------------------------------------- |
+| `npm run build:ext`         | Full production build → `tf-diff-explainer/dist/`                                      |
+| `npm run test:ext`          | Run Vitest unit + integration tests                                                    |
+| `npm run verify:extensions` | Playwright smoke verification for both extensions, with screenshots in `verify-shots/` |
+| `npm run lint`              | ESLint                                                                                 |
+| `npm run format`            | Prettier (write)                                                                       |
+| `npm run format:check`      | Prettier (check only)                                                                  |
 
 ## Project structure
 
@@ -67,7 +69,8 @@ tf-diff-explainer/
 ├── src/
 │   ├── master.ts         # ★ All modules in one file — start here for a full read
 │   ├── content/          # Content script (injected into PR pages)
-│   │   ├── index.ts      # Orchestrator: detect → cache → analyse → render → AI
+│   │   ├── index.ts      # Orchestrator: detect → setup → analyse → risk map → AI
+│   │   ├── stepper.ts    # Fixed 5-step bottom navigation
 │   │   ├── hunkParser.ts # DOM scraper: extracts ResourceChange[] from diff
 │   │   ├── riskClassifier.ts
 │   │   ├── refParser.ts  # Cross-resource reference detection (regex)
@@ -129,7 +132,8 @@ These rules are enforced across every build and reviewed on every proposal:
 
 ## Tech
 
-- TypeScript, Vite (three separate IIFE bundles), Vitest (129 tests)
+- TypeScript, Vite (three separate IIFE bundles), Vitest (191 TFE tests + 81 GFE tests)
+- Playwright smoke verifier (`npm run verify:extensions`) — latest recorded run: 12 pass, 0 fail, 1 expected GitHub PNG-preview warning
 - No runtime dependencies — everything ships in the bundle
 - AI calls proxied through the background service worker so the host page's CSP cannot block them
 
