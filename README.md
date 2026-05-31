@@ -2,21 +2,21 @@
 
 Two Chrome extensions (Manifest V3) that bring AI-powered insights directly into GitHub and GitLab.
 
-| Extension                                 | What it does                                                                                                        | Status           |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| [TF Diff Explainer](tf-diff-explainer/)   | Sidebar for GitHub PR / GitLab MR pages with Terraform diffs — risk analysis, dependency minimap, AI change summary | v1.0.0 ✅        |
-| [Git File Explainer](git-file-explainer/) | Sidebar for GitHub file pages — plain-English summary, key points, complexity rating                                | v0.1.0 (Phase 2) |
+| Extension                                 | What it does                                                                                                                                             | Status    |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| [TF Diff Explainer](tf-diff-explainer/)   | Sidebar for GitHub PR / GitLab MR diffs — activates on 22 file formats; Terraform `.tf` files get deep risk analysis, dependency minimap, and AI summary | v1.0.0 ✅ |
+| [Git File Explainer](git-file-explainer/) | Sidebar for GitHub and GitLab file views — AI-powered plain-English summary, key points, complexity rating, and interactive Q&A                          | v1.0.0 ✅ |
 
 ---
 
 ## TF Diff Explainer
 
-A Chrome extension (Manifest V3) that injects a sidebar into GitHub PR and GitLab MR pages when Terraform `.tf` files appear in the diff. Provides instant local risk analysis, a dependency minimap, and optional AI-powered summaries via the Claude API.
+A Chrome extension (Manifest V3) that injects a sidebar into GitHub PR and GitLab MR pages when supported code or configuration files appear in the diff. The sidebar activates for 22 file formats (`.tf`, `.ts`, `.js`, `.py`, `.go`, `.java`, `.rb`, `.cs`, `.cpp`, `.c`, `.tsx`, `.jsx`, `.php`, `.json`, `.yaml`, `.yml`, `.xml`, `.sql`, `.html`, `.css`, `.scss`, `.md`). Terraform `.tf` files receive the deepest local analysis; all other formats show the diff overview and optional AI summary.
 
 ## What it does
 
-- **Risk sidebar** — classifies each changed Terraform resource as Low / Medium / High based on local rules: IAM wildcard actions/principals, open security group ingress/egress, `force_destroy`, resource deletions
-- **Dependency minimap** — SVG graph showing which changed resources reference each other, laid out in a two-column dependent → target layout
+- **Risk sidebar** _(Terraform only)_ — classifies each changed resource as Low / Medium / High based on local rules: IAM wildcard actions/principals, open security group ingress/egress, `force_destroy`, resource deletions
+- **Dependency minimap** _(Terraform only)_ — SVG graph showing which changed resources reference each other, laid out in a two-column dependent → target layout
 - **Relationship highlighting** — hover any resource card to dim unrelated resources and edges
 - **Session caching** — analysis results are cached per URL so re-opening the sidebar is instant
 - **AI Change Summary** _(requires Anthropic API key)_ — plain-English summary of the diff, up to 3 risk bullets, and a 6-step interactive rollback checklist; results are cached per diff hash so each unique diff costs one API call
@@ -42,7 +42,7 @@ Then in Chrome:
 2. Enable **Developer mode**
 3. Click **Load unpacked** → select `tf-diff-explainer/dist/`
 
-The sidebar appears automatically on GitHub PR and GitLab MR pages that contain `.tf` file changes.
+The sidebar appears automatically on GitHub PR and GitLab MR pages that contain any of the 22 supported file types. Terraform `.tf` changes get the full risk analysis and minimap; other file types display the diff overview and AI summary.
 
 To enable AI features, open the extension popup and paste an Anthropic API key (`sk-ant-…`). The key is stored in `chrome.storage.local` and never leaves the extension.
 
@@ -129,7 +129,7 @@ These rules are enforced across every build and reviewed on every proposal:
 
 ## Tech
 
-- TypeScript, Vite (three separate IIFE bundles), Vitest (104 tests)
+- TypeScript, Vite (three separate IIFE bundles), Vitest (129 tests)
 - No runtime dependencies — everything ships in the bundle
 - AI calls proxied through the background service worker so the host page's CSP cannot block them
 

@@ -15,24 +15,26 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                | Value                                                             |
-| -------------------- | ----------------------------------------------------------------- |
-| Last active session  | 2026-06-02                                                        |
-| Active phase         | Maintenance / CWS Submission                                      |
-| Last commit          | `793db47` — BP-016: GFE Chrome Web Store prep                     |
-| Last build           | GFE Phase 4 sealed ✅ · GFE tests 79/79 ✅ · TFE tests 129/129 ✅ |
-| Lint / format        | ✅ clean                                                          |
-| Next action (Codex)  | None                                                              |
-| Next action (Gemini) | None                                                              |
-| Next action (Claude) | Monitor for CWS review feedback                                   |
-| Next action (user)   | CWS submission for both TF Diff Explainer and Git File Explainer  |
-| Open bugs            | None                                                              |
-| Blocked              | None                                                              |
+| Field                | Value                                                                                           |
+| -------------------- | ----------------------------------------------------------------------------------------------- |
+| Last active session  | 2026-05-31                                                                                      |
+| Active phase         | Maintenance / CWS Submission                                                                    |
+| Last commit          | `793db47` — BP-016: GFE Chrome Web Store prep                                                   |
+| Last build           | GFE Phase 4 sealed ✅ · GFE tests 79/79 ✅ · TFE tests 129/129 ✅                               |
+| Lint / format        | ✅ clean                                                                                        |
+| Uncommitted          | `README.md` + `git-file-explainer/README.md` — multi-format + v1.0.0 + Q&A doc updates          |
+| Next action (Codex)  | Commit the two README files (entry #74 in coordination log); push branch to remote              |
+| Next action (Gemini) | None pending                                                                                    |
+| Next action (Claude) | None — both extensions CWS-ready; monitor for CWS review feedback if user submits               |
+| Next action (user)   | (1) CWS submission for TFE; (2) CWS submission for GFE; (3) take screenshots for store listings |
+| Open bugs            | None                                                                                            |
+| Blocked              | None                                                                                            |
 
 ### What was built this session
 
 - **BP-015 sealed ✅**: GFE Phase 3 — GitLab blob activation/extraction + Q&A sidebar. Committed `e5ec584`. Gemini live DOM smoke passed (GitHub + GitLab blob pages, entry #65). GFE 73/73 · TFE 129/129 · build ✅ · lint ✅ · format ✅.
 - **BP-016 sealed ✅**: GFE Phase 4 — Polish + Ship. Committed `793db47`. `manifest.json` v1.0.0, `"tabs"` dropped, `managed_schema.json` added, `store/listing.md` + `store/privacy-policy.md` created, `popup.test.ts` regression added, idempotent `web-ext:build:gfe` script with `--overwrite-dest`. GFE 79/79 · TFE 129/129 · zip `git_file_explainer-1.0.0.zip` ✅.
+- **README docs updated** (uncommitted — awaiting Codex commit): root `README.md` now lists 22 TFE formats with Terraform-specific callouts, GFE v1.0.0 ✅, test count 129. `git-file-explainer/README.md` updated to v1.0.0, adds Q&A + enterprise policy, GitLab support table, GitLab extraction section, all 4 phases ✅ Done, correct test file list.
 
 ### GFE Phase 1 key facts (for Phase 2 planning)
 
