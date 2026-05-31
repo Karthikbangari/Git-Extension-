@@ -30,49 +30,56 @@ Screen 3 of the design spec (§10) maps 1-to-1 to GFE's content-script sidebar. 
 ### Approach
 
 **Part 1 — Design token layer (`sidebar.css`)**
+
 - Add a `.gfe-root` scoped block (not `:root`) with all tokens from §17: surfaces, borders, text, accents, gradients, glass, shadows, radius, type families. Scoping prevents token bleed into host pages.
 - Import Manrope (400/500/600/700/800) + JetBrains Mono (400/500/600) via `@import url(https://fonts.googleapis.com/...)` at the top of `sidebar.css`. Extension CSS is loaded via Chrome's extension context, not the page CSP — Google Fonts fetches correctly on all standard GitHub/GitLab pages.
 - Bump sidebar width from 340px → 480px (matching spec).
 
 **Part 2 — Glass header**
+
 - Replace current gradient header with: `--glass-strong` bg + `backdrop-filter: blur(22px)` + 1px bottom border `--border-soft`.
 - Left: 28px gradient sparkle SVG mark (`stroke: currentColor`, stroked `#07120A` on `--genius` gradient bg) + "Git File Explainer" title (Manrope 700, 13px).
 - Right: filename chip (JetBrains Mono, `--surface-3`, truncated) + language badge (accent-tinted pill) + collapse `‹`/`›` icon button.
 
 **Part 3 — File meta row**
+
 - First item below header in expanded state.
 - Full filename (JetBrains Mono, `--text-2`) + language pill + small SVG score ring (36px donut, uses `complexity` from `FileSummaryResult`).
 - Only shown in success state when a result exists.
 
 **Part 4 — Mode toggle in sidebar**
+
 - 2-option segmented control: Developer (code icon) / Business (globe icon) with sliding `--genius` gradient thumb (spring `cubic-bezier(0.34,1.4,0.5,1)` 0.3s).
 - Reads/writes existing `getAudience`/`setAudience` from storage. On toggle → call existing `triggerExplain()` so the sidebar rerenders with the new audience without a full page reload.
 
 **Part 5 — AI explanation accordion**
 Replace current flat section list with 4 `.gfe-acc` accordion items:
 
-| # | Title | Content | Default |
-|---|-------|---------|---------|
-| 1 | Summary | `result.summary` 2-sentence paragraph | Open |
-| 2 | Key Points | `result.keyPoints[]` bulleted list | Closed |
-| 3 | How It Connects | `result.connections[]` (dev) or `result.analogy` (biz) | Closed |
-| 4 | Watch Out For | `result.watchOutFor[]` bulleted list | Closed |
+| #   | Title           | Content                                                | Default |
+| --- | --------------- | ------------------------------------------------------ | ------- |
+| 1   | Summary         | `result.summary` 2-sentence paragraph                  | Open    |
+| 2   | Key Points      | `result.keyPoints[]` bulleted list                     | Closed  |
+| 3   | How It Connects | `result.connections[]` (dev) or `result.analogy` (biz) | Closed  |
+| 4   | Watch Out For   | `result.watchOutFor[]` bulleted list                   | Closed  |
 
 - Open/close via `grid-template-rows: 0fr → 1fr` (0.3s ease). Chevron rotates 180° when open.
 - One accordion open at a time — clicking an open header closes it.
 
 **Part 6 — Quick actions row (2×2 grid)**
+
 - 4 buttons below the accordion: **Explain** · **Find Bugs** · **Security Scan** · **Generate Tests**
 - "Explain" re-calls existing `triggerExplain()`.
 - The other three inject a pre-formed question string into the Q&A input and submit it (reusing existing `askQuestion()` flow).
 
 **Part 7 — Chat visual update**
+
 - User messages: blue-tinted bubble (`--blue` + `22` alpha bg), right-aligned.
 - AI messages: `--surface` bubble, left-aligned, soft border, sparkle avatar 24px.
 - Typing indicator: 3 bouncing dots (`.gfe-typing`) replaces current spinner during AI calls.
 - Updated textarea: `--canvas-2` bg, soft border, focus → `--blue-deep` border + 3px blue ring.
 
 **Part 8 — States**
+
 - **No-key**: 48px gradient sparkle tile + "Add your Anthropic API key to explain files" + genius-gradient CTA. Token chip stays.
 - **Loading skeleton**: 3 shimmer bars (`.gfe-skeleton` shimmer animation) filling the accordion area.
 - **Binary file**: neutral icon + "Binary file — nothing to explain."
@@ -81,12 +88,12 @@ Replace current flat section list with 4 `.gfe-acc` accordion items:
 
 ### Files changed
 
-| Action | File | Notes |
-|--------|------|-------|
-| MODIFIED | `git-file-explainer/src/content/sidebar/sidebar.css` | Full rewrite — new token layer, all component styles |
-| MODIFIED | `git-file-explainer/src/content/sidebar/index.ts` | New HTML structure: glass header, meta row, mode toggle, accordion, quick actions, chat bubbles |
-| MODIFIED | `git-file-explainer/src/content/index.ts` | Plumb `audience` state into `updateSidebar` for mode-toggle re-trigger |
-| MODIFIED | `git-file-explainer/tests/sidebar.test.ts` | Update DOM assertions for new element structure; add: accordion open/close, mode toggle, quick action injection |
+| Action   | File                                                 | Notes                                                                                                           |
+| -------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| MODIFIED | `git-file-explainer/src/content/sidebar/sidebar.css` | Full rewrite — new token layer, all component styles                                                            |
+| MODIFIED | `git-file-explainer/src/content/sidebar/index.ts`    | New HTML structure: glass header, meta row, mode toggle, accordion, quick actions, chat bubbles                 |
+| MODIFIED | `git-file-explainer/src/content/index.ts`            | Plumb `audience` state into `updateSidebar` for mode-toggle re-trigger                                          |
+| MODIFIED | `git-file-explainer/tests/sidebar.test.ts`           | Update DOM assertions for new element structure; add: accordion open/close, mode toggle, quick action injection |
 
 ### MV3 compliance check
 
@@ -124,11 +131,11 @@ Replace current flat section list with 4 `.gfe-acc` accordion items:
 
 ### Review
 
-| Reviewer | Input | Approved? |
-|----------|-------|-----------|
-| User | | |
-| Codex | Not approved as written. Keep BP-024 GFE-only, but remove the remote Google Fonts `@import` and use bundled/local or system font stacks; remote CSS/font loading is unnecessary CWS/privacy risk and conflicts with the repo's conservative MV3 posture. Also split the build into safer checkpoints or explicitly preserve existing BP-023 share/copy/token/Q&A behaviors with regression tests, because a full sidebar CSS/DOM rewrite plus mode-toggle behavior can easily break the current 90-test feature surface. Quick actions are okay only if they reuse the existing Q&A send path without adding permissions or new network destinations. | ❌ |
-| Gemini | | |
+| Reviewer | Input                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Approved? |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |           |
+| Codex    | Not approved as written. Keep BP-024 GFE-only, but remove the remote Google Fonts `@import` and use bundled/local or system font stacks; remote CSS/font loading is unnecessary CWS/privacy risk and conflicts with the repo's conservative MV3 posture. Also split the build into safer checkpoints or explicitly preserve existing BP-023 share/copy/token/Q&A behaviors with regression tests, because a full sidebar CSS/DOM rewrite plus mode-toggle behavior can easily break the current 90-test feature surface. Quick actions are okay only if they reuse the existing Q&A send path without adding permissions or new network destinations. | ❌        |
+| Gemini   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |           |
 
 ---
 
