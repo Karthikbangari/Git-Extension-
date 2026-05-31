@@ -153,7 +153,15 @@ function makeAccordion(
   acc.appendChild(bodyEl);
 
   head.addEventListener('click', () => {
-    const isOpen = acc.classList.toggle('gfe-acc-open');
+    const wasOpen = acc.classList.contains('gfe-acc-open');
+    if (!wasOpen) {
+      acc.parentElement?.querySelectorAll<HTMLElement>('.gfe-acc.gfe-acc-open').forEach((item) => {
+        item.classList.remove('gfe-acc-open');
+        item.querySelector<HTMLElement>('.gfe-acc-head')?.setAttribute('aria-expanded', 'false');
+      });
+    }
+    const isOpen = !wasOpen;
+    acc.classList.toggle('gfe-acc-open', isOpen);
     head.setAttribute('aria-expanded', String(isOpen));
   });
 

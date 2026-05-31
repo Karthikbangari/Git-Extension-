@@ -224,6 +224,19 @@ describe('sidebar accordion', () => {
     (sumAcc.querySelector('.gfe-acc-head') as HTMLElement).click();
     expect(sumAcc.classList.contains('gfe-acc-open')).toBe(false);
   });
+
+  it('opening one accordion closes the previously open accordion', () => {
+    injectSidebar();
+    updateSidebar({ summary: 'x', keyPoints: ['point one'], complexity: 'low' }, noop);
+    const accItems = document.querySelectorAll('.gfe-acc');
+    const summaryAcc = accItems[0] as HTMLElement;
+    const kpAcc = accItems[1] as HTMLElement;
+
+    (kpAcc.querySelector('.gfe-acc-head') as HTMLElement).click();
+
+    expect(kpAcc.classList.contains('gfe-acc-open')).toBe(true);
+    expect(summaryAcc.classList.contains('gfe-acc-open')).toBe(false);
+  });
 });
 
 describe('sidebar quick actions', () => {
