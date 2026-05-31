@@ -31,6 +31,16 @@ AI features require an Anthropic API key (`sk-ant-…`), set via the extension p
 | GitHub   | `github.com/*/blob/*`   |
 | GitLab   | `gitlab.com/*/-/blob/*` |
 
+## Real test examples
+
+Open this folder on GitHub after loading the extension:
+
+```text
+https://github.com/Karthikbangari/Git-Extension-/tree/main/git-file-explainer/test-fixtures/supported-file-types
+```
+
+It contains real sample files for every listed extension, so each file opens as a GitHub `/blob/` page that GFE can inspect.
+
 ## Install (development)
 
 **Requirements:** Node 22, Chrome 120+

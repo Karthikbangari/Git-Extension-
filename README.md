@@ -30,6 +30,16 @@ AI features require an Anthropic API key. The key is stored in `chrome.storage.l
 | GitHub   | `github.com/*/blob/*`   |
 | GitLab   | `gitlab.com/*/-/blob/*` |
 
+## Real Test Examples
+
+After loading the extension, open this folder on GitHub and click any sample file:
+
+```text
+https://github.com/Karthikbangari/Git-Extension-/tree/main/git-file-explainer/test-fixtures/supported-file-types
+```
+
+That folder contains real `.tf`, `.ts`, `.js`, `.py`, `.go`, `.java`, `.rb`, `.cs`, `.cpp`, `.c`, `.tsx`, `.jsx`, `.php`, `.json`, `.yaml`, `.yml`, `.xml`, `.sql`, `.html`, `.css`, `.scss`, and `.md` files for testing GFE on GitHub blob pages.
+
 ## Install For Development
 
 **Requirements:** Node 22 and Chrome 120+
