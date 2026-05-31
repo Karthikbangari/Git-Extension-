@@ -153,10 +153,27 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, streamQAAnswer } from './
   };
 
   let navObserver: MutationObserver | null = null;
+  let navPollTimer: number | null = null;
+  let navFallbackTimer: number | null = null;
+  let navRunId = 0;
+
+  const stopWaitingForCode = () => {
+    navObserver?.disconnect();
+    navObserver = null;
+    if (navPollTimer !== null) {
+      clearInterval(navPollTimer);
+      navPollTimer = null;
+    }
+    if (navFallbackTimer !== null) {
+      clearTimeout(navFallbackTimer);
+      navFallbackTimer = null;
+    }
+  };
 
   const handlePageChange = async (url: string) => {
+    const runId = ++navRunId;
     removeSidebar();
-    if (navObserver) navObserver.disconnect();
+    stopWaitingForCode();
 
     if (!isFilePage(url, customDomain)) return;
 
@@ -165,7 +182,11 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, streamQAAnswer } from './
 
     const autoTrigger = await getAutoTrigger();
 
+    let triggered = false;
     const triggerExplain = () => {
+      if (triggered || runId !== navRunId) return;
+      triggered = true;
+      stopWaitingForCode();
       autoTrigger ? void run() : showManualTrigger();
     };
 
@@ -174,24 +195,28 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, streamQAAnswer } from './
       return;
     }
 
-    let triggered = false;
     navObserver = new MutationObserver((_, obs) => {
       if (document.querySelector(SELECTORS)) {
-        triggered = true;
         obs.disconnect();
         triggerExplain();
       }
     });
 
     navObserver.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => {
-      navObserver?.disconnect();
-      if (!triggered && isGitHubFilePage(url)) {
+
+    // GitHub/GitLab SPA pages sometimes render code after the first mutation burst,
+    // or update an existing container without adding a matching node. Poll too.
+    navPollTimer = window.setInterval(() => {
+      if (document.querySelector(SELECTORS)) triggerExplain();
+    }, 500);
+
+    navFallbackTimer = window.setTimeout(() => {
+      if (!triggered && runId === navRunId && isGitHubFilePage(url)) {
         // Markdown and other preview-rendered GitHub blobs can omit code-cell DOM.
         // Running anyway lets the extractor use its raw.githubusercontent.com fallback.
         triggerExplain();
       }
-    }, 5000);
+    }, 30000);
   };
 
   // Alt+S keyboard shortcut
