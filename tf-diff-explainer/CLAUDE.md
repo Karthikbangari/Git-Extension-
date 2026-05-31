@@ -19,11 +19,11 @@ No exceptions.
 | -------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Last active session  | 2026-05-31                                                                                                 |
 | Active phase         | GFE Maintenance / CWS submission (TFE archived)                                                            |
-| Last commit          | pending Codex commit — BP-023 verified locally                                                             |
-| Last build           | BP-023 built and verified ✅ · GFE tests 90/90 ✅ · TFE tests 191/191 ✅                                   |
+| Last commit          | `e0bc5ef` — Codex (feat: add GFE token estimate and Claude.ai share)                                       |
+| Last build           | BP-023 built, verified, committed, and pushed ✅ · GFE tests 90/90 ✅ · TFE tests 191/191 ✅               |
 | Lint / format        | ✅ clean                                                                                                   |
-| Uncommitted          | BP-023 changes verified by Codex; commit/push in progress                                                  |
-| Next action (Codex)  | Commit/push BP-023; Chrome Web Store packaging/submission support if user asks                             |
+| Uncommitted          | None — working tree clean                                                                                  |
+| Next action (Codex)  | Chrome Web Store packaging/submission support if user asks; commit any new docs/assets from other agents   |
 | Next action (Gemini) | Optional deeper live smoke for GFE streaming Q&A, copy buttons, token meter, and binary skip with API key  |
 | Next action (Claude) | None — awaiting CWS feedback; respond if bugs found in smoke tests                                         |
 | Next action (user)   | (1) CWS submission for TFE; (2) CWS submission for GFE; (3) take 1280×800 screenshots for both store pages |
