@@ -1,8 +1,8 @@
 import { isFilePage, isGitHubFilePage, watchForNavigation } from './pageDetector';
 import { GitHubDomExtractor, GitLabDomExtractor } from './fileExtractor';
-import { injectSidebar, updateSidebar, removeSidebar } from './sidebar/index';
+import { injectSidebar, updateSidebar, updateQAAnswer, removeSidebar } from './sidebar/index';
 import { isEnabledForHost, getApiKey, getCachedSummary, setCachedSummary } from '../utils/storage';
-import { buildPrompt, fetchFileSummary } from './aiSummary';
+import { buildPrompt, fetchFileSummary, buildQAPrompt, fetchQAAnswer } from './aiSummary';
 
 (async function init() {
   const host = location.hostname;
@@ -25,19 +25,27 @@ import { buildPrompt, fetchFileSummary } from './aiSummary';
       return;
     }
 
+    const content = fileContent.lines.join('\n');
+
+    const onAsk = async (question: string) => {
+      updateQAAnswer('loading');
+      const qaPrompt = buildQAPrompt(question, fileContent.filePath, fileContent.language, content);
+      const answer = await fetchQAAnswer(qaPrompt);
+      updateQAAnswer(answer ?? 'error');
+    };
+
     const cached = await getCachedSummary(location.href);
     if (cached) {
-      updateSidebar(cached);
+      updateSidebar(cached, onAsk);
       return;
     }
 
-    const content = fileContent.lines.join('\n');
     const prompt = buildPrompt(fileContent.filePath, fileContent.language, content);
     const result = await fetchFileSummary(prompt);
 
     if (result) {
       void setCachedSummary(location.href, result);
-      updateSidebar(result);
+      updateSidebar(result, onAsk);
     } else {
       updateSidebar('error');
     }
@@ -65,7 +73,7 @@ import { buildPrompt, fetchFileSummary } from './aiSummary';
       navObserver = new MutationObserver((_, obs) => {
         if (
           document.querySelector(
-            '.blob-code-inner, td[id^="LC"], [data-testid="blob-code-content"]'
+            '.blob-code-inner, td[id^="LC"], [data-testid="blob-code-content"], .blob-content .line, .blob-content td.line_content'
           )
         ) {
           obs.disconnect();

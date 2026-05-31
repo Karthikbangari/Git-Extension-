@@ -2,10 +2,10 @@
 
 Two Chrome extensions (Manifest V3) that bring AI-powered insights directly into GitHub and GitLab.
 
-| Extension | What it does | Status |
-| --------- | ------------ | ------ |
-| [TF Diff Explainer](tf-diff-explainer/) | Sidebar for GitHub PR / GitLab MR pages with Terraform diffs — risk analysis, dependency minimap, AI change summary | v1.0.0 ✅ |
-| [Git File Explainer](git-file-explainer/) | Sidebar for GitHub file pages — plain-English summary, key points, complexity rating | v0.1.0 (Phase 2) |
+| Extension                                 | What it does                                                                                                        | Status           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| [TF Diff Explainer](tf-diff-explainer/)   | Sidebar for GitHub PR / GitLab MR pages with Terraform diffs — risk analysis, dependency minimap, AI change summary | v1.0.0 ✅        |
+| [Git File Explainer](git-file-explainer/) | Sidebar for GitHub file pages — plain-English summary, key points, complexity rating                                | v0.1.0 (Phase 2) |
 
 ---
 

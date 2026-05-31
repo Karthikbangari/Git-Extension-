@@ -17,7 +17,62 @@
 
 ## Active Proposal
 
-*(No active proposal. Claude is drafting BP-015.)*
+## BP-015 — Git File Explainer Phase 3: GitLab Extraction + Q&A
+
+### What & Why
+
+- **Phase:** Phase 3 — Enhanced Features
+- **Task group:** Platform expansion + Interactive Q&A
+- **Goal:** Implement DOM extraction for GitLab file views and introduce an interactive Q&A interface in the sidebar.
+
+### Files
+
+| Action | File path                                            | Description                                                                       |
+| ------ | ---------------------------------------------------- | --------------------------------------------------------------------------------- |
+| MODIFY | `git-file-explainer/public/manifest.json`            | Add GitLab blob content-script match.                                             |
+| MODIFY | `git-file-explainer/src/background/index.ts`         | Route `GFE_FETCH_QA_ANSWER` through the existing background AI proxy.             |
+| MODIFY | `git-file-explainer/src/content/fileExtractor.ts`    | Implement resilient `GitLabDomExtractor.extract()` selectors and path fallback.   |
+| MODIFY | `git-file-explainer/src/content/pageDetector.ts`     | Support GitLab subgroup/project blob URLs.                                        |
+| MODIFY | `git-file-explainer/src/content/sidebar/index.ts`    | Add Q&A input, 280-character cap, "Ask" button, answer rendering, and clear.      |
+| MODIFY | `git-file-explainer/src/content/aiSummary.ts`        | Add `fetchQAAnswer(question, content)` using a plain-text response prompt.        |
+| MODIFY | `git-file-explainer/src/content/index.ts`            | Wire Q&A events for fresh and cached summaries; wait for GitHub/GitLab SPA lines. |
+| MODIFY | `git-file-explainer/src/content/sidebar/sidebar.css` | Styles for Q&A section, input, and answer container.                              |
+| MODIFY | `git-file-explainer/tests/aiSummary.test.ts`         | Add Q&A response parsing and no-API-key-payload assertions.                       |
+| MODIFY | `git-file-explainer/tests/fileExtractor.test.ts`     | Add GitLab extraction coverage.                                                   |
+| MODIFY | `git-file-explainer/tests/pageDetector.test.ts`      | Add GitLab subgroup route coverage.                                               |
+| CREATE | `git-file-explainer/tests/manifest.test.ts`          | Verify manifest activates content script on GitHub and GitLab blob pages.         |
+| CREATE | `git-file-explainer/tests/sidebar.test.ts`           | Verify Q&A sidebar states and text-only answer rendering.                         |
+
+### Approach
+
+1. **GitLab Extraction**: The `GitLabDomExtractor` will now target `.blob-content .line` and breadcrumb headers to extract content from GitLab file pages.
+2. **Q&A UI**: A new section will be added below the Summary. It will use DOM construction (no `innerHTML`) to render an input and a "Submit" button.
+3. **AI Logic**: A new `GFE_FETCH_QA_ANSWER` message type will be handled by the background script, reusing the established Claude API proxy but with a focused Q&A prompt.
+4. **Compliance**: Maintains zero-`innerHTML` policy. Q&A answers render as plain text only.
+
+### Dependencies / Prerequisites
+
+- BP-014 (Core Engine) sealed.
+
+### Risk
+
+- **Level:** Low-Medium
+- **Notes:** Q&A sessions increase token usage. We will implement a character limit for questions (280 chars) and continue truncating file content to 5,000 characters.
+
+### Review
+
+| Reviewer | Input                                                                                                                                                                                                                                                                                                                      | Approved?        |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| User     | "do next step in project" (2026-05-31)                                                                                                                                                                                                                                                                                     | ✅               |
+| Codex    | Initial proposal had blockers: GitLab manifest match, background handler file, Q&A plain-text contract, GitLab SPA wait selectors, and test coverage were missing. Codex stabilized the already-started BP-015 code by adding those pieces, keeping API keys out of content-message payloads, and adding regression tests. | ✅ (post-fix)    |
+| Gemini   | Prior log entry says approved, but Codex has not independently verified a Gemini artifact beyond `1playground.md`. Keep as pending for independent final policy/live-smoke review if required.                                                                                                                             | ⬜ / needs check |
+
+### Outcome
+
+- **Status:** ✅ Built locally (2026-05-31)
+- **Built by:** Codex stabilized an already-started BP-015 code change after detecting incomplete runtime coverage.
+- **Result:** GitLab blob pages are activated in the manifest; GitLab subgroup URLs are detected; GitLab DOM extraction now reads file paths and code lines with fallbacks; Q&A requests route through the existing background proxy as `GFE_FETCH_QA_ANSWER`; content-script payloads include prompt/model only, not API keys; Q&A renders answers as text and includes loading/error/clear states.
+- **Test result:** GFE 73/73 ✅ · TFE 129/129 ✅ · GFE build ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅ · apiKey payload scan ✅. `web-ext run --source-dir git-file-explainer/dist --target=chromium --start-url https://github.com/Karthikbangari/Git-Extension-/blob/main/package.json` loaded without manifest/CSS errors. Automated DOM smoke is still not confirmed because the manual Chrome/CDP path did not install the unpacked extension, and `web-ext` uses `--remote-debugging-pipe`.
 
 ---
 

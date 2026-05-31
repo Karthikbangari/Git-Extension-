@@ -108,4 +108,11 @@ PATH="$PWD/.tools/node/bin:$PATH"
 
 - Root-level dependencies are installed for Codex/tooling support.
 - The extension itself lives in `tf-diff-explainer/`.
+- The sibling extension `git-file-explainer/` is active for GFE phases.
 - The project uses a single root `package.json` at `/Terraf/package.json`; there is no inner extension package file.
+
+## Current Codex Handoff
+
+- 2026-05-31: BP-015 was locally stabilized after partial cross-agent edits. GFE checks: build ✅, tests 73/73 ✅, lint ✅, format ✅, unsafe HTML scan ✅, apiKey payload scan ✅. TFE regression tests: 129/129 ✅.
+- `web-ext run --source-dir git-file-explainer/dist --target=chromium --start-url https://github.com/Karthikbangari/Git-Extension-/blob/main/package.json` loaded without manifest/CSS errors.
+- Automated DOM smoke remains inconclusive because manual Chrome/CDP launches did not install the unpacked GFE extension, while `web-ext` uses `--remote-debugging-pipe`. Do not seal GFE Phase 3 until a manual/Gemini live DOM smoke confirms sidebar injection on GitHub and GitLab blob pages.

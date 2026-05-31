@@ -1,5 +1,5 @@
 const GITHUB_FILE_RE = /^https:\/\/github\.com\/[^/]+\/[^/]+\/blob\//;
-const GITLAB_FILE_RE = /^https:\/\/gitlab\.com\/[^/]+\/[^/]+\/-\/blob\//;
+const GITLAB_FILE_RE = /^https:\/\/gitlab\.com\/.+\/-\/blob\//;
 
 export function isGitHubFilePage(url = location.href): boolean {
   return GITHUB_FILE_RE.test(url);

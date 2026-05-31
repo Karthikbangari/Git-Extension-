@@ -36,8 +36,8 @@ describe('isGitLabFilePage', () => {
 
   it('matches a subgroup path', () => {
     expect(isGitLabFilePage('https://gitlab.com/group/subgroup/project/-/blob/main/Makefile')).toBe(
-      false
-    ); // three-segment owner path — not matched by two-segment regex
+      true
+    );
   });
 
   it('does not match a GitLab MR page', () => {

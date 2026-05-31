@@ -58,30 +58,7 @@ interface AISummaryResult {
 const GITHUB_PR_RE = /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+/;
 const GITLAB_MR_RE = /^https:\/\/gitlab\.com\/[^/]+\/[^/]+\/-\/merge_requests\/\d+/;
 
-const SUPPORTED_EXTENSIONS = [
-  '.tf',
-  '.js',
-  '.ts',
-  '.tsx',
-  '.jsx',
-  '.py',
-  '.java',
-  '.go',
-  '.php',
-  '.rb',
-  '.cs',
-  '.cpp',
-  '.c',
-  '.json',
-  '.yaml',
-  '.yml',
-  '.xml',
-  '.sql',
-  '.html',
-  '.css',
-  '.scss',
-  '.md',
-];
+const SUPPORTED_EXTENSIONS = ['.tf'];
 
 function isSupportedFilePath(filePath: string): boolean {
   const lower = filePath.toLowerCase();

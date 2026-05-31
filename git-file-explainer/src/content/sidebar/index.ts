@@ -54,7 +54,8 @@ export function injectSidebar(): void {
 }
 
 export function updateSidebar(
-  state: FileSummaryResult | 'loading' | 'no-key' | 'no-content' | 'error'
+  state: FileSummaryResult | 'loading' | 'no-key' | 'no-content' | 'error',
+  onAsk?: (question: string) => void
 ): void {
   const sidebar = document.getElementById(SIDEBAR_ID);
   if (!sidebar) return;
@@ -131,6 +132,78 @@ export function updateSidebar(
     }
     body.appendChild(list);
   }
+
+  // Q&A section — always rendered for FileSummaryResult
+  const sep = document.createElement('hr');
+  sep.className = 'gfe-separator';
+  body.appendChild(sep);
+
+  const qaSection = document.createElement('div');
+  qaSection.className = 'gfe-qa-section';
+
+  const qaHeading = document.createElement('p');
+  qaHeading.className = 'gfe-subheading';
+  qaHeading.textContent = 'Ask a Question';
+  qaSection.appendChild(qaHeading);
+
+  const qaInput = document.createElement('textarea');
+  qaInput.className = 'gfe-qa-input';
+  qaInput.setAttribute('aria-label', 'Ask a question about this file');
+  qaInput.setAttribute('placeholder', 'What does this function do? How can I improve it?');
+  qaInput.maxLength = 280;
+  qaSection.appendChild(qaInput);
+
+  const qaBtn = document.createElement('button');
+  qaBtn.className = 'gfe-qa-btn';
+  qaBtn.textContent = 'Ask';
+  qaBtn.setAttribute('aria-label', 'Submit question');
+  qaSection.appendChild(qaBtn);
+
+  const qaContainer = document.createElement('div');
+  qaContainer.className = 'gfe-qa-answer';
+  qaSection.appendChild(qaContainer);
+
+  if (onAsk) {
+    qaBtn.addEventListener('click', () => {
+      const question = qaInput.value.trim();
+      if (!question) return;
+      qaBtn.disabled = true;
+      onAsk(question);
+    });
+  }
+
+  body.appendChild(qaSection);
+}
+
+export function updateQAAnswer(state: string | 'loading' | 'error'): void {
+  const container = document.querySelector<HTMLElement>(`#${SIDEBAR_ID} .gfe-qa-answer`);
+  const btn = document.querySelector<HTMLButtonElement>(`#${SIDEBAR_ID} .gfe-qa-btn`);
+  if (!container) return;
+
+  container.textContent = '';
+
+  if (state === 'loading') {
+    const el = document.createElement('p');
+    el.className = 'gfe-qa-thinking';
+    el.textContent = 'Thinking…';
+    container.appendChild(el);
+    return;
+  }
+
+  if (btn) btn.disabled = false;
+
+  if (state === 'error') {
+    const el = document.createElement('p');
+    el.className = 'gfe-qa-error-text';
+    el.textContent = 'Could not get an answer. Please try again.';
+    container.appendChild(el);
+    return;
+  }
+
+  const el = document.createElement('p');
+  el.className = 'gfe-qa-text';
+  el.textContent = state;
+  container.appendChild(el);
 }
 
 export function removeSidebar(): void {

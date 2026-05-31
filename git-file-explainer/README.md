@@ -14,10 +14,10 @@ AI features require an Anthropic API key (`sk-ant-…`), set via the extension p
 
 ## Supported pages (Phase 2)
 
-| Platform | URL pattern               |
-| -------- | ------------------------- |
-| GitHub   | `github.com/*/blob/*`     |
-| GitLab   | Coming in Phase 3         |
+| Platform | URL pattern           |
+| -------- | --------------------- |
+| GitHub   | `github.com/*/blob/*` |
+| GitLab   | Coming in Phase 3     |
 
 ## Install (development)
 
@@ -93,23 +93,23 @@ If all three fail (binary files, images, empty files), the sidebar shows a `no-c
 
 ## Security guardrails (MV3 compliance)
 
-| Guardrail               | Requirement                                                                                                                                  |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **No remote code**      | All JS bundled locally. No `eval()`, `new Function()`, or externally loaded scripts.                                                         |
-| **CSP**                 | Extension pages: `script-src 'self'; object-src 'self'; connect-src https://api.anthropic.com`.                                             |
-| **API key handling**    | Key read from `chrome.storage.local` at call time. Never in message payloads, never logged, never in DOM.                                    |
-| **Unsafe HTML**         | All sidebar DOM built via `createElement`/`appendChild`. No `innerHTML` anywhere.                                                            |
-| **Host permissions**    | Scoped to `https://github.com/*`, `https://gitlab.com/*`, and `https://api.anthropic.com/*`.                                                 |
-| **Content script**      | Runs in an isolated world. All Chrome APIs beyond `chrome.storage`/`chrome.runtime` are proxied through the background service worker.       |
+| Guardrail            | Requirement                                                                                                                            |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **No remote code**   | All JS bundled locally. No `eval()`, `new Function()`, or externally loaded scripts.                                                   |
+| **CSP**              | Extension pages: `script-src 'self'; object-src 'self'; connect-src https://api.anthropic.com`.                                        |
+| **API key handling** | Key read from `chrome.storage.local` at call time. Never in message payloads, never logged, never in DOM.                              |
+| **Unsafe HTML**      | All sidebar DOM built via `createElement`/`appendChild`. No `innerHTML` anywhere.                                                      |
+| **Host permissions** | Scoped to `https://github.com/*`, `https://gitlab.com/*`, and `https://api.anthropic.com/*`.                                           |
+| **Content script**   | Runs in an isolated world. All Chrome APIs beyond `chrome.storage`/`chrome.runtime` are proxied through the background service worker. |
 
 ## Roadmap
 
-| Phase             | Status         | Deliverable                                                          |
-| ----------------- | -------------- | -------------------------------------------------------------------- |
-| 1 — Scaffold      | Done           | Extension shell, route detection, provider interface, sidebar shell  |
-| 2 — Core          | Done           | GitHub DOM extraction, AI summary, URL cache, no-content state       |
-| 3 — GitLab + Q&A  | Planned        | GitLab DOM extraction, follow-up Q&A with file context               |
-| 4 — Polish + ship | Planned        | Onboarding, CWS submission                                           |
+| Phase             | Status  | Deliverable                                                         |
+| ----------------- | ------- | ------------------------------------------------------------------- |
+| 1 — Scaffold      | Done    | Extension shell, route detection, provider interface, sidebar shell |
+| 2 — Core          | Done    | GitHub DOM extraction, AI summary, URL cache, no-content state      |
+| 3 — GitLab + Q&A  | Planned | GitLab DOM extraction, follow-up Q&A with file context              |
+| 4 — Polish + ship | Planned | Onboarding, CWS submission                                          |
 
 ## Tech
 

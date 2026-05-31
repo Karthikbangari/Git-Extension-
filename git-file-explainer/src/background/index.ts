@@ -13,7 +13,9 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message.type !== 'GFE_FETCH_AI_SUMMARY') return false;
+  if (message.type !== 'GFE_FETCH_AI_SUMMARY' && message.type !== 'GFE_FETCH_QA_ANSWER') {
+    return false;
+  }
 
   const { prompt, model } = message.payload as { prompt: string; model: string };
 

@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { detectLanguage, GitHubDomExtractor } from '../src/content/fileExtractor';
+import {
+  detectLanguage,
+  GitHubDomExtractor,
+  GitLabDomExtractor,
+} from '../src/content/fileExtractor';
 
 describe('detectLanguage', () => {
   it('maps ts to typescript', () => {
@@ -116,5 +120,79 @@ describe('GitHubDomExtractor.extract', () => {
 
     const result = new GitHubDomExtractor().extract();
     expect(result?.language).toBe('terraform');
+  });
+});
+
+describe('GitLabDomExtractor.extract', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('extracts file path and code from GitLab blob content', () => {
+    const pathEl = document.createElement('span');
+    pathEl.className = 'file-title-name';
+    pathEl.textContent = 'src/main.go';
+    document.body.appendChild(pathEl);
+
+    const content = document.createElement('div');
+    content.className = 'blob-content';
+    for (const text of ['package main', 'func main() {}']) {
+      const line = document.createElement('span');
+      line.className = 'line';
+      line.textContent = text;
+      content.appendChild(line);
+    }
+    document.body.appendChild(content);
+
+    const result = new GitLabDomExtractor().extract();
+    expect(result?.filePath).toBe('src/main.go');
+    expect(result?.language).toBe('go');
+    expect(result?.lines).toEqual(['package main', 'func main() {}']);
+  });
+
+  it('returns null when GitLab file content has no line nodes', () => {
+    const pathEl = document.createElement('span');
+    pathEl.className = 'file-title-name';
+    pathEl.textContent = 'README.md';
+    document.body.appendChild(pathEl);
+
+    expect(new GitLabDomExtractor().extract()).toBeNull();
+  });
+
+  it('extracts content via layer 1 (td.line_content) before .line', () => {
+    const pathEl = document.createElement('span');
+    pathEl.className = 'file-title-name';
+    pathEl.textContent = 'app.rb';
+    document.body.appendChild(pathEl);
+
+    const blob = document.createElement('div');
+    blob.className = 'blob-content';
+    const table = document.createElement('table');
+    for (const text of ['def greet', '  puts "hi"', 'end']) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.className = 'line_content';
+      td.textContent = text;
+      tr.appendChild(td);
+      table.appendChild(tr);
+    }
+    blob.appendChild(table);
+    document.body.appendChild(blob);
+
+    const result = new GitLabDomExtractor().extract();
+    expect(result?.lines).toEqual(['def greet', '  puts "hi"', 'end']);
+    expect(result?.language).toBe('ruby');
+  });
+
+  it('returns null when no file path element is found', () => {
+    const blob = document.createElement('div');
+    blob.className = 'blob-content';
+    const line = document.createElement('span');
+    line.className = 'line';
+    line.textContent = 'some code';
+    blob.appendChild(line);
+    document.body.appendChild(blob);
+
+    expect(new GitLabDomExtractor().extract()).toBeNull();
   });
 });

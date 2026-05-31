@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { buildPrompt, fetchFileSummary } from '../src/content/aiSummary';
+import { buildPrompt, fetchFileSummary, fetchQAAnswer } from '../src/content/aiSummary';
 
 const mockSendMessage = vi.fn();
 
@@ -119,5 +119,50 @@ describe('fetchFileSummary', () => {
       cb(null);
     });
     expect(await fetchFileSummary('prompt')).toBeNull();
+  });
+});
+
+describe('fetchQAAnswer', () => {
+  beforeEach(() => {
+    mockSendMessage.mockReset();
+    Object.defineProperty(chrome.runtime, 'lastError', { value: undefined, writable: true });
+  });
+
+  function respond(payload: unknown) {
+    mockSendMessage.mockImplementation((_msg: unknown, cb: (r: unknown) => void) => cb(payload));
+  }
+
+  it('sends only prompt and model in the Q&A message payload', async () => {
+    respond({ content: [{ text: 'It initializes the app.' }] });
+    await fetchQAAnswer('What does this do?', 'const app = createApp();');
+
+    expect(mockSendMessage).toHaveBeenCalledWith(
+      {
+        type: 'GFE_FETCH_QA_ANSWER',
+        payload: {
+          prompt: expect.stringContaining('What does this do?'),
+          model: 'claude-haiku-4-5-20251001',
+        },
+      },
+      expect.any(Function)
+    );
+    expect(mockSendMessage.mock.calls[0][0].payload).not.toHaveProperty('apiKey');
+  });
+
+  it('returns a trimmed answer on a valid Q&A response', async () => {
+    respond({ content: [{ text: '  It validates user input.  ' }] });
+    expect(await fetchQAAnswer('What happens?', 'function validate() {}')).toBe(
+      'It validates user input.'
+    );
+  });
+
+  it('returns null when the Q&A response has an error field', async () => {
+    respond({ error: 'Missing API key' });
+    expect(await fetchQAAnswer('Why?', 'const x = 1;')).toBeNull();
+  });
+
+  it('returns null when the Q&A content text is absent', async () => {
+    respond({ content: [{}] });
+    expect(await fetchQAAnswer('Why?', 'const x = 1;')).toBeNull();
   });
 });

@@ -2,6 +2,7 @@ import type { FileSummaryResult } from './types';
 
 const MODEL = 'claude-haiku-4-5-20251001';
 const MAX_CONTENT_CHARS = 5000;
+export const MAX_QUESTION_CHARS = 280;
 
 export function buildPrompt(filePath: string, language: string, content: string): string {
   const filename = filePath.split('/').pop() ?? filePath;
@@ -67,6 +68,57 @@ export async function fetchFileSummary(prompt: string): Promise<FileSummaryResul
             return;
           }
           resolve(parsed as FileSummaryResult);
+        } catch {
+          resolve(null);
+        }
+      }
+    );
+  });
+}
+
+export function buildQAPrompt(
+  question: string,
+  filePath: string,
+  language: string,
+  content: string
+): string {
+  const filename = filePath.split('/').pop() ?? filePath;
+  const truncated =
+    content.length > MAX_CONTENT_CHARS
+      ? content.slice(0, MAX_CONTENT_CHARS) + '\n... (truncated)'
+      : content;
+  const q = question.slice(0, MAX_QUESTION_CHARS);
+
+  return `You are a helpful code reviewer. Answer the question about this ${language} file in 2-4 sentences. Be direct and specific. Plain text only — no markdown headers, no bullet lists.
+
+File: ${filename}
+
+Content:
+${truncated}
+
+Question: ${q}`;
+}
+
+export async function fetchQAAnswer(prompt: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage(
+      { type: 'GFE_FETCH_QA_ANSWER', payload: { prompt, model: MODEL } },
+      (response: unknown) => {
+        if (chrome.runtime.lastError) {
+          resolve(null);
+          return;
+        }
+        try {
+          const res = response as {
+            content?: Array<{ text?: string }>;
+            error?: string;
+          } | null;
+          if (!res || res.error) {
+            resolve(null);
+            return;
+          }
+          const text = res.content?.[0]?.text;
+          resolve(typeof text === 'string' && text.trim() ? text.trim() : null);
         } catch {
           resolve(null);
         }

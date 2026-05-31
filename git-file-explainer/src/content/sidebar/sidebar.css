@@ -273,3 +273,132 @@
     border-color: #30363d;
   }
 }
+
+/* ── Q&A ─────────────────────────────────────────────── */
+
+.gfe-separator {
+  border: none;
+  border-top: 1px solid #d0d7de;
+  margin: 4px 0;
+}
+
+.gfe-qa-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gfe-qa-input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 60px;
+  padding: 8px;
+  font-size: 12px;
+  font-family: inherit;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  color: #1f2328;
+  background: #f6f8fa;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.gfe-qa-input:focus {
+  border-color: #0969da;
+  background: #ffffff;
+}
+
+.gfe-qa-btn {
+  align-self: flex-end;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #0969da;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.gfe-qa-btn:hover:not(:disabled) {
+  background: #0860ca;
+}
+
+.gfe-qa-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.gfe-qa-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gfe-qa-thinking {
+  font-size: 12px;
+  color: #57606a;
+  font-style: italic;
+}
+
+.gfe-qa-text {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #1f2328;
+  padding: 10px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+}
+
+.gfe-qa-error-text {
+  font-size: 12px;
+  color: #9f1239;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gfe-separator {
+    border-top-color: #30363d;
+  }
+
+  .gfe-qa-input {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
+  }
+
+  .gfe-qa-input:focus {
+    border-color: #58a6ff;
+    background: #161b22;
+  }
+
+  .gfe-qa-btn {
+    background: #1f6feb;
+  }
+
+  .gfe-qa-btn:hover:not(:disabled) {
+    background: #388bfd;
+  }
+
+  .gfe-qa-thinking {
+    color: #8b949e;
+  }
+
+  .gfe-qa-text {
+    color: #e6edf3;
+    background: #0c2d48;
+    border-color: #1158a7;
+  }
+
+  .gfe-qa-error-text {
+    color: #f85149;
+    background: #2d1a1a;
+    border-color: #4a1a1a;
+  }
+}

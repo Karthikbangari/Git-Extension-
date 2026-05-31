@@ -15,23 +15,23 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                | Value                                                                                       |
-| -------------------- | ------------------------------------------------------------------------------------------- |
-| Last active session  | 2026-05-31                                                                                  |
-| Active phase         | GFE Phase 3 — Q&A + GitLab                                                                  |
-| Last commit          | `f86f02f` — BP-014: GFE Core Engine (Phase 2)                                               |
-| Last build           | TFE build ✅ · TFE tests 129/129 ✅ · GFE build ✅ · GFE tests 41/41 ✅                     |
-| Lint / format        | ✅ clean                                                                                    |
-| Next action (Codex)  | Review BP-015 proposal alignment                                                            |
-| Next action (Gemini) | Audit BP-015 for MV3/Google Policy compliance                                               |
-| Next action (Claude) | Write BP-015 (GitLab extraction + interactive Q&A)                                          |
-| Next action (user)   | CWS submission for TF Diff Explainer (dashboard link below)                                 |
-| Open bugs            | None                                                                                        |
-| Blocked              | None                                                                                        |
+| Field                | Value                                                       |
+| -------------------- | ----------------------------------------------------------- |
+| Last active session  | 2026-05-31                                                  |
+| Active phase         | GFE Phase 3 — Q&A + GitLab                                  |
+| Last commit          | `f86f02f` — BP-014: GFE Core Engine (Phase 2)               |
+| Last build           | TFE tests 129/129 ✅ · GFE build ✅ · GFE tests 73/73 ✅    |
+| Lint / format        | ✅ clean                                                    |
+| Next action (Codex)  | Commit BP-015                                               |
+| Next action (Gemini) | Manual live DOM smoke on GitHub + GitLab blob pages         |
+| Next action (Claude) | Hold until live DOM smoke result                            |
+| Next action (user)   | CWS submission for TF Diff Explainer (dashboard link below) |
+| Open bugs            | None                                                        |
+| Blocked              | Automated DOM smoke inconclusive via Chrome/CDP             |
 
 ### What was built this session
 
-- **BP-014 built** (uncommitted): GFE Phase 2 — real DOM extraction (3-layer fallback) + AI summary via Claude Haiku + SHA-256 URL cache + `no-content` sidebar state. Content-script matches narrowed to GitHub-only; GitLab deferred to Phase 3. GFE 41/41 tests · TFE 129/129 · build ✅ · lint ✅ · format ✅
+- **BP-015 locally stabilized** (uncommitted): GFE Phase 3 — GitLab blob activation/extraction + Q&A sidebar. Codex corrected a partial build: added `GFE_FETCH_QA_ANSWER` background routing, broad GitHub/GitLab blob manifest matches, subgroup route support, Q&A text-only rendering tests, manifest tests, sidebar tests, and GitLab extractor tests. Checks: GFE 73/73 · TFE 129/129 · GFE build ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅ · apiKey payload scan ✅. `web-ext run` packaged-load smoke clean; automated DOM smoke inconclusive because manual Chrome/CDP did not install the unpacked extension.
 
 ### GFE Phase 1 key facts (for Phase 2 planning)
 

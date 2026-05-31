@@ -81,20 +81,40 @@ export class GitHubDomExtractor implements FileExtractor {
 
 export class GitLabDomExtractor implements FileExtractor {
   extract(): FileContent | null {
-    // Phase 3 — GitLab DOM extraction
-    const pathEl = document.querySelector<HTMLElement>('.file-title-name');
-    const filePath = pathEl?.textContent?.trim() ?? '';
+    const pathEl = document.querySelector<HTMLElement>(
+      '.file-title-name, .js-blob-filename, .breadcrumb-item-selected'
+    );
+    const filePath =
+      pathEl?.textContent?.trim() ??
+      location.pathname.split('/-/blob/').pop()?.split('/').slice(1).join('/') ??
+      '';
     if (!filePath) return null;
 
-    const codeLines = Array.from(document.querySelectorAll<HTMLElement>('.blob-content .line')).map(
-      (el) => el.textContent ?? ''
-    );
-    if (codeLines.length === 0) return null;
+    // Layer 1: classic line_content table cells
+    const layer1 = Array.from(
+      document.querySelectorAll<HTMLElement>('.blob-content td.line_content')
+    ).map((el) => el.textContent ?? '');
+    if (layer1.length > 0) {
+      return { filePath, language: detectLanguage(filePath), lines: layer1 };
+    }
 
-    return {
-      filePath,
-      language: detectLanguage(filePath),
-      lines: codeLines,
-    };
+    // Layer 2: .line class inside blob/file content
+    const layer2 = Array.from(
+      document.querySelectorAll<HTMLElement>('.blob-content .line, .file-content .line')
+    ).map((el) => el.textContent ?? '');
+    if (layer2.length > 0) {
+      return { filePath, language: detectLanguage(filePath), lines: layer2 };
+    }
+
+    // Layer 3: full blob-content-holder / file-content container text
+    const container = document.querySelector<HTMLElement>('#blob-content-holder, .file-content');
+    if (container) {
+      const text = container.textContent ?? '';
+      if (text.trim()) {
+        return { filePath, language: detectLanguage(filePath), lines: text.split('\n') };
+      }
+    }
+
+    return null;
   }
 }
