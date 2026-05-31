@@ -19,7 +19,7 @@ No exceptions.
 | -------------------- | ----------------------------------------------------------- |
 | Last active session  | 2026-05-31                                                  |
 | Active phase         | GFE Phase 3 — Q&A + GitLab                                  |
-| Last commit          | `f86f02f` — BP-014: GFE Core Engine (Phase 2)               |
+| Last commit          | `e5ec584` — BP-015: GFE GitLab extraction + Q&A             |
 | Last build           | TFE tests 129/129 ✅ · GFE build ✅ · GFE tests 73/73 ✅    |
 | Lint / format        | ✅ clean                                                    |
 | Next action (Codex)  | Commit BP-015                                               |

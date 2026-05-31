@@ -82,20 +82,20 @@
 | 61 | GEMINI | ALL | **Policy Audit:** Identified BUG-13 regression in `src/master.ts`. `GEMINI.md` claimed a revert to `.tf` only, but the code still contained 22 extensions. Corrected `src/master.ts` to ensure "Single Purpose" compliance for CWS submission. |
 | 62 | CODEX | ALL | BP-015 smoke status: `web-ext run --source-dir git-file-explainer/dist --target=chromium --start-url https://github.com/Karthikbangari/Git-Extension-/blob/main/package.json` loaded the built extension without manifest/CSS errors. Automated DOM confirmation is still inconclusive: manual Chrome/CDP launches opened the corrected GitHub blob page, but those profiles did not install the unpacked GFE extension (no GFE extension record in Preferences), while `web-ext` uses `--remote-debugging-pipe`, so Codex could not query the page DOM. Treat BP-015 as locally verified and packaged-load clean, but still needing manual/Gemini live DOM smoke for GitHub + GitLab before sealing Phase 3. |
 | 63 | CODEX | ALL | BP-015 committed on `main` as `e5ec584` (`feat(BP-015): add GFE GitLab extraction and Q&A`). Commit includes GFE GitLab extraction, Q&A background proxy/UI/tests, manifest broad GitHub/GitLab blob matches, docs/handoff updates, README formatting, and Gemini's TFE `src/master.ts` single-purpose correction from #61. Working tree will be rechecked after the handoff hash update. |
-| 63 | CLAUDE | ALL | BP-015 final code verification ✅. Aligned all source files with the pre-written test expectations from entries #60/#62: `sidebar/index.ts` Q&A section renders only when `onAsk` callback provided; `.gfe-qa-answer` is the container; `updateQAAnswer` renders `.gfe-qa-thinking` (`'Thinking…'`) / `.gfe-qa-error-text` / `.gfe-qa-text` as children (no innerHTML at any point); `content/index.ts` builds `onAsk` closure via `buildQAPrompt`+`fetchQAAnswer` and passes to both cache-hit and fresh-fetch `updateSidebar` calls; GitLab nav observer watches `.blob-content .line` + `td.line_content` selectors. Final checks: GFE 73/73 ✅ · TFE 129/129 ✅ · build ✅ (content.js 9.68 kB) · lint ✅ · format ✅ · unsafe HTML ✅. Awaiting Codex commit + Gemini live DOM smoke (GitHub + GitLab blob pages). |
+| 64 | CLAUDE | ALL | BP-015 final code verification ✅. Aligned all source files with the pre-written test expectations from entries #60/#62: `sidebar/index.ts` Q&A section renders only when `onAsk` callback provided; `.gfe-qa-answer` is the container; `updateQAAnswer` renders `.gfe-qa-thinking` (`'Thinking…'`) / `.gfe-qa-error-text` / `.gfe-qa-text` as children (no innerHTML at any point); `content/index.ts` builds `onAsk` closure via `buildQAPrompt`+`fetchQAAnswer` and passes to both cache-hit and fresh-fetch `updateSidebar` calls; GitLab nav observer watches `.blob-content .line` + `td.line_content` selectors. Final checks: GFE 73/73 ✅ · TFE 129/129 ✅ · build ✅ (content.js 9.68 kB) · lint ✅ · format ✅ · unsafe HTML ✅. Codex commit recorded in #63; awaiting Gemini/user live DOM smoke (GitHub + GitLab blob pages). |
 
 ---
 
 ## Current Focus
 
-| Field        | Value                                                                     |
-| ------------ | ------------------------------------------------------------------------- |
-| Active phase | GFE Phase 3 — Q&A + GitLab                                                |
-| Status       | TFE Phase 4 sealed ✅ · GFE Phase 3 locally verified, DOM smoke pending   |
-| Current task | Codex commit BP-015; Gemini/user manual live DOM smoke on GitHub + GitLab |
-| Blocker      | Automated DOM smoke inconclusive via Chrome/CDP                           |
-| Claude owns  | Code, tests, build proposals                                              |
-| Codex owns   | Git commits, branches, CI config execution                                |
+| Field        | Value                                                                   |
+| ------------ | ----------------------------------------------------------------------- |
+| Active phase | GFE Phase 3 — Q&A + GitLab                                              |
+| Status       | TFE Phase 4 sealed ✅ · GFE Phase 3 locally verified, DOM smoke pending |
+| Current task | Gemini/user manual live DOM smoke on GitHub + GitLab blob pages         |
+| Blocker      | Automated DOM smoke inconclusive via Chrome/CDP                         |
+| Claude owns  | Code, tests, build proposals                                            |
+| Codex owns   | Git commits, branches, CI config execution                              |
 
 ---
 
