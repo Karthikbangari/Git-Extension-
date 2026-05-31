@@ -15,23 +15,24 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                | Value                                                       |
-| -------------------- | ----------------------------------------------------------- |
-| Last active session  | 2026-05-31                                                  |
-| Active phase         | GFE Phase 3 — Q&A + GitLab                                  |
-| Last commit          | `e5ec584` — BP-015: GFE GitLab extraction + Q&A             |
-| Last build           | TFE tests 129/129 ✅ · GFE build ✅ · GFE tests 73/73 ✅    |
-| Lint / format        | ✅ clean                                                    |
-| Next action (Codex)  | Commit BP-015                                               |
-| Next action (Gemini) | Manual live DOM smoke on GitHub + GitLab blob pages         |
-| Next action (Claude) | Hold until live DOM smoke result                            |
-| Next action (user)   | CWS submission for TF Diff Explainer (dashboard link below) |
-| Open bugs            | None                                                        |
-| Blocked              | Automated DOM smoke inconclusive via Chrome/CDP             |
+| Field                | Value                                                      |
+| -------------------- | ---------------------------------------------------------- |
+| Last active session  | 2026-05-31                                                 |
+| Active phase         | GFE Phase 4 — Polish + Ship                                |
+| Last commit          | `e5ec584` — BP-015: GFE GitLab extraction + Q&A            |
+| Last build           | TFE tests 129/129 ✅ · GFE build ✅ · GFE tests 73/73 ✅   |
+| Lint / format        | ✅ clean                                                   |
+| Next action (Codex)  | Review BP-016 in `Build.md`; log in `1playground.md`       |
+| Next action (Gemini) | Review BP-016 in `Build.md`; log in `1playground.md`       |
+| Next action (Claude) | Build BP-016 — BLOCKED until user says "go"                |
+| Next action (user)   | (1) Say "go" to approve BP-016; (2) CWS submission for TFE |
+| Open bugs            | None                                                       |
+| Blocked              | Waiting on Codex + Gemini BP-016 review, then user "go"    |
 
 ### What was built this session
 
-- **BP-015 locally stabilized** (uncommitted): GFE Phase 3 — GitLab blob activation/extraction + Q&A sidebar. Codex corrected a partial build: added `GFE_FETCH_QA_ANSWER` background routing, broad GitHub/GitLab blob manifest matches, subgroup route support, Q&A text-only rendering tests, manifest tests, sidebar tests, and GitLab extractor tests. Checks: GFE 73/73 · TFE 129/129 · GFE build ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅ · apiKey payload scan ✅. `web-ext run` packaged-load smoke clean; automated DOM smoke inconclusive because manual Chrome/CDP did not install the unpacked extension.
+- **BP-015 sealed ✅**: GFE Phase 3 — GitLab blob activation/extraction + Q&A sidebar. Committed `e5ec584`. Gemini live DOM smoke passed (GitHub + GitLab blob pages, entry #65). GFE 73/73 · TFE 129/129 · build ✅ · lint ✅ · format ✅.
+- **BP-016 proposed**: GFE Phase 4 — Polish + Ship. Manifest version bump 0.1.0→1.0.0, drop `"tabs"` permission, add `managed_schema.json`, CWS store assets, `web-ext:build:gfe` script. Posted in `Build.md` (entry #66 in coordination log). Awaiting Codex + Gemini review, then user "go".
 
 ### GFE Phase 1 key facts (for Phase 2 planning)
 

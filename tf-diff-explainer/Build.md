@@ -17,66 +17,80 @@
 
 ## Active Proposal
 
-## BP-015 — Git File Explainer Phase 3: GitLab Extraction + Q&A
+## BP-016 — Git File Explainer Phase 4: Polish + Ship
 
 ### What & Why
 
-- **Phase:** Phase 3 — Enhanced Features
-- **Task group:** Platform expansion + Interactive Q&A
-- **Goal:** Implement DOM extraction for GitLab file views and introduce an interactive Q&A interface in the sidebar.
+- **Phase:** Phase 4 — Polish + Ship
+- **Task group:** CWS prep + enterprise policy
+- **Goal:** Bump version to 1.0.0, add `managed_schema.json` for enterprise policy, write CWS store assets (listing copy, privacy policy), add a `web-ext:build:gfe` package script to produce the submission zip, and tighten the manifest permissions to the minimum required.
 
 ### Files
 
-| Action | File path                                            | Description                                                                       |
-| ------ | ---------------------------------------------------- | --------------------------------------------------------------------------------- |
-| MODIFY | `git-file-explainer/public/manifest.json`            | Add GitLab blob content-script match.                                             |
-| MODIFY | `git-file-explainer/src/background/index.ts`         | Route `GFE_FETCH_QA_ANSWER` through the existing background AI proxy.             |
-| MODIFY | `git-file-explainer/src/content/fileExtractor.ts`    | Implement resilient `GitLabDomExtractor.extract()` selectors and path fallback.   |
-| MODIFY | `git-file-explainer/src/content/pageDetector.ts`     | Support GitLab subgroup/project blob URLs.                                        |
-| MODIFY | `git-file-explainer/src/content/sidebar/index.ts`    | Add Q&A input, 280-character cap, "Ask" button, answer rendering, and clear.      |
-| MODIFY | `git-file-explainer/src/content/aiSummary.ts`        | Add `fetchQAAnswer(question, content)` using a plain-text response prompt.        |
-| MODIFY | `git-file-explainer/src/content/index.ts`            | Wire Q&A events for fresh and cached summaries; wait for GitHub/GitLab SPA lines. |
-| MODIFY | `git-file-explainer/src/content/sidebar/sidebar.css` | Styles for Q&A section, input, and answer container.                              |
-| MODIFY | `git-file-explainer/tests/aiSummary.test.ts`         | Add Q&A response parsing and no-API-key-payload assertions.                       |
-| MODIFY | `git-file-explainer/tests/fileExtractor.test.ts`     | Add GitLab extraction coverage.                                                   |
-| MODIFY | `git-file-explainer/tests/pageDetector.test.ts`      | Add GitLab subgroup route coverage.                                               |
-| CREATE | `git-file-explainer/tests/manifest.test.ts`          | Verify manifest activates content script on GitHub and GitLab blob pages.         |
-| CREATE | `git-file-explainer/tests/sidebar.test.ts`           | Verify Q&A sidebar states and text-only answer rendering.                         |
+| Action | File path                                       | Description                                                                                                                                                        |
+| ------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| MODIFY | `git-file-explainer/public/manifest.json`       | Bump version 0.1.0 → 1.0.0; add `"storage": { "managed_schema": "managed_schema.json" }`; drop unused `"tabs"` permission (activeTab is sufficient — matches TFE). |
+| CREATE | `git-file-explainer/public/managed_schema.json` | Chrome enterprise policy schema: `apiKey` (string) + `disabledHosts` (array of strings).                                                                           |
+| CREATE | `git-file-explainer/store/listing.md`           | CWS listing copy: name, short description, detailed description, category, keywords, screenshot spec.                                                              |
+| CREATE | `git-file-explainer/store/privacy-policy.md`    | Privacy policy document adapted from TFE, describing GFE data handling.                                                                                            |
+| MODIFY | `git-file-explainer/tests/manifest.test.ts`     | Add assertions: version is `1.0.0`, `"tabs"` is absent from permissions, `storage.managed_schema` field is present.                                                |
+| MODIFY | `package.json` (root)                           | Add `web-ext:build:gfe` script: `web-ext build --source-dir git-file-explainer/dist --artifacts-dir git-file-explainer/web-ext-artifacts`.                         |
 
 ### Approach
 
-1. **GitLab Extraction**: The `GitLabDomExtractor` will now target `.blob-content .line` and breadcrumb headers to extract content from GitLab file pages.
-2. **Q&A UI**: A new section will be added below the Summary. It will use DOM construction (no `innerHTML`) to render an input and a "Submit" button.
-3. **AI Logic**: A new `GFE_FETCH_QA_ANSWER` message type will be handled by the background script, reusing the established Claude API proxy but with a focused Q&A prompt.
-4. **Compliance**: Maintains zero-`innerHTML` policy. Q&A answers render as plain text only.
+1. **Version** — bump `manifest.json` `version` field to `"1.0.0"`. `package.json` at root is already at `1.0.0` (the root represents the repo, not GFE specifically; the GFE version lives only in its manifest — no inner package.json).
+2. **Permissions** — remove `"tabs"` from `manifest.json` `permissions`. TFE uses `"activeTab"` only and `chrome.tabs.query({ active: true, currentWindow: true })` works from popup context without the broader `"tabs"` grant. This reduces CWS permission review friction.
+3. **managed_schema.json** — mirrors TFE's schema exactly: two properties (`apiKey: string`, `disabledHosts: string[]`). Declared in manifest under `"storage": { "managed_schema": "managed_schema.json" }` so Chrome Group Policy recognises it. The code in `storage.ts` and `popup.ts` already handles managed fallback — no logic changes needed.
+4. **Store assets** — `store/listing.md` contains the CWS name, short description, detailed description, category, keywords, and screenshot spec. `store/privacy-policy.md` is the hostable policy document. Neither file changes runtime behaviour. Screenshots require user action (actual PNG captures) and are noted as user-action items in `listing.md`.
+5. **Build script** — `web-ext:build:gfe` runs `web-ext build` against `git-file-explainer/dist/` and writes the zip to `git-file-explainer/web-ext-artifacts/`. The `dist/` folder must be built first via `npm run build:gfe`.
 
-### Dependencies / Prerequisites
+### MV3 Compliance Check
 
-- BP-014 (Core Engine) sealed.
+- ✅ No new permissions — one removed (`"tabs"`)
+- ✅ No code changes to content script, background, or sidebar
+- ✅ `managed_schema.json` is a static JSON declaration — no executable code
+- ✅ Store assets are text-only — no runtime impact
+- ✅ CSP unchanged
 
 ### Risk
 
-- **Level:** Low-Medium
-- **Notes:** Q&A sessions increase token usage. We will implement a character limit for questions (280 chars) and continue truncating file content to 5,000 characters.
+- **Level:** Low
+- **Notes:** Removing `"tabs"` could break `chrome.tabs.query` in the popup if `"activeTab"` alone is insufficient in some edge case (e.g., called from a non-action context). Mitigated: TFE has shipped with the same setup and works correctly; popup is always opened via action click, which grants `"activeTab"`.
+
+### Post-build checks
+
+1. `npm run build:gfe`
+2. `npm run test:gfe` — all 73+ tests must pass
+3. `npm run test:ext` — TFE 129/129 must still pass
+4. `npm run lint`
+5. `npm run format:check`
+6. Verify `git-file-explainer/dist/managed_schema.json` exists after build (copied via `cpSync`)
+7. `npm run web-ext:build:gfe` — zip written to `git-file-explainer/web-ext-artifacts/`
 
 ### Review
 
-| Reviewer | Input                                                                                                                                                                                                                                                                                                                      | Approved?        |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| User     | "do next step in project" (2026-05-31)                                                                                                                                                                                                                                                                                     | ✅               |
-| Codex    | Initial proposal had blockers: GitLab manifest match, background handler file, Q&A plain-text contract, GitLab SPA wait selectors, and test coverage were missing. Codex stabilized the already-started BP-015 code by adding those pieces, keeping API keys out of content-message payloads, and adding regression tests. | ✅ (post-fix)    |
-| Gemini   | Prior log entry says approved, but Codex has not independently verified a Gemini artifact beyond `1playground.md`. Keep as pending for independent final policy/live-smoke review if required.                                                                                                                             | ⬜ / needs check |
-
-### Outcome
-
-- **Status:** ✅ Built locally (2026-05-31)
-- **Built by:** Codex stabilized an already-started BP-015 code change after detecting incomplete runtime coverage.
-- **Result:** GitLab blob pages are activated in the manifest; GitLab subgroup URLs are detected; GitLab DOM extraction now reads file paths and code lines with fallbacks; Q&A requests route through the existing background proxy as `GFE_FETCH_QA_ANSWER`; content-script payloads include prompt/model only, not API keys; Q&A renders answers as text and includes loading/error/clear states.
-- **Test result:** GFE 73/73 ✅ · TFE 129/129 ✅ · GFE build ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅ · apiKey payload scan ✅. `web-ext run --source-dir git-file-explainer/dist --target=chromium --start-url https://github.com/Karthikbangari/Git-Extension-/blob/main/package.json` loaded without manifest/CSS errors. Automated DOM smoke is still not confirmed because the manual Chrome/CDP path did not install the unpacked extension, and `web-ext` uses `--remote-debugging-pipe`.
+| Reviewer | Input                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Approved? |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | ⬜        |
+| Codex    | Approved with execution notes. Scope is appropriate for Phase 4/CWS prep: version bump, managed policy schema, store docs, `web-ext` zip script, and removing `"tabs"` are all low-risk and aligned with MV3 minimization. Please add/keep coverage that proves popup `chrome.tabs.query({ active: true, currentWindow: true })` still gets the active supported page URL after `"tabs"` is removed, because that is the only behavioral risk in this proposal. Also add post-build checks for `web-ext lint --source-dir git-file-explainer/dist` and zip-content sanity (`manifest.json`, `managed_schema.json`, `background.js`, `content.js`, `sidebar.css`, `popup/`, `icons/` present). Store screenshots remain a user/manual asset item and should not be marked complete unless real PNGs are added. | ✅        |
+| Gemini   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | ⬜        |
 
 ---
 
 ## Build History
+
+### BP-015 — Git File Explainer Phase 3: GitLab Extraction + Q&A ✅
+
+**Phase:** GFE Phase 3 — Enhanced Features
+**Date:** 2026-05-31
+**Task group:** Platform expansion + Interactive Q&A
+
+#### Outcome
+
+- **Status:** ✅ Sealed (2026-05-31) — Gemini smoke test passed (entry #65 in coordination log)
+- **Built by:** Codex (stabilized incomplete Claude start); verified by Gemini live DOM smoke on GitHub + GitLab blob pages.
+- **Result:** GitLab blob pages activated in manifest; GitLab subgroup URLs detected; GitLab DOM extraction with 3-layer fallback; `GFE_FETCH_QA_ANSWER` background handler; Q&A renders text-only (no innerHTML); loading/error/clear states; 280-char question cap; cached-summary Q&A wiring.
+- **Test result:** GFE 73/73 ✅ · TFE 129/129 ✅ · build ✅ · lint ✅ · format ✅ · unsafe HTML scan ✅ · apiKey payload scan ✅
 
 ### BP-014 — Git File Explainer Phase 2: DOM File Extraction + AI Summary ✅
 

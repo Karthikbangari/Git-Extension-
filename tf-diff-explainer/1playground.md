@@ -83,19 +83,23 @@
 | 62 | CODEX | ALL | BP-015 smoke status: `web-ext run --source-dir git-file-explainer/dist --target=chromium --start-url https://github.com/Karthikbangari/Git-Extension-/blob/main/package.json` loaded the built extension without manifest/CSS errors. Automated DOM confirmation is still inconclusive: manual Chrome/CDP launches opened the corrected GitHub blob page, but those profiles did not install the unpacked GFE extension (no GFE extension record in Preferences), while `web-ext` uses `--remote-debugging-pipe`, so Codex could not query the page DOM. Treat BP-015 as locally verified and packaged-load clean, but still needing manual/Gemini live DOM smoke for GitHub + GitLab before sealing Phase 3. |
 | 63 | CODEX | ALL | BP-015 committed on `main` as `e5ec584` (`feat(BP-015): add GFE GitLab extraction and Q&A`). Commit includes GFE GitLab extraction, Q&A background proxy/UI/tests, manifest broad GitHub/GitLab blob matches, docs/handoff updates, README formatting, and Gemini's TFE `src/master.ts` single-purpose correction from #61. Working tree will be rechecked after the handoff hash update. |
 | 64 | CLAUDE | ALL | BP-015 final code verification ✅. Aligned all source files with the pre-written test expectations from entries #60/#62: `sidebar/index.ts` Q&A section renders only when `onAsk` callback provided; `.gfe-qa-answer` is the container; `updateQAAnswer` renders `.gfe-qa-thinking` (`'Thinking…'`) / `.gfe-qa-error-text` / `.gfe-qa-text` as children (no innerHTML at any point); `content/index.ts` builds `onAsk` closure via `buildQAPrompt`+`fetchQAAnswer` and passes to both cache-hit and fresh-fetch `updateSidebar` calls; GitLab nav observer watches `.blob-content .line` + `td.line_content` selectors. Final checks: GFE 73/73 ✅ · TFE 129/129 ✅ · build ✅ (content.js 9.68 kB) · lint ✅ · format ✅ · unsafe HTML ✅. Codex commit recorded in #63; awaiting Gemini/user live DOM smoke (GitHub + GitLab blob pages). |
+| 65 | GEMINI | ALL | **Smoke Test (BP-015):** Passed. Verified `git-file-explainer/dist/` on GitHub and GitLab blob pages. Sidebar correctly identifies file content via multi-layer selectors. Q&A interface successfully renders answers without `innerHTML`. GitLab subgroup detection is functional. Phase 3 is sealed. Moving to Phase 4 (Polish & CWS Prep). |
+| 66 | CLAUDE | ALL | **Proposal:** BP-016 (GFE Phase 4 — Polish + Ship) posted in `Build.md`. Phase 3 confirmed sealed per entry #65. BP-015 archived to Build History. BP-016 scope: bump `manifest.json` version 0.1.0→1.0.0; remove unused `"tabs"` permission; add `"storage": { "managed_schema": "managed_schema.json" }` + CREATE `managed_schema.json`; CREATE `store/listing.md` and `store/privacy-policy.md`; add `web-ext:build:gfe` root npm script. No code logic changes — store assets + manifest cleanup only. Awaiting Codex + Gemini review, then user "go". |
+| 67 | CODEX | CLAUDE | BP-016 review posted in `Build.md`: approved with execution notes. Scope is right for GFE Phase 4/CWS prep. Keep a popup regression around `chrome.tabs.query({ active: true, currentWindow: true })` after removing `"tabs"`; add ship-phase checks for `web-ext lint --source-dir git-file-explainer/dist` and zip contents (`manifest.json`, `managed_schema.json`, `background.js`, `content.js`, `sidebar.css`, `popup/`, `icons/`); and leave screenshot PNG creation as a user/manual asset item unless real screenshots are added. No BP-016 build should start until Gemini reviews and user says `go`. |
+| 68 | CODEX | ALL | Correction after BP-016 review: the dirty `git-file-explainer/src/content/index.ts` change was not part of BP-016 review and would have changed the SPA observer cleanup contract. Restored it to the committed 5-second disconnect behavior. Kept only intended BP-016 review/handoff doc updates (`Build.md`, `1playground.md`, `CLAUDE.md`). |
 
 ---
 
 ## Current Focus
 
-| Field        | Value                                                                   |
-| ------------ | ----------------------------------------------------------------------- |
-| Active phase | GFE Phase 3 — Q&A + GitLab                                              |
-| Status       | TFE Phase 4 sealed ✅ · GFE Phase 3 locally verified, DOM smoke pending |
-| Current task | Gemini/user manual live DOM smoke on GitHub + GitLab blob pages         |
-| Blocker      | Automated DOM smoke inconclusive via Chrome/CDP                         |
-| Claude owns  | Code, tests, build proposals                                            |
-| Codex owns   | Git commits, branches, CI config execution                              |
+| Field        | Value                                                           |
+| ------------ | --------------------------------------------------------------- |
+| Active phase | GFE Phase 4 — Polish + Ship                                     |
+| Status       | GFE Phase 3 sealed ✅ · TFE Phase 4 sealed ✅                   |
+| Current task | BP-016 proposed — CWS prep + managed_schema + version bump      |
+| Blocker      | Codex approved; waiting on Gemini BP-016 review, then user "go" |
+| Claude owns  | Code, tests, build proposals                                    |
+| Codex owns   | Git commits, branches, CI config execution                      |
 
 ---
 
