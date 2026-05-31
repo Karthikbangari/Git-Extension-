@@ -107,6 +107,42 @@ describe('GitHubDomExtractor.extract', () => {
     expect(result?.language).toBe('go');
   });
 
+  it('falls back to current GitHub React code cells', () => {
+    const pathEl = document.createElement('span');
+    pathEl.setAttribute('data-testid', 'breadcrumbs-filename');
+    pathEl.textContent = '/package.json';
+    document.body.appendChild(pathEl);
+
+    for (const text of ['{', '  "name": "terraf"', '}']) {
+      const line = document.createElement('div');
+      line.setAttribute('data-testid', 'code-cell');
+      line.textContent = text;
+      document.body.appendChild(line);
+    }
+
+    const result = new GitHubDomExtractor().extract();
+    expect(result?.filePath).toBe('package.json');
+    expect(result?.lines).toEqual(['{', '  "name": "terraf"', '}']);
+    expect(result?.language).toBe('json');
+  });
+
+  it('falls back to the current GitHub file-content textarea', () => {
+    const pathEl = document.createElement('span');
+    pathEl.setAttribute('data-testid', 'blob-path');
+    pathEl.textContent = 'README.md';
+    document.body.appendChild(pathEl);
+
+    const textarea = document.createElement('textarea');
+    textarea.setAttribute('data-testid', 'read-only-cursor-text-area');
+    textarea.setAttribute('aria-label', 'file content');
+    textarea.value = '# Project\n\nHello';
+    document.body.appendChild(textarea);
+
+    const result = new GitHubDomExtractor().extract();
+    expect(result?.lines).toEqual(['# Project', '', 'Hello']);
+    expect(result?.language).toBe('markdown');
+  });
+
   it('returns the correct language inferred from the file path', () => {
     const pathEl = document.createElement('span');
     pathEl.setAttribute('data-testid', 'blob-path');

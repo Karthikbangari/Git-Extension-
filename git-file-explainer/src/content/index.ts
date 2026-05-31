@@ -8,7 +8,7 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, fetchQAAnswer } from './a
   const host = location.hostname;
 
   const SELECTORS =
-    '.blob-code-inner, td[id^="LC"], [data-testid="blob-code-content"], .blob-content .line, .blob-content td.line_content';
+    '.blob-code-inner, td[id^="LC"], [data-testid="blob-code-content"], [data-testid="code-cell"], [data-testid="read-only-cursor-text-area"][aria-label="file content"], .blob-content .line, .blob-content td.line_content';
 
   const run = async () => {
     injectSidebar();
@@ -64,6 +64,11 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, fetchQAAnswer } from './a
 
     const enabled = await isEnabledForHost(host);
     if (!enabled) return;
+
+    if (document.querySelector(SELECTORS)) {
+      void run();
+      return;
+    }
 
     // Wait for the code container to be present in the DOM
     navObserver = new MutationObserver((_, obs) => {

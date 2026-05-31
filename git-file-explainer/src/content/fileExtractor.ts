@@ -34,6 +34,10 @@ export function detectLanguage(filePath: string): string {
   return map[ext] ?? ext;
 }
 
+function normalizeFilePath(filePath: string): string {
+  return filePath.trim().replace(/^\/+/, '');
+}
+
 function extractCodeLines(): string[] {
   // Layer 1: classic GitHub blob table
   const layer1 = Array.from(document.querySelectorAll<HTMLElement>('td.blob-code-inner')).map(
@@ -54,18 +58,29 @@ function extractCodeLines(): string[] {
     if (text.trim()) return text.split('\n');
   }
 
+  // Layer 4: current GitHub React code view
+  const layer4 = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="code-cell"]'))
+    .map((el) => el.textContent ?? '')
+    .filter((line) => line.trim().length > 0);
+  if (layer4.length > 0) return layer4;
+
+  // Layer 5: accessibility textarea used by the current GitHub React code view
+  const textarea = document.querySelector<HTMLTextAreaElement>(
+    '[data-testid="read-only-cursor-text-area"][aria-label="file content"]'
+  );
+  if (textarea?.value.trim()) return textarea.value.split('\n');
+
   return [];
 }
 
 export class GitHubDomExtractor implements FileExtractor {
   extract(): FileContent | null {
     const pathEl = document.querySelector<HTMLElement>(
-      '[data-testid="blob-path"], .final-path, .breadcrumb-item-selected'
+      '[data-testid="blob-path"], [data-testid="breadcrumbs-filename"], .final-path, .breadcrumb-item-selected'
     );
     const filePath =
-      pathEl?.textContent?.trim() ??
-      location.pathname.split('/blob/').pop()?.split('/').slice(1).join('/') ??
-      '';
+      normalizeFilePath(pathEl?.textContent ?? '') ||
+      (location.pathname.split('/blob/').pop()?.split('/').slice(1).join('/') ?? '');
     if (!filePath) return null;
 
     const lines = extractCodeLines();

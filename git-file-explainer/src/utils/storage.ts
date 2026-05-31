@@ -1,10 +1,23 @@
 import type { FileSummaryResult } from '../content/types';
 
 const GFE_PREFIX = 'gfe_';
+const STORAGE_TIMEOUT_MS = 500;
+
+async function withTimeout<T>(promise: Promise<T>, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => {
+      setTimeout(() => resolve(fallback), STORAGE_TIMEOUT_MS);
+    }),
+  ]);
+}
 
 export async function getApiKey(): Promise<string | null> {
   try {
-    const { apiKey: managedKey } = await chrome.storage.managed.get('apiKey');
+    const { apiKey: managedKey } = await withTimeout(
+      chrome.storage.managed.get('apiKey'),
+      {} as Record<string, unknown>
+    );
     if (managedKey) return managedKey as string;
   } catch {
     // managed storage unavailable
@@ -15,7 +28,10 @@ export async function getApiKey(): Promise<string | null> {
 
 export async function isEnabledForHost(host: string): Promise<boolean> {
   try {
-    const { disabledHosts: managedDisabled } = await chrome.storage.managed.get('disabledHosts');
+    const { disabledHosts: managedDisabled } = await withTimeout(
+      chrome.storage.managed.get('disabledHosts'),
+      {} as Record<string, unknown>
+    );
     if (Array.isArray(managedDisabled)) {
       return !(managedDisabled as string[]).includes(host);
     }
