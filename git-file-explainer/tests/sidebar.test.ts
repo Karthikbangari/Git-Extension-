@@ -239,25 +239,39 @@ describe('sidebar quick actions', () => {
     expect(document.querySelectorAll('.gfe-quick-btn').length).toBe(4);
   });
 
-  it('Find Bugs button fills the Q&A input', () => {
+  it('Find Bugs button fills and submits the Q&A input', () => {
     injectSidebar();
-    updateSidebar({ summary: 'x', keyPoints: [], complexity: 'low' }, noop);
+    let asked: string | null = null;
+    updateSidebar({ summary: 'x', keyPoints: [], complexity: 'low' }, (question) => {
+      asked = question;
+    });
     const findBugsBtn = Array.from(document.querySelectorAll<HTMLElement>('.gfe-quick-btn')).find(
       (b) => b.textContent?.includes('Find Bugs')
     )!;
     findBugsBtn.click();
     const input = document.querySelector<HTMLTextAreaElement>('.gfe-qa-input');
-    expect(input?.value).toBe('Find bugs and issues in this file');
+    expect(input?.value).toBe('');
+    expect(asked).toBe('Find bugs and issues in this file');
+    expect(document.querySelector('.gfe-user-bubble')?.textContent).toBe(
+      'Find bugs and issues in this file'
+    );
   });
 
-  it('Security Scan button fills the Q&A input', () => {
+  it('Security Scan button fills and submits the Q&A input', () => {
     injectSidebar();
-    updateSidebar({ summary: 'x', keyPoints: [], complexity: 'low' }, noop);
+    let asked: string | null = null;
+    updateSidebar({ summary: 'x', keyPoints: [], complexity: 'low' }, (question) => {
+      asked = question;
+    });
     const secBtn = Array.from(document.querySelectorAll<HTMLElement>('.gfe-quick-btn')).find((b) =>
       b.textContent?.includes('Security Scan')
     )!;
     secBtn.click();
     const input = document.querySelector<HTMLTextAreaElement>('.gfe-qa-input');
-    expect(input?.value).toBe('Are there any security vulnerabilities in this file?');
+    expect(input?.value).toBe('');
+    expect(asked).toBe('Are there any security vulnerabilities in this file?');
+    expect(document.querySelector('.gfe-user-bubble')?.textContent).toBe(
+      'Are there any security vulnerabilities in this file?'
+    );
   });
 });

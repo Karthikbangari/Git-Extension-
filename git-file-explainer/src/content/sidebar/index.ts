@@ -471,7 +471,7 @@ export function updateSidebar(
   }
 
   // ── Quick actions ─────────────────────────────────────────────────────────
-  body.appendChild(buildQuickActions(body));
+  body.appendChild(buildQuickActions(body, onAsk));
 
   // ── Q&A section ───────────────────────────────────────────────────────────
   body.appendChild(buildQASection(state, onAsk));
@@ -514,7 +514,7 @@ function buildNoKeyCard(): HTMLElement {
 
 // ── Quick actions ─────────────────────────────────────────────────────────────
 
-function buildQuickActions(body: HTMLElement): HTMLElement {
+function buildQuickActions(body: HTMLElement, onAsk?: (question: string) => void): HTMLElement {
   const grid = document.createElement('div');
   grid.className = 'gfe-quick-actions';
 
@@ -558,6 +558,9 @@ function buildQuickActions(body: HTMLElement): HTMLElement {
         if (input) {
           input.value = action.question!;
           input.focus();
+          if (onAsk) {
+            body.querySelector<HTMLButtonElement>('.gfe-qa-btn')?.click();
+          }
         }
       });
     } else {
