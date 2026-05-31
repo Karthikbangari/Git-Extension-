@@ -40,6 +40,15 @@ https://github.com/Karthikbangari/Git-Extension-/tree/main/git-file-explainer/te
 
 That folder contains real `.tf`, `.ts`, `.js`, `.py`, `.go`, `.java`, `.rb`, `.cs`, `.cpp`, `.c`, `.tsx`, `.jsx`, `.php`, `.json`, `.yaml`, `.yml`, `.xml`, `.sql`, `.html`, `.css`, `.scss`, and `.md` files for testing GFE on GitHub blob pages.
 
+Latest realtime smoke result:
+
+```text
+npm run smoke:gfe:filetypes
+22 pass, 0 warn, 0 fail
+```
+
+Screenshots are stored in `git-file-explainer/realtime-screenshots/supported-file-types/`.
+
 ## Install For Development
 
 **Requirements:** Node 22 and Chrome 120+
@@ -62,15 +71,16 @@ You can also load `git-file-explainer/dist/` after running `npm run build:gfe`.
 
 ## Commands
 
-| Command                     | What it does                                                  |
-| --------------------------- | ------------------------------------------------------------- |
-| `npm run build:gfe`         | Builds the Chrome extension into `git-file-explainer/dist/`   |
-| `npm run test:gfe`          | Runs Git File Explainer tests                                 |
-| `npm run dev:gfe`           | Launches Chrome with the extension loaded through `web-ext`   |
-| `npm run verify:extensions` | Runs the Playwright smoke verifier and writes `verify-shots/` |
-| `npm run lint`              | Runs ESLint                                                   |
-| `npm run format`            | Formats the repo with Prettier                                |
-| `npm run format:check`      | Checks formatting without writing files                       |
+| Command                       | What it does                                                      |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `npm run build:gfe`           | Builds the Chrome extension into `git-file-explainer/dist/`       |
+| `npm run test:gfe`            | Runs Git File Explainer tests                                     |
+| `npm run dev:gfe`             | Launches Chrome with the extension loaded through `web-ext`       |
+| `npm run smoke:gfe:filetypes` | Opens all real GitHub sample files with GFE and saves screenshots |
+| `npm run verify:extensions`   | Runs the Playwright smoke verifier and writes `verify-shots/`     |
+| `npm run lint`                | Runs ESLint                                                       |
+| `npm run format`              | Formats the repo with Prettier                                    |
+| `npm run format:check`        | Checks formatting without writing files                           |
 
 ## Project Structure
 

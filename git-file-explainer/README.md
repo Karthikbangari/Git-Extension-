@@ -41,6 +41,21 @@ https://github.com/Karthikbangari/Git-Extension-/tree/main/git-file-explainer/te
 
 It contains real sample files for every listed extension, so each file opens as a GitHub `/blob/` page that GFE can inspect.
 
+Latest realtime smoke result:
+
+```text
+npm run smoke:gfe:filetypes
+22 pass, 0 warn, 0 fail
+```
+
+Screenshots are stored in [`realtime-screenshots/supported-file-types/`](realtime-screenshots/supported-file-types/).
+
+## Auto-trigger behavior
+
+GFE auto-injects on GitHub/GitLab blob pages when code appears. The content script watches SPA navigation, listens for late DOM mutations, polls every 500 ms for delayed code cells, and falls back to raw GitHub content after 8 seconds for preview-rendered blobs such as Markdown.
+
+The no-key setup state appears automatically when no Anthropic API key is saved. AI summaries render after saving an API key in the extension popup.
+
 ## Install (development)
 
 **Requirements:** Node 22, Chrome 120+
