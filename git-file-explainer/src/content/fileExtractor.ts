@@ -151,6 +151,10 @@ export function smartTruncate(lines: string[], headLines = 300, tailLines = 50):
   };
 }
 
+export function estimateTokens(chars: number): number {
+  return Math.ceil(chars / 4);
+}
+
 const MAX_CONTENT_CHARS = 12_000;
 
 function capContent(lines: string[]): string {

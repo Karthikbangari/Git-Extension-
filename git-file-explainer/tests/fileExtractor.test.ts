@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   detectLanguage,
+  estimateTokens,
   GitHubDomExtractor,
   GitLabDomExtractor,
 } from '../src/content/fileExtractor';
@@ -28,6 +29,26 @@ describe('detectLanguage', () => {
 
   it('returns Makefile for a file named Makefile', () => {
     expect(detectLanguage('Makefile')).toBe('Makefile');
+  });
+});
+
+describe('estimateTokens', () => {
+  it('returns 0 for 0 chars', () => {
+    expect(estimateTokens(0)).toBe(0);
+  });
+
+  it('rounds up to nearest token', () => {
+    expect(estimateTokens(1)).toBe(1);
+    expect(estimateTokens(4)).toBe(1);
+    expect(estimateTokens(5)).toBe(2);
+  });
+
+  it('estimates 400 chars as 100 tokens', () => {
+    expect(estimateTokens(400)).toBe(100);
+  });
+
+  it('estimates 12000 chars as 3000 tokens', () => {
+    expect(estimateTokens(12_000)).toBe(3_000);
   });
 });
 

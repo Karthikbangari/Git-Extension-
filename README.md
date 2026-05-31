@@ -1,11 +1,11 @@
 # Git-Exp — Chrome Extensions for Developers
 
-Two Chrome extensions (Manifest V3) that bring AI-powered insights directly into GitHub and GitLab.
+Chrome extensions (Manifest V3) that bring AI-powered insights directly into GitHub and GitLab. **Git File Explainer is the primary active project going forward**; TF Diff Explainer remains in the repo as an archived/background extension.
 
-| Extension                                 | What it does                                                                                                                                     | Status    |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
-| [TF Diff Explainer](tf-diff-explainer/)   | Guided 5-step sidebar for GitHub PR / GitLab MR diffs — activates on 22 file formats; Terraform `.tf` files get deep risk analysis and AI review | v1.0.0 ✅ |
-| [Git File Explainer](git-file-explainer/) | Sidebar for GitHub and GitLab file views — AI summary, rich cards, streaming Q&A, copy/export actions, token meter, and custom GitLab support    | v1.0.0 ✅ |
+| Extension                                 | What it does                                                                                                                                                                                 | Status    |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| [Git File Explainer](git-file-explainer/) | Primary extension: sidebar for GitHub and GitLab file views — AI summary, rich cards, streaming Q&A, copy/export, Claude.ai sharing, token estimates, token meter, and custom GitLab support | v1.0.0 ✅ |
+| [TF Diff Explainer](tf-diff-explainer/)   | Archived/background extension: guided 5-step sidebar for GitHub PR / GitLab MR diffs with Terraform-focused risk analysis and AI review                                                      | v1.0.0 ✅ |
 
 ---
 
@@ -132,7 +132,7 @@ These rules are enforced across every build and reviewed on every proposal:
 
 ## Tech
 
-- TypeScript, Vite (three separate IIFE bundles), Vitest (191 TFE tests + 81 GFE tests)
+- TypeScript, Vite (three separate IIFE bundles), Vitest (191 TFE tests + 90 GFE tests)
 - Playwright smoke verifier (`npm run verify:extensions`) — latest recorded run: 12 pass, 0 fail, 1 expected GitHub PNG-preview warning
 - No runtime dependencies — everything ships in the bundle
 - AI calls proxied through the background service worker so the host page's CSP cannot block them

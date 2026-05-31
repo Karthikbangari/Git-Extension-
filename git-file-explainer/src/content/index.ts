@@ -54,13 +54,21 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, streamQAAnswer } from './
 
     updateSidebar('loading');
 
+    const content = extractor.buildContent(fileContent);
+    const contentChars = content.length;
+
     const apiKey = await getApiKey();
     if (!apiKey) {
-      updateSidebar('no-key', undefined, fileContent.truncated, fileContent.originalLineCount);
+      updateSidebar(
+        'no-key',
+        undefined,
+        fileContent.truncated,
+        fileContent.originalLineCount,
+        undefined,
+        contentChars
+      );
       return;
     }
-
-    const content = extractor.buildContent(fileContent);
     const audience = await getAudience();
 
     // Streaming Q&A with prior summary context
@@ -96,10 +104,17 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, streamQAAnswer } from './
     const cached = await getCachedSummaryWithMeta(location.href);
     if (cached) {
       currentSummaryText = cached.result.summary;
-      updateSidebar(cached.result, onAsk, fileContent.truncated, fileContent.originalLineCount, {
-        fromCache: true,
-        ts: cached.ts,
-      });
+      updateSidebar(
+        cached.result,
+        onAsk,
+        fileContent.truncated,
+        fileContent.originalLineCount,
+        {
+          fromCache: true,
+          ts: cached.ts,
+        },
+        contentChars
+      );
       return;
     }
 
@@ -109,7 +124,14 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, streamQAAnswer } from './
     if (result) {
       currentSummaryText = result.summary;
       void setCachedSummary(location.href, result);
-      updateSidebar(result, onAsk, fileContent.truncated, fileContent.originalLineCount);
+      updateSidebar(
+        result,
+        onAsk,
+        fileContent.truncated,
+        fileContent.originalLineCount,
+        undefined,
+        contentChars
+      );
     } else {
       updateSidebar('error');
     }

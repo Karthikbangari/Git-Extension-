@@ -10,7 +10,9 @@ A Chrome extension (Manifest V3) that injects an AI-powered sidebar into GitHub 
 - **Complexity chip** — Low / Medium / High rating so you can gauge review effort at a glance
 - **Streaming Q&A** — ask follow-up questions about the file directly in the sidebar; answers stream through an MV3 runtime port (280-character question limit)
 - **Copy/export** — copy the rendered summary as plain text or Markdown from the sidebar
+- **Share to Claude.ai** — copy a formatted follow-up prompt and open Claude.ai from a summary result without extra extension permissions
 - **Token meter** — popup tracks cumulative input/output token usage with a reset control
+- **Token estimate chip** — sidebar shows approximate tokens for no-key and truncated-file states
 - **Stable cache + raw fallback** — summaries use normalized cache keys with metadata, LRU eviction, and raw-content fallback when DOM extraction fails
 - **Binary skip / large-file handling** — skips binary extensions and smart-truncates large files (first 300 + last 50 lines)
 - **Custom GitLab support** — popup can store a self-hosted GitLab domain for file-page detection
@@ -140,7 +142,7 @@ If all selectors fail (binary files, images, empty files), the sidebar shows a b
 
 ## Tech
 
-- TypeScript, Vite (three separate IIFE bundles), Vitest (81 GFE tests)
+- TypeScript, Vite (three separate IIFE bundles), Vitest (90 GFE tests)
 - No extension runtime dependencies
 - AI calls proxied through the background service worker (model: `claude-haiku-4-5-20251001`)
 - File content capped around 12,000 characters before sending to the API

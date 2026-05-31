@@ -18,20 +18,22 @@ No exceptions.
 | Field                | Value                                                                                                      |
 | -------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Last active session  | 2026-05-31                                                                                                 |
-| Active phase         | Maintenance / CWS submission                                                                               |
-| Last commit          | `d458747` — Codex (README refresh + BP-023 review)                                                         |
-| Last build           | BP-017..BP-022 + extension verifier built, committed, and pushed ✅                                        |
+| Active phase         | GFE Maintenance / CWS submission (TFE archived)                                                            |
+| Last commit          | pending Codex commit — BP-023 verified locally                                                             |
+| Last build           | BP-023 built and verified ✅ · GFE tests 90/90 ✅ · TFE tests 191/191 ✅                                   |
 | Lint / format        | ✅ clean                                                                                                   |
-| Uncommitted          | None — working tree clean                                                                                  |
-| Next action (Codex)  | Chrome Web Store packaging/submission support if user asks; commit any new docs/assets from other agents   |
+| Uncommitted          | BP-023 changes verified by Codex; commit/push in progress                                                  |
+| Next action (Codex)  | Commit/push BP-023; Chrome Web Store packaging/submission support if user asks                             |
 | Next action (Gemini) | Optional deeper live smoke for GFE streaming Q&A, copy buttons, token meter, and binary skip with API key  |
-| Next action (Claude) | Refine BP-023 (Share to Claude.ai) to address Codex review (use window.open vs tabs permission)            |
+| Next action (Claude) | None — awaiting CWS feedback; respond if bugs found in smoke tests                                         |
 | Next action (user)   | (1) CWS submission for TFE; (2) CWS submission for GFE; (3) take 1280×800 screenshots for both store pages |
 | Open bugs            | None                                                                                                       |
 | Blocked              | None                                                                                                       |
 
 ### What was built this session
 
+- **GFE Project Pivot (2026-05-31) ✅**: Git File Explainer (GFE) is now the sole primary extension; TF Diff Explainer (TFE) is archived.
+- **BP-023 built and tested ✅**: GFE Final Gaps. Token estimate chip (`~N tokens`) in sidebar; "↗ Open in Claude.ai" share button copies prompt and opens Claude.ai via `window.open` (addressing Codex security feedback). GFE tests 90/90.
 - **BP-017 built, committed, pushed, and smoke-tested ✅**: TFE interactive 5-step UX flow. New `stepper.ts` (fixed bottom bar, 5 steps, Back/Next). Full sidebar rewrite: `showSetupPanel` (step 2 — API key + site toggle inline), `showAnalyzing` (step 3 — compact header + skeleton), `showRiskMap` (step 4 — compact header + gradient risk bar + redesigned diff cards), `showAIReview` (step 5 — inline HIGH/MEDIUM badges). Orchestrator rewritten as step state machine. Added `setApiKey` to storage. 62 new tests. TFE 191/191 · GFE 81/81 · build ✅ · lint ✅ · format ✅. Committed in `dbc7a9a`, log updates in `4926acd` and `f6558c2`.
 - **GFE BP-018..BP-022 built, committed, and smoke-tested at baseline ✅**: content foundation, cache/fallback, dual-mode rich cards, streaming Q&A plumbing, copy/export, token meter, and self-hosted GitLab support are included in `dbc7a9a`. Basic live GFE smoke passed on GitHub blob page: sidebar injected, `package.json` / `JSON` header rendered, current GitHub `code-cell` DOM detected, no-key state shown. Deeper API-key-dependent live checks remain optional/manual: streaming Q&A, copy buttons after a successful summary, token meter after API use, and binary skip on a binary blob target.
 - **BP-016 sealed ✅**: GFE Chrome Web Store prep. Committed `793db47`. GFE 79/79 · TFE 129/129.

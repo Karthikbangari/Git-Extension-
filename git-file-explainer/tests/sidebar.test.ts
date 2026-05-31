@@ -78,4 +78,42 @@ describe('sidebar Q&A UI', () => {
     removeSidebar();
     expect(document.getElementById('git-file-explainer-sidebar')).toBeNull();
   });
+
+  it('renders token chip in no-key state when contentChars provided', () => {
+    injectSidebar();
+    updateSidebar('no-key', undefined, false, undefined, undefined, 4000);
+    const chip = document.querySelector('.gfe-token-chip');
+    expect(chip).not.toBeNull();
+    expect(chip?.textContent).toBe('~1,000 tokens');
+  });
+
+  it('does not render token chip in no-key state when contentChars absent', () => {
+    injectSidebar();
+    updateSidebar('no-key');
+    expect(document.querySelector('.gfe-token-chip')).toBeNull();
+  });
+
+  it('includes token count in truncated notice when contentChars provided', () => {
+    injectSidebar();
+    updateSidebar('no-key', undefined, true, 800, undefined, 12000);
+    const notice = document.querySelector('.gfe-truncated-notice');
+    expect(notice?.textContent).toContain('3,000 tokens sent');
+  });
+
+  it('renders share button after summary result', () => {
+    injectSidebar();
+    updateSidebar(
+      { summary: 'Does routing.', keyPoints: ['Defines routes'], complexity: 'low' },
+      noop
+    );
+    const btn = document.querySelector('.gfe-share-btn');
+    expect(btn).not.toBeNull();
+    expect(btn?.textContent).toBe('↗ Open in Claude.ai');
+  });
+
+  it('does not render share button for no-key state', () => {
+    injectSidebar();
+    updateSidebar('no-key');
+    expect(document.querySelector('.gfe-share-btn')).toBeNull();
+  });
 });

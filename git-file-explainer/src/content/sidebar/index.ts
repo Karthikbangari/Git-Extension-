@@ -1,4 +1,5 @@
 import type { FileSummaryResult } from '../types';
+import { estimateTokens } from '../fileExtractor';
 
 const SIDEBAR_ID = 'git-file-explainer-sidebar';
 
@@ -110,7 +111,8 @@ export function updateSidebar(
   onAsk?: (question: string) => void,
   truncated?: boolean,
   originalLineCount?: number,
-  cacheMeta?: CacheMeta
+  cacheMeta?: CacheMeta,
+  contentChars?: number
 ): void {
   const sidebar = document.getElementById(SIDEBAR_ID);
   if (!sidebar) return;
@@ -138,7 +140,14 @@ export function updateSidebar(
     msg.className = 'gfe-cta';
     msg.textContent = 'Click the extension icon ↗ to set up AI explanations.';
     body.appendChild(msg);
-    if (truncated && originalLineCount) appendTruncatedNotice(body, originalLineCount);
+    if (truncated && originalLineCount) {
+      appendTruncatedNotice(body, originalLineCount, contentChars);
+    } else if (contentChars !== undefined) {
+      const chip = document.createElement('span');
+      chip.className = 'gfe-token-chip';
+      chip.textContent = `~${estimateTokens(contentChars).toLocaleString()} tokens`;
+      body.appendChild(chip);
+    }
     return;
   }
 
@@ -159,7 +168,7 @@ export function updateSidebar(
   }
 
   // FileSummaryResult
-  if (truncated && originalLineCount) appendTruncatedNotice(body, originalLineCount);
+  if (truncated && originalLineCount) appendTruncatedNotice(body, originalLineCount, contentChars);
 
   if (cacheMeta?.fromCache && cacheMeta.ts) {
     const badge = document.createElement('span');
@@ -266,6 +275,9 @@ export function updateSidebar(
 
   // Copy buttons
   appendCopyButtons(body, state);
+
+  // Share to Claude.ai
+  appendShareButton(body, state);
 }
 
 function appendSection(
@@ -290,10 +302,18 @@ function appendSection(
   parent.appendChild(list);
 }
 
-function appendTruncatedNotice(parent: HTMLElement, originalLineCount: number): void {
+function appendTruncatedNotice(
+  parent: HTMLElement,
+  originalLineCount: number,
+  contentChars?: number
+): void {
   const notice = document.createElement('p');
   notice.className = 'gfe-truncated-notice';
-  notice.textContent = `⚠ File truncated — showing excerpt of ${originalLineCount.toLocaleString()} lines`;
+  let text = `⚠ File truncated — showing excerpt of ${originalLineCount.toLocaleString()} lines`;
+  if (contentChars !== undefined) {
+    text += ` (~${estimateTokens(contentChars).toLocaleString()} tokens sent)`;
+  }
+  notice.textContent = text;
   parent.appendChild(notice);
 }
 
@@ -377,6 +397,51 @@ function buildMarkdown(result: FileSummaryResult): string {
     result.watchOutFor.forEach((w) => lines.push(`- ${w}`));
   }
   return lines.join('\n').trim();
+}
+
+function buildClaudePrompt(result: FileSummaryResult, filePath: string, language: string): string {
+  const lines: string[] = [];
+  if (filePath) lines.push(`File: ${filePath}`);
+  if (language) lines.push(`Language: ${language}`);
+  lines.push('', 'Summary:', result.summary, '');
+  if (result.keyPoints.length > 0) {
+    lines.push('Key Points:');
+    result.keyPoints.forEach((p) => lines.push(`• ${p}`));
+    lines.push('');
+  }
+  lines.push('Ask me anything about this file.');
+  return lines.join('\n').trim();
+}
+
+function showToast(): void {
+  const sidebar = document.getElementById(SIDEBAR_ID);
+  if (!sidebar) return;
+  const existing = sidebar.querySelector('.gfe-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'gfe-toast';
+  toast.textContent = 'Copied! Paste into Claude.ai ↗';
+  sidebar.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}
+
+function appendShareButton(parent: HTMLElement, result: FileSummaryResult): void {
+  const sidebar = document.getElementById(SIDEBAR_ID);
+  const filePath = sidebar?.querySelector<HTMLElement>('.gfe-filename')?.textContent ?? '';
+  const language = sidebar?.querySelector<HTMLElement>('.gfe-lang-badge')?.textContent ?? '';
+
+  const btn = document.createElement('button');
+  btn.className = 'gfe-share-btn';
+  btn.setAttribute('aria-label', 'Open in Claude.ai');
+  btn.textContent = '↗ Open in Claude.ai';
+  btn.addEventListener('click', () => {
+    const prompt = buildClaudePrompt(result, filePath, language);
+    void navigator.clipboard.writeText(prompt).then(() => {
+      showToast();
+      window.open('https://claude.ai', '_blank', 'noopener');
+    });
+  });
+  parent.appendChild(btn);
 }
 
 export function updateQAAnswer(state: string | 'loading' | 'error'): void {
