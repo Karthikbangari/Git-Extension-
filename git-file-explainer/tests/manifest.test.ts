@@ -7,6 +7,8 @@ describe('manifest', () => {
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
     version?: string;
     permissions?: string[];
+    host_permissions?: string[];
+    content_security_policy?: { extension_pages?: string };
     storage?: { managed_schema?: string };
     content_scripts?: Array<{ matches?: string[] }>;
   };
@@ -27,5 +29,12 @@ describe('manifest', () => {
 
   it('declares managed_schema for enterprise policy support', () => {
     expect(manifest.storage?.managed_schema).toBe('managed_schema.json');
+  });
+
+  it('allows raw GitHub fallback fetches for preview-rendered files', () => {
+    expect(manifest.host_permissions ?? []).toContain('https://raw.githubusercontent.com/*');
+    expect(manifest.content_security_policy?.extension_pages ?? '').toContain(
+      'https://raw.githubusercontent.com'
+    );
   });
 });

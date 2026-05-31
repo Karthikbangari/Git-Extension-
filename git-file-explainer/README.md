@@ -68,12 +68,13 @@ To enable AI summaries, open the extension popup and paste an Anthropic API key 
 
 All commands run from the repo root (`/Git-Extension-`).
 
-| Command                     | What it does                                                      |
-| --------------------------- | ----------------------------------------------------------------- |
-| `npm run build:gfe`         | Full production build → `git-file-explainer/dist/`                |
-| `npm run test:gfe`          | Run Vitest unit tests                                             |
-| `npm run dev:gfe`           | Launch Chrome with extension loaded via web-ext                   |
-| `npm run verify:extensions` | Playwright smoke verification with screenshots in `verify-shots/` |
+| Command                       | What it does                                                           |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| `npm run build:gfe`           | Full production build → `git-file-explainer/dist/`                     |
+| `npm run test:gfe`            | Run Vitest unit tests                                                  |
+| `npm run dev:gfe`             | Launch Chrome with extension loaded via web-ext                        |
+| `npm run smoke:gfe:filetypes` | Open all real GitHub sample files with GFE loaded and save screenshots |
+| `npm run verify:extensions`   | Playwright smoke verification with screenshots in `verify-shots/`      |
 
 ## Project structure
 
@@ -139,7 +140,7 @@ If all selectors fail (binary files, images, empty files), the sidebar shows a b
 | Guardrail            | Requirement                                                                                                                            |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | **No remote code**   | All JS bundled locally. No `eval()`, `new Function()`, or externally loaded scripts.                                                   |
-| **CSP**              | Extension pages: `script-src 'self'; object-src 'self'; connect-src https://api.anthropic.com`.                                        |
+| **CSP**              | Extension pages: `script-src 'self'; object-src 'self'; connect-src https://api.anthropic.com https://raw.githubusercontent.com`.      |
 | **API key handling** | Key read from `chrome.storage.local` at call time. Never in message payloads, never logged, never in DOM.                              |
 | **Unsafe HTML**      | All sidebar DOM built via `createElement`/`appendChild`. No `innerHTML` anywhere.                                                      |
 | **Host permissions** | Scoped to `https://github.com/*`, `https://gitlab.com/*`, and `https://api.anthropic.com/*`.                                           |
@@ -156,7 +157,7 @@ If all selectors fail (binary files, images, empty files), the sidebar shows a b
 
 ## Tech
 
-- TypeScript, Vite (three separate IIFE bundles), Vitest (112 GFE tests)
+- TypeScript, Vite (three separate IIFE bundles), Vitest (113 GFE tests)
 - No extension runtime dependencies
 - AI calls proxied through the background service worker (model: `claude-haiku-4-5-20251001`)
 - File content capped around 12,000 characters before sending to the API

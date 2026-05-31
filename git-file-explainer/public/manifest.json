@@ -3,7 +3,7 @@
   "name": "Git File Explainer",
   "version": "1.0.0",
   "description": "AI-powered explanations for files viewed on GitHub and GitLab",
-  "homepage_url": "https://github.com/Karthikbangari/Git-Exp",
+  "homepage_url": "https://github.com/Karthikbangari/Git-Extension-",
   "minimum_chrome_version": "120",
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
@@ -37,7 +37,7 @@
     "128": "icons/icon128.png"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://api.anthropic.com",
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://api.anthropic.com https://raw.githubusercontent.com",
     "sandbox": "sandbox allow-scripts; script-src 'self'"
   },
   "storage": {

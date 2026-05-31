@@ -165,20 +165,33 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, streamQAAnswer } from './
 
     const autoTrigger = await getAutoTrigger();
 
-    if (document.querySelector(SELECTORS)) {
+    const triggerExplain = () => {
       autoTrigger ? void run() : showManualTrigger();
+    };
+
+    if (document.querySelector(SELECTORS)) {
+      triggerExplain();
       return;
     }
 
+    let triggered = false;
     navObserver = new MutationObserver((_, obs) => {
       if (document.querySelector(SELECTORS)) {
+        triggered = true;
         obs.disconnect();
-        autoTrigger ? void run() : showManualTrigger();
+        triggerExplain();
       }
     });
 
     navObserver.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => navObserver?.disconnect(), 5000);
+    setTimeout(() => {
+      navObserver?.disconnect();
+      if (!triggered && isGitHubFilePage(url)) {
+        // Markdown and other preview-rendered GitHub blobs can omit code-cell DOM.
+        // Running anyway lets the extractor use its raw.githubusercontent.com fallback.
+        triggerExplain();
+      }
+    }, 5000);
   };
 
   // Alt+S keyboard shortcut

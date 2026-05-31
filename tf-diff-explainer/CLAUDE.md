@@ -20,7 +20,7 @@ No exceptions.
 | Last active session  | 2026-05-31                                                                                                 |
 | Active phase         | GFE Maintenance / CWS submission (TFE archived)                                                            |
 | Last commit          | `e0bc5ef` — Codex (feat: add GFE token estimate and Claude.ai share)                                       |
-| Last build           | GFE supported-file-type coverage verified ✅ · GFE tests 112/112 ✅ · TFE archived/background              |
+| Last build           | GFE realtime file-type screenshots verified ✅ · GFE tests 113/113 ✅ · TFE archived/background            |
 | Lint / format        | ✅ clean                                                                                                   |
 | Uncommitted          | None — working tree clean                                                                                  |
 | Next action (Codex)  | Chrome Web Store packaging/submission support if user asks; commit any new docs/assets from other agents   |
@@ -33,7 +33,7 @@ No exceptions.
 ### What was built this session
 
 - **GFE Project Pivot (2026-05-31) ✅**: Git File Explainer (GFE) is now the sole primary extension; TF Diff Explainer (TFE) is archived.
-- **GFE supported-file-type coverage verified ✅**: Codex added regression coverage for all listed 22 file extensions (`.tf`, `.ts`, `.js`, `.py`, `.go`, `.java`, `.rb`, `.cs`, `.cpp`, `.c`, `.tsx`, `.jsx`, `.php`, `.json`, `.yaml`, `.yml`, `.xml`, `.sql`, `.html`, `.css`, `.scss`, `.md`). GFE tests 112/112.
+- **GFE realtime file-type screenshots verified ✅**: Codex opened all 22 real GitHub sample blob URLs with `git-file-explainer/dist` loaded, captured screenshots into `git-file-explainer/realtime-screenshots/supported-file-types/`, and fixed Markdown preview pages by allowing the raw GitHub fallback in CSP. Result: 22 pass, 0 warn, 0 fail. GFE tests 113/113.
 - **BP-023 built and tested ✅**: GFE Final Gaps. Token estimate chip (`~N tokens`) in sidebar; "↗ Open in Claude.ai" share button copies prompt and opens Claude.ai via `window.open` (addressing Codex security feedback).
 - **BP-017 built, committed, pushed, and smoke-tested ✅**: TFE interactive 5-step UX flow. New `stepper.ts` (fixed bottom bar, 5 steps, Back/Next). Full sidebar rewrite: `showSetupPanel` (step 2 — API key + site toggle inline), `showAnalyzing` (step 3 — compact header + skeleton), `showRiskMap` (step 4 — compact header + gradient risk bar + redesigned diff cards), `showAIReview` (step 5 — inline HIGH/MEDIUM badges). Orchestrator rewritten as step state machine. Added `setApiKey` to storage. 62 new tests. TFE 191/191 · GFE 81/81 · build ✅ · lint ✅ · format ✅. Committed in `dbc7a9a`, log updates in `4926acd` and `f6558c2`.
 - **GFE BP-018..BP-022 built, committed, and smoke-tested at baseline ✅**: content foundation, cache/fallback, dual-mode rich cards, streaming Q&A plumbing, copy/export, token meter, and self-hosted GitLab support are included in `dbc7a9a`. Basic live GFE smoke passed on GitHub blob page: sidebar injected, `package.json` / `JSON` header rendered, current GitHub `code-cell` DOM detected, no-key state shown. Deeper API-key-dependent live checks remain optional/manual: streaming Q&A, copy buttons after a successful summary, token meter after API use, and binary skip on a binary blob target.
