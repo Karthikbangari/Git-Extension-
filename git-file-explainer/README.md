@@ -1,4 +1,4 @@
-# Git File Explainer
+# Git-Extension- / Git File Explainer
 
 A Chrome extension (Manifest V3) that injects an AI-powered sidebar into GitHub and GitLab file views, explaining what a file does, its key points, and complexity — powered by the Claude API (Haiku model).
 
@@ -32,8 +32,8 @@ AI features require an Anthropic API key (`sk-ant-…`), set via the extension p
 **Requirements:** Node 22, Chrome 120+
 
 ```bash
-git clone https://github.com/Karthikbangari/Git-Exp.git
-cd Git-Exp
+git clone https://github.com/Karthikbangari/Git-Extension-.git
+cd Git-Extension-
 npm install
 npm run build:gfe
 ```
@@ -52,14 +52,14 @@ To enable AI summaries, open the extension popup and paste an Anthropic API key 
 
 ## Development commands
 
-All commands run from the repo root (`/Git-Exp`).
+All commands run from the repo root (`/Git-Extension-`).
 
-| Command                     | What it does                                                                     |
-| --------------------------- | -------------------------------------------------------------------------------- |
-| `npm run build:gfe`         | Full production build → `git-file-explainer/dist/`                               |
-| `npm run test:gfe`          | Run Vitest unit tests                                                            |
-| `npm run dev:gfe`           | Launch Chrome with extension loaded via web-ext                                  |
-| `npm run verify:extensions` | Playwright smoke verification for TFE + GFE, with screenshots in `verify-shots/` |
+| Command                     | What it does                                                      |
+| --------------------------- | ----------------------------------------------------------------- |
+| `npm run build:gfe`         | Full production build → `git-file-explainer/dist/`                |
+| `npm run test:gfe`          | Run Vitest unit tests                                             |
+| `npm run dev:gfe`           | Launch Chrome with extension loaded via web-ext                   |
+| `npm run verify:extensions` | Playwright smoke verification with screenshots in `verify-shots/` |
 
 ## Project structure
 
