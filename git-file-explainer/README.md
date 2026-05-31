@@ -2,6 +2,10 @@
 
 A Chrome extension (Manifest V3) that injects an AI-powered sidebar into GitHub and GitLab file views, explaining what a file does, its key points, and complexity — powered by the Claude API (Haiku model).
 
+**GFE (`git-file-explainer`) is the sole active Chrome extension in this repo. TFE is archived and receives no new features.**
+
+GFE explains code files on GitHub/GitLab blob pages across 21+ file types, including `.tf`, `.ts`, `.js`, `.py`, `.go`, `.java`, `.rb`, `.cs`, `.cpp`, `.c`, `.tsx`, `.jsx`, `.php`, `.json`, `.yaml`, `.yml`, `.xml`, `.sql`, `.html`, `.css`, `.scss`, and `.md`.
+
 ## What it does
 
 - **File summary** — 2-3 sentence plain-English or developer-focused description of what the file does
