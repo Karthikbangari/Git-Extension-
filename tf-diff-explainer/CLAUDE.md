@@ -19,10 +19,10 @@ No exceptions.
 | -------------------- | ----------------------------------------------------------------- |
 | Last active session  | 2026-06-02                                                        |
 | Active phase         | Maintenance / CWS Submission                                      |
-| Last commit          | `e5ec584` — BP-015 (Codex needs to commit BP-016)                 |
+| Last commit          | `793db47` — BP-016: GFE Chrome Web Store prep                     |
 | Last build           | GFE Phase 4 sealed ✅ · GFE tests 79/79 ✅ · TFE tests 129/129 ✅ |
 | Lint / format        | ✅ clean                                                          |
-| Next action (Codex)  | Commit BP-016                                                     |
+| Next action (Codex)  | None                                                              |
 | Next action (Gemini) | None                                                              |
 | Next action (Claude) | Monitor for CWS review feedback                                   |
 | Next action (user)   | CWS submission for both TF Diff Explainer and Git File Explainer  |
@@ -32,7 +32,7 @@ No exceptions.
 ### What was built this session
 
 - **BP-015 sealed ✅**: GFE Phase 3 — GitLab blob activation/extraction + Q&A sidebar. Committed `e5ec584`. Gemini live DOM smoke passed (GitHub + GitLab blob pages, entry #65). GFE 73/73 · TFE 129/129 · build ✅ · lint ✅ · format ✅.
-- **BP-016 built ✅**: GFE Phase 4 — Polish + Ship. `manifest.json` v1.0.0, `"tabs"` dropped, `managed_schema.json` added, `store/listing.md` + `store/privacy-policy.md` created, `popup.test.ts` regression added, idempotent `web-ext:build:gfe` script with `--overwrite-dest`. GFE 79/79 · TFE 129/129 · zip `git_file_explainer-1.0.0.zip` ✅. Awaiting Codex commit.
+- **BP-016 sealed ✅**: GFE Phase 4 — Polish + Ship. Committed `793db47`. `manifest.json` v1.0.0, `"tabs"` dropped, `managed_schema.json` added, `store/listing.md` + `store/privacy-policy.md` created, `popup.test.ts` regression added, idempotent `web-ext:build:gfe` script with `--overwrite-dest`. GFE 79/79 · TFE 129/129 · zip `git_file_explainer-1.0.0.zip` ✅.
 
 ### GFE Phase 1 key facts (for Phase 2 planning)
 
