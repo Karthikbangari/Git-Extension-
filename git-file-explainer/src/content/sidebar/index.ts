@@ -2,6 +2,7 @@ import type { FileSummaryResult } from '../types';
 import { estimateTokens } from '../fileExtractor';
 
 const SIDEBAR_ID = 'git-file-explainer-sidebar';
+const FAB_ID = 'gfe-fab';
 
 export interface CacheMeta {
   fromCache: boolean;
@@ -31,20 +32,21 @@ function svg(paths: string, size = 14): string {
 const SPARKLE_PATH = '<path d="M12 3l1.5 6.5H20l-5.5 4 2 6.5L12 17l-4.5 3 2-6.5L4 9.5h6.5z"/>';
 
 const ICONS = {
-  sparkle: svg(SPARKLE_PATH),
-  sparkleSm: svg(SPARKLE_PATH, 12),
-  code: svg('<polyline points="9 18 3 12 9 6"/><polyline points="15 6 21 12 15 18"/>'),
-  globe: svg(
-    '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>'
-  ),
-  chevron: svg('<polyline points="6 9 12 15 18 9"/>'),
-  chevLeft: svg('<polyline points="15 18 9 12 15 6"/>'),
-  chevRight: svg('<polyline points="9 18 15 12 9 6"/>'),
+  sparkle: svg(SPARKLE_PATH, 18),
+  sparkleSm: svg(SPARKLE_PATH, 13),
+  close: svg('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'),
   check: svg(
     '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>'
   ),
-  share: svg(
-    '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>'
+  summary: svg(
+    '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>'
+  ),
+  files: svg(
+    '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>'
+  ),
+  health: svg('<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'),
+  refresh: svg(
+    '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>'
   ),
   alert: svg(
     '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
@@ -54,109 +56,122 @@ const ICONS = {
   ),
   shield: svg('<path d="M12 2l9 4.5v5c0 4-2.5 8-9 10.5C5.5 19.5 3 15.5 3 11.5v-5L12 2z"/>'),
   flask: svg('<path d="M9 3h6M9 3v8l-4 8h14l-4-8V3"/><line x1="9" y1="11" x2="15" y2="11"/>'),
+  layers: svg(
+    '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>'
+  ),
 };
 
-const complexityColors: Record<FileSummaryResult['complexity'], string> = {
-  low: 'gfe-chip-low',
-  medium: 'gfe-chip-medium',
-  high: 'gfe-chip-high',
-};
+type TabId = 'summary' | 'files' | 'health';
 
-function complexityScore(c: FileSummaryResult['complexity']): { score: number; color: string } {
-  if (c === 'low') return { score: 90, color: '#3fb950' };
-  if (c === 'medium') return { score: 60, color: '#f2cc60' };
-  return { score: 30, color: '#f85149' };
+function complexityScore(c: FileSummaryResult['complexity']): {
+  score: number;
+  color: string;
+  label: string;
+} {
+  if (c === 'low') return { score: 90, color: 'var(--gfe-emerald)', label: 'LOW' };
+  if (c === 'medium') return { score: 60, color: 'var(--gfe-gold)', label: 'MEDIUM' };
+  return { score: 30, color: 'var(--gfe-danger)', label: 'HIGH' };
 }
 
-function scoreRingSvg(score: number, color: string): string {
-  const r = 14,
-    cx = 18,
-    cy = 18,
-    sw = 3;
+function buildScoreRing(score: number, color: string, size = 62): HTMLElement {
+  const wrap = document.createElement('div');
+  wrap.className = 'gfe-ring-wrap';
+
+  const sw = 6;
+  const r = (size - sw) / 2;
   const circ = 2 * Math.PI * r;
-  const offset = circ - (score / 100) * circ;
-  return `<svg width="36" height="36" viewBox="0 0 36 36" class="gfe-score-ring">
-    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#21262d" stroke-width="${sw}"/>
-    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}"
-      stroke-linecap="round" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
-      transform="rotate(-90 ${cx} ${cy})"/>
-    <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central"
-      fill="${color}" font-size="9" font-weight="700">${score}</text>
-  </svg>`;
-}
+  const offset = circ * (1 - score / 100);
+  const c = size / 2;
 
-// ── Accordion ────────────────────────────────────────────────────────────────
+  const ns = 'http://www.w3.org/2000/svg';
+  const svgEl = document.createElementNS(ns, 'svg');
+  svgEl.setAttribute('width', String(size));
+  svgEl.setAttribute('height', String(size));
+  svgEl.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svgEl.style.transform = 'rotate(-90deg)';
 
-function makeAccordion(
-  title: string,
-  iconHtml: string,
-  iconClass: string,
-  open: boolean
-): { container: HTMLElement; inner: HTMLElement } {
-  const acc = document.createElement('div');
-  acc.className = open ? 'gfe-acc gfe-acc-open' : 'gfe-acc';
+  const track = document.createElementNS(ns, 'circle');
+  track.setAttribute('cx', String(c));
+  track.setAttribute('cy', String(c));
+  track.setAttribute('r', String(r));
+  track.setAttribute('fill', 'none');
+  track.setAttribute('stroke', 'var(--gfe-canvas-2)');
+  track.setAttribute('stroke-width', String(sw));
 
-  const head = document.createElement('button');
-  head.className = 'gfe-acc-head';
-  head.setAttribute('aria-expanded', String(open));
+  const fill = document.createElementNS(ns, 'circle');
+  fill.setAttribute('cx', String(c));
+  fill.setAttribute('cy', String(c));
+  fill.setAttribute('r', String(r));
+  fill.setAttribute('fill', 'none');
+  fill.setAttribute('stroke', color);
+  fill.setAttribute('stroke-width', String(sw));
+  fill.setAttribute('stroke-linecap', 'round');
+  fill.setAttribute('stroke-dasharray', circ.toFixed(1));
+  fill.setAttribute('stroke-dashoffset', circ.toFixed(1));
+  fill.style.transition = 'stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)';
 
-  const iconEl = document.createElement('span');
-  iconEl.className = `gfe-acc-icon ${iconClass}`;
-  iconEl.innerHTML = iconHtml;
+  svgEl.appendChild(track);
+  svgEl.appendChild(fill);
 
-  const titleEl = document.createElement('span');
-  titleEl.className = 'gfe-acc-title';
-  titleEl.textContent = title;
+  const val = document.createElement('div');
+  val.className = 'gfe-ring-val';
+  val.style.color = color;
+  val.textContent = String(score);
 
-  const chevEl = document.createElement('span');
-  chevEl.className = 'gfe-chev';
-  chevEl.innerHTML = ICONS.chevron;
+  wrap.appendChild(svgEl);
+  wrap.appendChild(val);
 
-  head.appendChild(iconEl);
-  head.appendChild(titleEl);
-  head.appendChild(chevEl);
-
-  const bodyEl = document.createElement('div');
-  bodyEl.className = 'gfe-acc-body';
-
-  const inner = document.createElement('div');
-  inner.className = 'gfe-acc-inner';
-  bodyEl.appendChild(inner);
-
-  acc.appendChild(head);
-  acc.appendChild(bodyEl);
-
-  head.addEventListener('click', () => {
-    const wasOpen = acc.classList.contains('gfe-acc-open');
-    if (!wasOpen) {
-      acc.parentElement?.querySelectorAll<HTMLElement>('.gfe-acc.gfe-acc-open').forEach((item) => {
-        item.classList.remove('gfe-acc-open');
-        item.querySelector<HTMLElement>('.gfe-acc-head')?.setAttribute('aria-expanded', 'false');
-      });
-    }
-    const isOpen = !wasOpen;
-    acc.classList.toggle('gfe-acc-open', isOpen);
-    head.setAttribute('aria-expanded', String(isOpen));
+  // Animate the ring fill after paint
+  requestAnimationFrame(() => {
+    fill.setAttribute('stroke-dashoffset', offset.toFixed(1));
   });
 
-  return { container: acc, inner };
+  return wrap;
 }
 
-function buildList(items: string[], itemClass = ''): HTMLElement {
-  const list = document.createElement('ul');
-  list.className = 'gfe-list';
-  for (const item of items) {
-    const li = document.createElement('li');
-    if (itemClass) li.className = itemClass;
-    li.textContent = item;
-    list.appendChild(li);
-  }
-  return list;
+// ── FAB ──────────────────────────────────────────────────────────────────────
+
+function injectFab(): void {
+  if (document.getElementById(FAB_ID)) return;
+
+  const fab = document.createElement('button');
+  fab.id = FAB_ID;
+  fab.setAttribute('aria-label', 'Open Git File Explainer');
+  fab.classList.add('gfe-fab-hidden');
+
+  const ring = document.createElement('span');
+  ring.className = 'gfe-fab-ring';
+
+  const icon = document.createElement('span');
+  icon.className = 'gfe-fab-icon';
+  icon.innerHTML = svg(SPARKLE_PATH, 22);
+
+  fab.appendChild(ring);
+  fab.appendChild(icon);
+
+  fab.addEventListener('click', () => {
+    document.getElementById(SIDEBAR_ID)?.classList.remove('gfe-panel-closed');
+    fab.classList.add('gfe-fab-hidden');
+  });
+
+  document.body.appendChild(fab);
 }
 
-// ── Sidebar inject ───────────────────────────────────────────────────────────
+// ── Tab switching helper ──────────────────────────────────────────────────────
+
+function activateTab(panel: HTMLElement, tabId: TabId): void {
+  panel.querySelectorAll('.gfe-pn-tab').forEach((t) => t.classList.remove('gfe-tab-on'));
+  panel.querySelector<HTMLElement>(`[data-tab="${tabId}"]`)?.classList.add('gfe-tab-on');
+  panel.querySelectorAll<HTMLElement>('.gfe-tabview').forEach((v) => {
+    v.style.display = v.dataset.tabview === tabId ? '' : 'none';
+  });
+}
+
+// ── Panel shell ──────────────────────────────────────────────────────────────
 
 export function injectSidebar(filePath?: string, language?: string): void {
+  injectFab();
+
   const existing = document.getElementById(SIDEBAR_ID);
   if (existing) {
     if (filePath) {
@@ -170,84 +185,148 @@ export function injectSidebar(filePath?: string, language?: string): void {
     return;
   }
 
-  const sidebar = document.createElement('div');
-  sidebar.id = SIDEBAR_ID;
+  const panel = document.createElement('div');
+  panel.id = SIDEBAR_ID;
 
-  // ── Header ──
-  const header = document.createElement('div');
-  header.className = 'gfe-header';
+  // ── Header ──────────────────────────────────────────────────────────────
+  const head = document.createElement('div');
+  head.className = 'gfe-pn-head';
 
-  const headerRow = document.createElement('div');
-  headerRow.className = 'gfe-header-row';
+  const mark = document.createElement('div');
+  mark.className = 'gfe-pn-mark';
+  mark.innerHTML = svg(SPARKLE_PATH, 18);
 
-  const collapseBtn = document.createElement('button');
-  collapseBtn.className = 'gfe-icon-btn gfe-collapse-btn';
-  collapseBtn.setAttribute('aria-label', 'Collapse sidebar');
-  collapseBtn.innerHTML = ICONS.chevLeft;
+  const idBlock = document.createElement('div');
+  idBlock.className = 'gfe-pn-id';
 
-  const brand = document.createElement('div');
-  brand.className = 'gfe-brand';
+  const pnName = document.createElement('div');
+  pnName.className = 'gfe-pn-name';
+  pnName.textContent = 'Git File Explainer';
 
-  const markEl = document.createElement('div');
-  markEl.className = 'gfe-mark';
-  markEl.innerHTML = svg(SPARKLE_PATH.replace('currentColor', '#07120a'), 14);
-
-  const titleEl = document.createElement('span');
-  titleEl.className = 'gfe-title';
-  titleEl.textContent = 'Git File Explainer';
-
-  brand.appendChild(markEl);
-  brand.appendChild(titleEl);
-
-  const chips = document.createElement('div');
-  chips.className = 'gfe-header-chips';
+  const pnSub = document.createElement('div');
+  pnSub.className = 'gfe-pn-sub';
 
   if (filePath) {
-    const nameEl = document.createElement('span');
-    nameEl.className = 'gfe-filename';
-    nameEl.textContent = filePath.split('/').pop() ?? filePath;
-    chips.appendChild(nameEl);
+    const fname = document.createElement('span');
+    fname.className = 'gfe-filename';
+    fname.textContent = filePath.split('/').pop() ?? filePath;
+    pnSub.appendChild(fname);
   }
   if (language) {
-    const langEl = document.createElement('span');
-    langEl.className = 'gfe-lang-badge';
-    langEl.textContent = language;
-    chips.appendChild(langEl);
+    const lang = document.createElement('span');
+    lang.className = 'gfe-lang-badge';
+    lang.textContent = language;
+    pnSub.appendChild(lang);
   }
 
-  const expandBtn = document.createElement('button');
-  expandBtn.className = 'gfe-icon-btn gfe-expand-btn';
-  expandBtn.setAttribute('aria-label', 'Expand sidebar');
-  expandBtn.innerHTML = ICONS.chevRight;
+  idBlock.appendChild(pnName);
+  idBlock.appendChild(pnSub);
 
-  headerRow.appendChild(collapseBtn);
-  headerRow.appendChild(brand);
-  headerRow.appendChild(chips);
-  headerRow.appendChild(expandBtn);
-  header.appendChild(headerRow);
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'gfe-pn-x';
+  closeBtn.setAttribute('aria-label', 'Close panel');
+  closeBtn.innerHTML = ICONS.close;
+  closeBtn.addEventListener('click', () => {
+    panel.classList.add('gfe-panel-closed');
+    document.getElementById(FAB_ID)?.classList.remove('gfe-fab-hidden');
+  });
 
-  // ── Body ──
+  head.appendChild(mark);
+  head.appendChild(idBlock);
+  head.appendChild(closeBtn);
+
+  // ── Tab bar ──────────────────────────────────────────────────────────────
+  const tabBar = document.createElement('div');
+  tabBar.className = 'gfe-pn-tabs';
+
+  const tabDefs: Array<{ id: TabId; label: string; icon: string }> = [
+    { id: 'summary', label: 'Summary', icon: ICONS.summary },
+    { id: 'files', label: 'Files', icon: ICONS.files },
+    { id: 'health', label: 'Health', icon: ICONS.health },
+  ];
+
+  for (const def of tabDefs) {
+    const tab = document.createElement('button');
+    tab.className = `gfe-pn-tab${def.id === 'summary' ? ' gfe-tab-on' : ''}`;
+    tab.dataset.tab = def.id;
+    tab.setAttribute('aria-label', def.label);
+
+    const ic = document.createElement('div');
+    ic.className = 'gfe-pn-tab-ic';
+    ic.innerHTML = def.icon;
+
+    const lbl = document.createElement('span');
+    lbl.textContent = def.label;
+
+    tab.appendChild(ic);
+    tab.appendChild(lbl);
+    tab.addEventListener('click', () => activateTab(panel, def.id));
+    tabBar.appendChild(tab);
+  }
+
+  // ── Body ─────────────────────────────────────────────────────────────────
   const body = document.createElement('div');
-  body.className = 'gfe-body';
-  appendSkeleton(body);
+  body.className = 'gfe-pn-body';
 
-  sidebar.appendChild(header);
-  sidebar.appendChild(body);
-  document.body.appendChild(sidebar);
-
-  collapseBtn.addEventListener('click', () => sidebar.classList.add('gfe-collapsed'));
-  expandBtn.addEventListener('click', () => sidebar.classList.remove('gfe-collapsed'));
-}
-
-function appendSkeleton(parent: HTMLElement): void {
-  const skeleton = document.createElement('div');
-  skeleton.className = 'gfe-skeleton';
-  for (const short of [false, true, false, false, true]) {
-    const line = document.createElement('div');
-    line.className = short ? 'gfe-skeleton-line short' : 'gfe-skeleton-line';
-    skeleton.appendChild(line);
+  for (const def of tabDefs) {
+    const view = document.createElement('div');
+    view.className = 'gfe-tabview';
+    view.dataset.tabview = def.id;
+    if (def.id !== 'summary') view.style.display = 'none';
+    body.appendChild(view);
   }
-  parent.appendChild(skeleton);
+
+  // ── Footer ───────────────────────────────────────────────────────────────
+  const foot = document.createElement('div');
+  foot.className = 'gfe-pn-foot';
+
+  const refreshBtn = document.createElement('button');
+  refreshBtn.className = 'gfe-refresh-btn';
+  refreshBtn.setAttribute('aria-label', 'Refresh analysis');
+
+  const refreshIcon = document.createElement('span');
+  refreshIcon.innerHTML = ICONS.refresh;
+  refreshBtn.appendChild(refreshIcon);
+  refreshBtn.appendChild(document.createTextNode('Refresh Analysis'));
+  refreshBtn.addEventListener('click', () => _onRerun?.());
+  foot.appendChild(refreshBtn);
+
+  // ── Loading overlay ──────────────────────────────────────────────────────
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.className = 'gfe-pn-loading';
+
+  const orbWrap = document.createElement('div');
+  orbWrap.className = 'gfe-orb-wrap';
+
+  const orb = document.createElement('div');
+  orb.className = 'gfe-orb';
+  orb.innerHTML = svg(SPARKLE_PATH, 26);
+
+  const orbRing = document.createElement('div');
+  orbRing.className = 'gfe-orb-ring';
+
+  orbWrap.appendChild(orb);
+  orbWrap.appendChild(orbRing);
+
+  const ldH = document.createElement('div');
+  ldH.className = 'gfe-ld-h';
+  ldH.textContent = 'Analyzing file…';
+
+  const ldSub = document.createElement('div');
+  ldSub.className = 'gfe-ld-sub';
+  ldSub.textContent = 'Reading content & mapping structure';
+
+  loadingOverlay.appendChild(orbWrap);
+  loadingOverlay.appendChild(ldH);
+  loadingOverlay.appendChild(ldSub);
+
+  panel.appendChild(head);
+  panel.appendChild(tabBar);
+  panel.appendChild(body);
+  panel.appendChild(foot);
+  panel.appendChild(loadingOverlay);
+
+  document.body.appendChild(panel);
 }
 
 // ── Update sidebar ───────────────────────────────────────────────────────────
@@ -260,168 +339,306 @@ export function updateSidebar(
   cacheMeta?: CacheMeta,
   contentChars?: number
 ): void {
-  const sidebar = document.getElementById(SIDEBAR_ID);
-  if (!sidebar) return;
+  const panel = document.getElementById(SIDEBAR_ID);
+  if (!panel) return;
 
-  const body = sidebar.querySelector<HTMLElement>('.gfe-body');
-  if (!body) return;
+  const loadingOverlay = panel.querySelector<HTMLElement>('.gfe-pn-loading');
+  const summaryView = panel.querySelector<HTMLElement>('[data-tabview="summary"]');
+  const filesView = panel.querySelector<HTMLElement>('[data-tabview="files"]');
+  const healthView = panel.querySelector<HTMLElement>('[data-tabview="health"]');
 
-  body.textContent = '';
+  if (!summaryView || !filesView || !healthView) return;
+
+  summaryView.textContent = '';
+  filesView.textContent = '';
+  healthView.textContent = '';
 
   if (state === 'loading') {
-    appendSkeleton(body);
+    if (loadingOverlay) loadingOverlay.style.display = '';
     return;
   }
+  if (loadingOverlay) loadingOverlay.style.display = 'none';
 
-  if (state === 'binary') {
+  // ── Error / binary / no-content ──────────────────────────────────────────
+  if (state === 'binary' || state === 'no-content' || state === 'error') {
     const msg = document.createElement('p');
-    msg.className = 'gfe-no-content';
-    msg.textContent = 'Binary file — no text content to explain.';
-    body.appendChild(msg);
+    msg.className = 'gfe-status-msg';
+    msg.textContent =
+      state === 'binary'
+        ? 'Binary file — no text content to explain.'
+        : state === 'no-content'
+          ? 'Could not read file content from this page.'
+          : 'Explanation failed. Check your API key in the extension popup, then reload.';
+    summaryView.appendChild(msg);
     return;
   }
 
+  // ── No-key ───────────────────────────────────────────────────────────────
   if (state === 'no-key') {
-    body.appendChild(buildNoKeyCard());
-    if (truncated && originalLineCount) {
-      appendTruncatedNotice(body, originalLineCount, contentChars);
-    } else if (contentChars !== undefined) {
-      const chip = document.createElement('span');
-      chip.className = 'gfe-token-chip';
-      chip.textContent = `~${estimateTokens(contentChars).toLocaleString()} tokens`;
-      body.appendChild(chip);
-    }
+    summaryView.appendChild(buildNoKeyCard(contentChars, truncated, originalLineCount));
     return;
   }
 
-  if (state === 'error') {
-    const msg = document.createElement('p');
-    msg.className = 'gfe-error';
-    msg.textContent = 'Explanation failed. Check your API key in the extension popup, then reload.';
-    body.appendChild(msg);
-    return;
-  }
-
-  if (state === 'no-content') {
-    const msg = document.createElement('p');
-    msg.className = 'gfe-no-content';
-    msg.textContent = 'Could not read file content from this page.';
-    body.appendChild(msg);
-    return;
-  }
-
-  // ── FileSummaryResult ──────────────────────────────────────────────────────
-
-  if (truncated && originalLineCount) appendTruncatedNotice(body, originalLineCount, contentChars);
+  // ── FileSummaryResult ────────────────────────────────────────────────────
+  const { score, color, label } = complexityScore(state.complexity);
 
   if (cacheMeta?.fromCache && cacheMeta.ts) {
     const badge = document.createElement('span');
     badge.className = 'gfe-cached-badge';
     badge.textContent = `● Cached ${relativeTime(cacheMeta.ts)}`;
-    body.appendChild(badge);
+    summaryView.appendChild(badge);
   }
 
-  // File meta row (filename + language pill + score ring from header)
-  const headerFilename = sidebar.querySelector<HTMLElement>('.gfe-filename')?.textContent ?? '';
-  const headerLang = sidebar.querySelector<HTMLElement>('.gfe-lang-badge')?.textContent ?? '';
-  if (headerFilename || headerLang) {
-    const metaRow = document.createElement('div');
-    metaRow.className = 'gfe-file-meta-row';
-    if (headerFilename) {
-      const fn = document.createElement('span');
-      fn.className = 'gfe-filename-body';
-      fn.textContent = headerFilename;
-      metaRow.appendChild(fn);
-    }
-    if (headerLang) {
-      const pill = document.createElement('span');
-      pill.className = 'gfe-lang-pill gfe-lang-pill-green';
-      pill.textContent = headerLang;
-      metaRow.appendChild(pill);
-    }
-    const { score, color } = complexityScore(state.complexity);
-    const ring = document.createElement('span');
-    ring.innerHTML = scoreRingSvg(score, color);
-    metaRow.appendChild(ring);
-    body.appendChild(metaRow);
+  if (truncated && originalLineCount) {
+    appendTruncatedNotice(summaryView, originalLineCount, contentChars);
   }
 
-  // ── Accordion: Summary ────────────────────────────────────────────────────
-  const { container: sumAcc, inner: sumInner } = makeAccordion(
-    'Summary',
-    ICONS.sparkle,
-    'gfe-acc-icon-green',
-    true
-  );
-  const chip = document.createElement('span');
-  chip.className = `gfe-chip ${complexityColors[state.complexity]}`;
-  chip.textContent = `${state.complexity.toUpperCase()} COMPLEXITY`;
-  sumInner.appendChild(chip);
-  const summaryEl = document.createElement('p');
-  summaryEl.className = 'gfe-summary';
-  summaryEl.textContent = state.summary;
-  sumInner.appendChild(summaryEl);
-  body.appendChild(sumAcc);
+  // AI summary card
+  const aiCard = document.createElement('div');
+  aiCard.className = 'gfe-ai-card';
 
-  // ── Accordion: Key Points ─────────────────────────────────────────────────
+  const aiChip = document.createElement('div');
+  aiChip.className = 'gfe-ai-chip';
+  const chipIcon = document.createElement('span');
+  chipIcon.innerHTML = ICONS.sparkleSm;
+  aiChip.appendChild(chipIcon);
+  aiChip.appendChild(document.createTextNode('SUMMARY'));
+
+  const aiH = document.createElement('div');
+  aiH.className = 'gfe-ai-h';
+  aiH.textContent = 'What does this file do?';
+
+  const aiBody = document.createElement('div');
+  aiBody.className = 'gfe-ai-body';
+  aiBody.textContent = state.summary;
+
+  aiCard.appendChild(aiChip);
+  aiCard.appendChild(aiH);
+  aiCard.appendChild(aiBody);
+  summaryView.appendChild(aiCard);
+
+  // Key points card
   if (state.keyPoints.length > 0) {
-    const { container: kpAcc, inner: kpInner } = makeAccordion(
-      'Key Points',
-      ICONS.check,
-      'gfe-acc-icon-blue',
-      false
-    );
-    kpInner.appendChild(buildList(state.keyPoints));
-    body.appendChild(kpAcc);
+    const kpCard = document.createElement('div');
+    kpCard.className = 'gfe-card';
+
+    const kpLabel = document.createElement('div');
+    kpLabel.className = 'gfe-label';
+    kpLabel.textContent = 'Key Points';
+
+    const kpList = document.createElement('div');
+    kpList.className = 'gfe-kp';
+
+    for (const point of state.keyPoints) {
+      const row = document.createElement('div');
+      row.className = 'gfe-kp-row';
+
+      const dot = document.createElement('div');
+      dot.className = 'gfe-kp-dot';
+      dot.innerHTML = ICONS.check;
+
+      const text = document.createElement('span');
+      text.textContent = point;
+
+      row.appendChild(dot);
+      row.appendChild(text);
+      kpList.appendChild(row);
+    }
+
+    kpCard.appendChild(kpLabel);
+    kpCard.appendChild(kpList);
+    summaryView.appendChild(kpCard);
   }
 
-  // ── Accordion: How It Connects ────────────────────────────────────────────
+  // How It Connects card
   const hasConn = (state.connections?.length ?? 0) > 0;
   if (hasConn || state.analogy) {
-    const { container: connAcc, inner: connInner } = makeAccordion(
-      'How It Connects',
-      ICONS.share,
-      'gfe-acc-icon-purple',
-      false
-    );
+    const connCard = document.createElement('div');
+    connCard.className = 'gfe-card';
+
+    const connLabel = document.createElement('div');
+    connLabel.className = 'gfe-label';
+    connLabel.textContent = 'How It Connects';
+    connCard.appendChild(connLabel);
+
     if (state.analogy) {
       const analogyEl = document.createElement('p');
       analogyEl.className = 'gfe-analogy';
-      analogyEl.textContent = `💡 ${state.analogy}`;
-      connInner.appendChild(analogyEl);
+      analogyEl.textContent = state.analogy;
+      connCard.appendChild(analogyEl);
     }
-    if (hasConn) connInner.appendChild(buildList(state.connections!));
-    body.appendChild(connAcc);
+
+    if (hasConn) {
+      const connects = document.createElement('div');
+      connects.className = 'gfe-connects';
+
+      for (const conn of state.connections!) {
+        const node = document.createElement('div');
+        node.className = 'gfe-cnode';
+
+        const ic = document.createElement('div');
+        ic.className = 'gfe-cnode-ic';
+        ic.innerHTML = ICONS.layers;
+
+        const tt = document.createElement('div');
+        tt.className = 'gfe-cnode-tt';
+        tt.textContent = conn;
+
+        node.appendChild(ic);
+        node.appendChild(tt);
+        connects.appendChild(node);
+      }
+
+      connCard.appendChild(connects);
+    }
+
+    summaryView.appendChild(connCard);
   }
 
-  // ── Accordion: Watch Out For ──────────────────────────────────────────────
+  // Watch Out For card
   if ((state.watchOutFor?.length ?? 0) > 0) {
-    const { container: woAcc, inner: woInner } = makeAccordion(
-      'Watch Out For',
-      ICONS.alert,
-      'gfe-acc-icon-warn',
-      false
-    );
-    woInner.appendChild(buildList(state.watchOutFor!, 'gfe-watchout-item'));
-    body.appendChild(woAcc);
+    const woCard = document.createElement('div');
+    woCard.className = 'gfe-card';
+
+    const woLabel = document.createElement('div');
+    woLabel.className = 'gfe-label';
+    woLabel.textContent = 'Watch Out For';
+
+    const woList = document.createElement('ul');
+    woList.className = 'gfe-watchout-list';
+
+    for (const w of state.watchOutFor!) {
+      const li = document.createElement('li');
+      li.className = 'gfe-watchout-item';
+      li.textContent = w;
+      woList.appendChild(li);
+    }
+
+    woCard.appendChild(woLabel);
+    woCard.appendChild(woList);
+    summaryView.appendChild(woCard);
   }
 
-  // ── Quick actions ─────────────────────────────────────────────────────────
-  body.appendChild(buildQuickActions(body, onAsk));
+  // At a Glance card
+  {
+    const glanceCard = document.createElement('div');
+    glanceCard.className = 'gfe-card';
 
-  // ── Q&A section ───────────────────────────────────────────────────────────
-  body.appendChild(buildQASection(state, onAsk));
+    const glanceLabel = document.createElement('div');
+    glanceLabel.className = 'gfe-label';
+    glanceLabel.textContent = 'At a Glance';
+
+    const grid = document.createElement('div');
+    grid.className = 'gfe-glance';
+
+    const headerLang = panel.querySelector<HTMLElement>('.gfe-lang-badge')?.textContent ?? '';
+    const glanceItems: Array<{ value: string; label: string }> = [
+      { value: label, label: 'COMPLEXITY' },
+      { value: headerLang || '—', label: 'LANGUAGE' },
+    ];
+    if (contentChars !== undefined) {
+      glanceItems.push({
+        value: `~${estimateTokens(contentChars).toLocaleString()}`,
+        label: 'TOKENS',
+      });
+    }
+
+    for (const item of glanceItems) {
+      const cell = document.createElement('div');
+      cell.className = 'gfe-glance-cell';
+
+      const val = document.createElement('div');
+      val.className = 'gfe-glance-val';
+      val.textContent = item.value;
+
+      const lbl = document.createElement('div');
+      lbl.className = 'gfe-glance-lbl';
+      lbl.textContent = item.label;
+
+      cell.appendChild(val);
+      cell.appendChild(lbl);
+      grid.appendChild(cell);
+    }
+
+    glanceCard.appendChild(glanceLabel);
+    glanceCard.appendChild(grid);
+    summaryView.appendChild(glanceCard);
+  }
+
+  // ── Files tab ────────────────────────────────────────────────────────────
+  const headerFilename = panel.querySelector<HTMLElement>('.gfe-filename')?.textContent ?? '';
+  const headerLang = panel.querySelector<HTMLElement>('.gfe-lang-badge')?.textContent ?? '';
+
+  if (headerFilename || headerLang) {
+    const fileCard = document.createElement('div');
+    fileCard.className = 'gfe-card';
+
+    const fileLabel = document.createElement('div');
+    fileLabel.className = 'gfe-label';
+    fileLabel.textContent = 'Current File';
+
+    const fileInfo = document.createElement('div');
+    fileInfo.className = 'gfe-file-info';
+
+    if (headerFilename) {
+      const fn = document.createElement('div');
+      fn.className = 'gfe-file-name';
+      fn.textContent = headerFilename;
+      fileInfo.appendChild(fn);
+    }
+
+    if (headerLang) {
+      const langPill = document.createElement('span');
+      langPill.className = 'gfe-lang-pill';
+      langPill.textContent = headerLang;
+      fileInfo.appendChild(langPill);
+    }
+
+    fileCard.appendChild(fileLabel);
+    fileCard.appendChild(fileInfo);
+    filesView.appendChild(fileCard);
+  }
+
+  filesView.appendChild(buildQuickActions(filesView, onAsk));
+  filesView.appendChild(buildQASection(state, onAsk));
+
+  // ── Health tab ───────────────────────────────────────────────────────────
+  const healthCard = document.createElement('div');
+  healthCard.className = 'gfe-card gfe-health-card';
+
+  const healthLabel = document.createElement('div');
+  healthLabel.className = 'gfe-label';
+  healthLabel.textContent = 'File Complexity';
+
+  const ringCell = document.createElement('div');
+  ringCell.className = 'gfe-ring-cell';
+
+  const ringEl = buildScoreRing(score, color);
+  const ringCaption = document.createElement('div');
+  ringCaption.className = 'gfe-ring-caption';
+  ringCaption.style.color = color;
+  ringCaption.textContent = label;
+
+  ringCell.appendChild(ringEl);
+  ringCell.appendChild(ringCaption);
+  healthCard.appendChild(healthLabel);
+  healthCard.appendChild(ringCell);
+  healthView.appendChild(healthCard);
 }
 
 // ── No-key card ──────────────────────────────────────────────────────────────
 
-function buildNoKeyCard(): HTMLElement {
+function buildNoKeyCard(
+  contentChars?: number,
+  truncated?: boolean,
+  originalLineCount?: number
+): HTMLElement {
   const card = document.createElement('div');
   card.className = 'gfe-no-key-card';
 
   const markEl = document.createElement('div');
   markEl.className = 'gfe-no-key-mark';
-  markEl.innerHTML = svg(SPARKLE_PATH.replace('currentColor', '#07120a'), 22);
+  markEl.innerHTML = svg(SPARKLE_PATH, 22);
 
   const titleEl = document.createElement('p');
   titleEl.className = 'gfe-no-key-title';
@@ -441,12 +658,32 @@ function buildNoKeyCard(): HTMLElement {
   card.appendChild(titleEl);
   card.appendChild(subEl);
   card.appendChild(ctaBtn);
+
+  if (truncated && originalLineCount) {
+    const notice = document.createElement('p');
+    notice.className = 'gfe-truncated-notice';
+    let text = `⚠ File truncated — showing excerpt of ${originalLineCount.toLocaleString()} lines`;
+    if (contentChars !== undefined) {
+      text += ` (~${estimateTokens(contentChars).toLocaleString()} tokens sent)`;
+    }
+    notice.textContent = text;
+    card.appendChild(notice);
+  } else if (contentChars !== undefined) {
+    const chip = document.createElement('span');
+    chip.className = 'gfe-token-chip';
+    chip.textContent = `~${estimateTokens(contentChars).toLocaleString()} tokens`;
+    card.appendChild(chip);
+  }
+
   return card;
 }
 
 // ── Quick actions ─────────────────────────────────────────────────────────────
 
-function buildQuickActions(body: HTMLElement, onAsk?: (question: string) => void): HTMLElement {
+function buildQuickActions(
+  container: HTMLElement,
+  onAsk?: (question: string) => void
+): HTMLElement {
   const grid = document.createElement('div');
   grid.className = 'gfe-quick-actions';
 
@@ -486,17 +723,14 @@ function buildQuickActions(body: HTMLElement, onAsk?: (question: string) => void
 
     if (action.question) {
       btn.addEventListener('click', () => {
-        const input = body.querySelector<HTMLTextAreaElement>('.gfe-qa-input');
+        const input = container.querySelector<HTMLTextAreaElement>('.gfe-qa-input');
         if (input) {
           input.value = action.question!;
           input.focus();
-          if (onAsk) {
-            body.querySelector<HTMLButtonElement>('.gfe-qa-btn')?.click();
-          }
+          if (onAsk) container.querySelector<HTMLButtonElement>('.gfe-qa-btn')?.click();
         }
       });
     } else {
-      // Explain button — re-run via stored handler
       btn.addEventListener('click', () => _onRerun?.());
     }
 
@@ -517,7 +751,6 @@ function buildQASection(state: FileSummaryResult, onAsk?: (question: string) => 
   heading.textContent = 'Ask a Question';
   section.appendChild(heading);
 
-  // Suggestion chips
   const suggestions = suggestedQuestions(state);
   if (suggestions.length > 0) {
     const chipsRow = document.createElement('div');
@@ -534,7 +767,6 @@ function buildQASection(state: FileSummaryResult, onAsk?: (question: string) => 
     section.appendChild(chipsRow);
   }
 
-  // Messages area: user bubbles + AI response
   const messagesArea = document.createElement('div');
   messagesArea.className = 'gfe-qa-messages';
 
@@ -554,7 +786,6 @@ function buildQASection(state: FileSummaryResult, onAsk?: (question: string) => 
   messagesArea.appendChild(aiMsg);
   section.appendChild(messagesArea);
 
-  // Input row
   const inputRow = document.createElement('div');
   inputRow.className = 'gfe-qa-input-row';
 
@@ -579,7 +810,6 @@ function buildQASection(state: FileSummaryResult, onAsk?: (question: string) => 
       if (!question) return;
       qaBtn.disabled = true;
 
-      // Show user bubble
       const userMsg = document.createElement('div');
       userMsg.className = 'gfe-user-msg';
       const bubble = document.createElement('div');
@@ -588,9 +818,7 @@ function buildQASection(state: FileSummaryResult, onAsk?: (question: string) => 
       userMsg.appendChild(bubble);
       messagesArea.insertBefore(userMsg, aiMsg);
 
-      // Reveal the AI response area
       aiMsg.style.display = 'flex';
-
       qaInput.value = '';
       onAsk(question);
     });
@@ -629,7 +857,6 @@ export function updateQAAnswer(state: string | 'loading' | 'error'): void {
   const btn = document.querySelector<HTMLButtonElement>(`#${SIDEBAR_ID} .gfe-qa-btn`);
   if (!container) return;
 
-  // Reveal the AI message wrapper if it exists
   const aiMsg = container.closest<HTMLElement>('.gfe-ai-msg');
   if (aiMsg) aiMsg.style.display = 'flex';
 
@@ -673,4 +900,5 @@ export function appendQAChunk(chunk: string): void {
 
 export function removeSidebar(): void {
   document.getElementById(SIDEBAR_ID)?.remove();
+  document.getElementById(FAB_ID)?.remove();
 }

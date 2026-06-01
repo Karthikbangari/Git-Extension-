@@ -12,6 +12,7 @@ GFE explains code files on GitHub/GitLab blob pages across 21+ file types, inclu
 
 ## Features
 
+- **Animated sidebar** — polished floating action button, tabbed Summary / File / Health views, animated complexity score ring, shimmer loading state, and streaming typing indicators
 - **File summaries** — clear developer or plain-English explanations for code and config files
 - **Rich cards** — key points, connections, watch-outs, analogies, and suggested follow-up questions
 - **Streaming Q&A** — ask questions about the current file inside the sidebar
@@ -20,6 +21,16 @@ GFE explains code files on GitHub/GitLab blob pages across 21+ file types, inclu
 - **Token tools** — approximate token chips in the sidebar, popup token meter, and dashboard token totals
 - **GitHub + GitLab support** — works on file views, with support for a custom GitLab domain
 - **Enterprise policy** — supports managed API key and host restrictions through Chrome policy
+
+## Sidebar Experience
+
+The GFE sidebar now opens as a dark glass panel with smooth motion and a compact floating sparkle button when collapsed. Explanation content is split into focused tabs:
+
+- **Summary** — overview, key points, quick actions, and follow-up Q&A
+- **File** — filename, language, cache status, and token-aware file metadata
+- **Health** — animated complexity score ring plus watch-outs for review risk
+
+Loading, tab switching, score updates, Q&A streaming, and the collapsed launcher all use local CSS animation. No remote scripts, remote fonts, or runtime animation libraries are loaded.
 
 AI features require an Anthropic API key. The key is stored in `chrome.storage.local`, never placed in the page DOM, and never committed to the repo.
 

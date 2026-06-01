@@ -101,57 +101,50 @@ describe('sidebar Q&A UI', () => {
   });
 });
 
-describe('sidebar accordion', () => {
-  const noop = () => {};
-
+describe('sidebar tabs', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
 
-  it('Summary accordion is open by default', () => {
+  it('Summary tab is active by default', () => {
     injectSidebar();
-    updateSidebar(
-      { summary: 'Handles auth.', keyPoints: ['Validates JWT'], complexity: 'low' },
-      noop
+    expect(document.querySelector('[data-tab="summary"]')?.classList.contains('gfe-tab-on')).toBe(
+      true
     );
-    const accItems = document.querySelectorAll('.gfe-acc');
-    expect(accItems[0]?.classList.contains('gfe-acc-open')).toBe(true);
   });
 
-  it('Key Points accordion is closed by default', () => {
+  it('Summary tabview visible by default', () => {
     injectSidebar();
-    updateSidebar({ summary: 'x', keyPoints: ['point one'], complexity: 'low' }, noop);
-    const accItems = document.querySelectorAll('.gfe-acc');
-    expect(accItems[1]?.classList.contains('gfe-acc-open')).toBe(false);
+    const view = document.querySelector<HTMLElement>('[data-tabview="summary"]');
+    expect(view?.style.display).not.toBe('none');
   });
 
-  it('clicking a closed accordion header opens it', () => {
+  it('Files tabview hidden by default', () => {
     injectSidebar();
-    updateSidebar({ summary: 'x', keyPoints: ['point one'], complexity: 'low' }, noop);
-    const kpAcc = document.querySelectorAll('.gfe-acc')[1] as HTMLElement;
-    (kpAcc.querySelector('.gfe-acc-head') as HTMLElement).click();
-    expect(kpAcc.classList.contains('gfe-acc-open')).toBe(true);
+    expect(document.querySelector<HTMLElement>('[data-tabview="files"]')?.style.display).toBe(
+      'none'
+    );
   });
 
-  it('clicking an open accordion header closes it', () => {
+  it('clicking Files tab activates it', () => {
     injectSidebar();
-    updateSidebar({ summary: 'x', keyPoints: [], complexity: 'low' }, noop);
-    const sumAcc = document.querySelector('.gfe-acc') as HTMLElement;
-    (sumAcc.querySelector('.gfe-acc-head') as HTMLElement).click();
-    expect(sumAcc.classList.contains('gfe-acc-open')).toBe(false);
+    const panel = document.getElementById('git-file-explainer-sidebar')!;
+    (panel.querySelector<HTMLElement>('[data-tab="files"]') as HTMLElement).click();
+    expect(document.querySelector('[data-tab="files"]')?.classList.contains('gfe-tab-on')).toBe(
+      true
+    );
+    expect(document.querySelector('[data-tab="summary"]')?.classList.contains('gfe-tab-on')).toBe(
+      false
+    );
   });
 
-  it('opening one accordion closes the previously open accordion', () => {
+  it('clicking Files tab shows files tabview', () => {
     injectSidebar();
-    updateSidebar({ summary: 'x', keyPoints: ['point one'], complexity: 'low' }, noop);
-    const accItems = document.querySelectorAll('.gfe-acc');
-    const summaryAcc = accItems[0] as HTMLElement;
-    const kpAcc = accItems[1] as HTMLElement;
-
-    (kpAcc.querySelector('.gfe-acc-head') as HTMLElement).click();
-
-    expect(kpAcc.classList.contains('gfe-acc-open')).toBe(true);
-    expect(summaryAcc.classList.contains('gfe-acc-open')).toBe(false);
+    const panel = document.getElementById('git-file-explainer-sidebar')!;
+    (panel.querySelector<HTMLElement>('[data-tab="files"]') as HTMLElement).click();
+    expect(document.querySelector<HTMLElement>('[data-tabview="files"]')?.style.display).not.toBe(
+      'none'
+    );
   });
 });
 

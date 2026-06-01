@@ -8,9 +8,12 @@ GFE explains code files on GitHub/GitLab blob pages across 21+ file types, inclu
 
 ## What it does
 
+- **Animated sidebar shell** — dark glass panel with a floating sparkle launcher, smooth tab transitions, animated loading overlay, and polished collapse/reopen behavior
 - **File summary** — 2-3 sentence plain-English or developer-focused description of what the file does
 - **Key points** — up to 5 verb-led bullets covering the file's main responsibilities
 - **Rich cards** — optional connections, watch-outs, analogy, suggested question chips, and language-aware prompts
+- **Tabbed file review** — Summary, File, and Health tabs separate explanation, metadata, and risk context
+- **Animated complexity score** — score ring fills after render and color-codes Low / Medium / High complexity
 - **Complexity chip** — Low / Medium / High rating so you can gauge review effort at a glance
 - **Streaming Q&A** — ask follow-up questions about the file directly in the sidebar; answers stream through an MV3 runtime port (280-character question limit)
 - **Quick actions** — one-click Explain, Find Bugs, Security Scan, and Generate Tests prompts reuse the sidebar Q&A flow
@@ -56,6 +59,17 @@ Screenshots are stored in [`realtime-screenshots/supported-file-types/`](realtim
 GFE auto-injects on GitHub/GitLab blob pages when code appears. The content script watches SPA navigation, listens for late DOM mutations, polls every 500 ms for delayed code cells, and falls back to raw GitHub content after 8 seconds for preview-rendered blobs such as Markdown.
 
 The no-key setup state appears automatically when no Anthropic API key is saved. AI summaries render after saving an API key in the extension popup.
+
+## Sidebar animation model
+
+All sidebar motion is implemented with local DOM/CSS:
+
+- Collapsing the panel reveals a floating sparkle button with a pulsing ring.
+- Summary, File, and Health tabs fade upward as they switch.
+- The complexity score ring animates with an SVG stroke transition after render.
+- Loading states use a local shimmer/sparkle overlay, and Q&A streaming uses lightweight typing dots.
+
+The extension does not load remote scripts, remote fonts, or animation libraries at runtime.
 
 ## Install (development)
 
@@ -104,8 +118,8 @@ git-file-explainer/
 │   │   ├── pageDetector.ts   # URL route matching (GitHub/GitLab blob views)
 │   │   ├── types.ts          # FileSummaryResult, FileContent, FileExtractor interface
 │   │   └── sidebar/
-│   │       ├── index.ts      # Sidebar DOM, rich cards, quick actions, streaming Q&A
-│   │       └── sidebar.css   # Sidebar styles + dark mode + shimmer skeleton
+│   │       ├── index.ts      # Animated tabbed sidebar DOM, quick actions, streaming Q&A
+│   │       └── sidebar.css   # Sidebar glass UI, FAB, score ring, shimmer/typing animations
 │   ├── background/
 │   │   └── index.ts          # MV3 service worker — proxies GFE_FETCH_AI_SUMMARY to Anthropic
 │   ├── dashboard/
