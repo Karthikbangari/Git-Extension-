@@ -239,7 +239,6 @@ export function injectSidebar(filePath?: string, language?: string): void {
   expandBtn.addEventListener('click', () => sidebar.classList.remove('gfe-collapsed'));
 }
 
-
 function appendSkeleton(parent: HTMLElement): void {
   const skeleton = document.createElement('div');
   skeleton.className = 'gfe-skeleton';
@@ -412,7 +411,6 @@ export function updateSidebar(
 
   // ── Q&A section ───────────────────────────────────────────────────────────
   body.appendChild(buildQASection(state, onAsk));
-
 }
 
 // ── No-key card ──────────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@ AI-powered Chrome extension for understanding code files directly on GitHub and 
 
 ## Git File Explainer
 
-Git File Explainer injects a Manifest V3 sidebar into repository file pages. It explains what a file does, highlights key points, rates complexity, supports follow-up Q&A, and lets you copy or share summaries with Claude.ai.
+Git File Explainer injects a Manifest V3 sidebar into repository file pages. It explains what a file does, highlights key points, rates complexity, supports follow-up Q&A, and includes a dashboard for recently explained files, token totals, and cache usage.
 
 GFE explains code files on GitHub/GitLab blob pages across 21+ file types, including `.tf`, `.ts`, `.js`, `.py`, `.go`, `.java`, `.rb`, `.cs`, `.cpp`, `.c`, `.tsx`, `.jsx`, `.php`, `.json`, `.yaml`, `.yml`, `.xml`, `.sql`, `.html`, `.css`, `.scss`, and `.md`.
 
@@ -15,9 +15,9 @@ GFE explains code files on GitHub/GitLab blob pages across 21+ file types, inclu
 - **File summaries** — clear developer or plain-English explanations for code and config files
 - **Rich cards** — key points, connections, watch-outs, analogies, and suggested follow-up questions
 - **Streaming Q&A** — ask questions about the current file inside the sidebar
-- **Copy/export** — copy summaries as plain text or Markdown
-- **Share to Claude.ai** — copies a formatted prompt and opens Claude.ai without extra extension permissions
-- **Token tools** — approximate token chips in the sidebar and a popup token meter
+- **Popup-only mode control** — switch Developer / Non-technical mode from the extension popup
+- **Repository dashboard** — open Dashboard from the popup/options page to review recent files, token totals, and cache usage
+- **Token tools** — approximate token chips in the sidebar, popup token meter, and dashboard token totals
 - **GitHub + GitLab support** — works on file views, with support for a custom GitLab domain
 - **Enterprise policy** — supports managed API key and host restrictions through Chrome policy
 
@@ -94,6 +94,7 @@ git-file-explainer/
 │   │   ├── pageDetector.ts
 │   │   └── sidebar/
 │   ├── background/
+│   ├── dashboard/
 │   ├── popup/
 │   └── utils/
 ├── tests/

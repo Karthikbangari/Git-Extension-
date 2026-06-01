@@ -99,9 +99,7 @@ describe('sidebar Q&A UI', () => {
     const notice = document.querySelector('.gfe-truncated-notice');
     expect(notice?.textContent).toContain('3,000 tokens sent');
   });
-
 });
-
 
 describe('sidebar accordion', () => {
   const noop = () => {};

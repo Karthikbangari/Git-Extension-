@@ -13,8 +13,9 @@ GFE explains code files on GitHub/GitLab blob pages across 21+ file types, inclu
 - **Rich cards** — optional connections, watch-outs, analogy, suggested question chips, and language-aware prompts
 - **Complexity chip** — Low / Medium / High rating so you can gauge review effort at a glance
 - **Streaming Q&A** — ask follow-up questions about the file directly in the sidebar; answers stream through an MV3 runtime port (280-character question limit)
-- **Copy/export** — copy the rendered summary as plain text or Markdown from the sidebar
-- **Share to Claude.ai** — copy a formatted follow-up prompt and open Claude.ai from a summary result without extra extension permissions
+- **Quick actions** — one-click Explain, Find Bugs, Security Scan, and Generate Tests prompts reuse the sidebar Q&A flow
+- **Popup-only mode control** — Developer / Non-technical mode lives in the extension popup; the sidebar stays focused on file explanation and Q&A
+- **Repository dashboard** — open from the popup or Chrome options page to review recently explained files, token totals, summary-cache size, and clear cached summaries
 - **Token meter** — popup tracks cumulative input/output token usage with a reset control
 - **Token estimate chip** — sidebar shows approximate tokens for no-key and truncated-file states
 - **Stable cache + raw fallback** — summaries use normalized cache keys with metadata, LRU eviction, and raw-content fallback when DOM extraction fails
@@ -103,10 +104,12 @@ git-file-explainer/
 │   │   ├── pageDetector.ts   # URL route matching (GitHub/GitLab blob views)
 │   │   ├── types.ts          # FileSummaryResult, FileContent, FileExtractor interface
 │   │   └── sidebar/
-│   │       ├── index.ts      # Sidebar DOM, rich cards, Q&A, copy/export rendering
+│   │       ├── index.ts      # Sidebar DOM, rich cards, quick actions, streaming Q&A
 │   │       └── sidebar.css   # Sidebar styles + dark mode + shimmer skeleton
 │   ├── background/
 │   │   └── index.ts          # MV3 service worker — proxies GFE_FETCH_AI_SUMMARY to Anthropic
+│   ├── dashboard/
+│   │   └── dashboard.ts      # Options-page dashboard for recent files, token totals, cache size
 │   ├── utils/
 │   │   └── storage.ts        # chrome.storage wrappers + SHA-256 URL cache helpers
 │   └── popup/
@@ -115,6 +118,7 @@ git-file-explainer/
 │   ├── pageDetector.test.ts
 │   ├── fileExtractor.test.ts
 │   ├── aiSummary.test.ts
+│   ├── dashboard.test.ts
 │   ├── qa.test.ts
 │   ├── sidebar.test.ts
 │   ├── manifest.test.ts
@@ -125,6 +129,7 @@ git-file-explainer/
 ├── public/
 │   ├── manifest.json         # MV3 manifest (v1.0.0)
 │   ├── managed_schema.json   # Chrome enterprise policy schema
+│   ├── dashboard/
 │   ├── icons/
 │   └── popup/
 ├── manifest.json             # Load-unpacked shim pointing to dist/ assets
@@ -157,22 +162,22 @@ If all selectors fail (binary files, images, empty files), the sidebar shows a b
 | **No remote code**   | All JS bundled locally. No `eval()`, `new Function()`, or externally loaded scripts.                                                   |
 | **CSP**              | Extension pages: `script-src 'self'; object-src 'self'; connect-src https://api.anthropic.com https://raw.githubusercontent.com`.      |
 | **API key handling** | Key read from `chrome.storage.local` at call time. Never in message payloads, never logged, never in DOM.                              |
-| **Unsafe HTML**      | All sidebar DOM built via `createElement`/`appendChild`. No `innerHTML` anywhere.                                                      |
-| **Host permissions** | Scoped to `https://github.com/*`, `https://gitlab.com/*`, and `https://api.anthropic.com/*`.                                           |
+| **HTML safety**      | Sidebar UI is built with DOM APIs; dashboard-rendered file text is escaped before insertion.                                           |
+| **Host permissions** | Scoped to `https://github.com/*`, `https://gitlab.com/*`, `https://api.anthropic.com/*`, and `https://raw.githubusercontent.com/*`.    |
 | **Content script**   | Runs in an isolated world. All Chrome APIs beyond `chrome.storage`/`chrome.runtime` are proxied through the background service worker. |
 
 ## Roadmap
 
-| Phase             | Status  | Deliverable                                                                                         |
-| ----------------- | ------- | --------------------------------------------------------------------------------------------------- |
-| 1 — Scaffold      | ✅ Done | Extension shell, route detection, provider interface, sidebar shell                                 |
-| 2 — Core          | ✅ Done | GitHub DOM extraction, AI summary, URL cache, no-content state                                      |
-| 3 — GitLab + Q&A  | ✅ Done | GitLab DOM extraction (3-layer fallback), interactive Q&A sidebar, onboarding badge                 |
-| 4 — Polish + ship | ✅ Done | Enterprise policy, CWS store assets, streaming Q&A, copy/export, token meter, custom GitLab, v1.0.0 |
+| Phase             | Status  | Deliverable                                                                                                      |
+| ----------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1 — Scaffold      | ✅ Done | Extension shell, route detection, provider interface, sidebar shell                                              |
+| 2 — Core          | ✅ Done | GitHub DOM extraction, AI summary, URL cache, no-content state                                                   |
+| 3 — GitLab + Q&A  | ✅ Done | GitLab DOM extraction (3-layer fallback), interactive Q&A sidebar, onboarding badge                              |
+| 4 — Polish + ship | ✅ Done | Enterprise policy, CWS store assets, streaming Q&A, quick actions, token meter, dashboard, custom GitLab, v1.0.0 |
 
 ## Tech
 
-- TypeScript, Vite (three separate IIFE bundles), Vitest (113 GFE tests)
+- TypeScript, Vite (four separate IIFE bundles), Vitest (141 GFE tests)
 - No extension runtime dependencies
 - AI calls proxied through the background service worker (model: `claude-haiku-4-5-20251001`)
 - File content capped around 12,000 characters before sending to the API
