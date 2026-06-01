@@ -100,8 +100,7 @@ input[type='text']:focus {
 
 /* ── Buttons ─────────────────────────────────────────── */
 
-button#save-key,
-button#save-gitlab {
+button#save-key {
   padding: 6px 13px;
   background: rgba(52, 211, 153, 0.12);
   color: #34d399;
@@ -116,8 +115,7 @@ button#save-gitlab {
     border-color 0.15s;
 }
 
-button#save-key:hover,
-button#save-gitlab:hover {
+button#save-key:hover {
   background: rgba(52, 211, 153, 0.22);
   border-color: rgba(52, 211, 153, 0.5);
 }
@@ -136,54 +134,6 @@ button#save-gitlab:hover {
 
 .hint.error {
   color: #f87171;
-}
-
-/* ── Toggle switch ───────────────────────────────────── */
-
-.toggle-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 12px;
-  color: #c9d1d9;
-  gap: 10px;
-}
-
-.toggle-label input[type='checkbox'] {
-  display: none;
-}
-
-.toggle-switch {
-  position: relative;
-  width: 34px;
-  height: 20px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  transition: background 0.2s;
-  flex-shrink: 0;
-}
-
-.toggle-switch::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 14px;
-  height: 14px;
-  background: white;
-  border-radius: 50%;
-  transition: left 0.2s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-}
-
-input[type='checkbox']:checked + .toggle-switch {
-  background: #34d399;
-}
-
-input[type='checkbox']:checked + .toggle-switch::after {
-  left: 17px;
 }
 
 /* ── Onboarding banner ───────────────────────────────── */
@@ -223,43 +173,6 @@ input[type='checkbox']:checked + .toggle-switch::after {
   color: #4ade80;
   text-decoration: underline;
   text-underline-offset: 2px;
-}
-
-/* ── Segmented control (audience mode) ──────────────── */
-
-.segmented-control {
-  display: flex;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 7px;
-  overflow: hidden;
-  padding: 2px;
-  gap: 2px;
-}
-
-.seg-btn {
-  flex: 1;
-  padding: 5px 0;
-  font-size: 12px;
-  font-weight: 500;
-  border: none;
-  background: transparent;
-  color: #6e7681;
-  cursor: pointer;
-  border-radius: 5px;
-  transition:
-    background 0.15s,
-    color 0.15s;
-}
-
-.seg-btn.active {
-  background: linear-gradient(135deg, #34d399 0%, #58a6ff 50%, #a78bfa 100%);
-  color: #0d1117;
-}
-
-.seg-btn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.08);
-  color: #c9d1d9;
 }
 
 /* ── Token meter ─────────────────────────────────────── */
