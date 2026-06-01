@@ -15,20 +15,20 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                | Value                                                                                                                                                                                              |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Last active session  | 2026-06-01                                                                                                                                                                                         |
-| Active phase         | GFE Maintenance / CWS submission (TFE archived)                                                                                                                                                    |
-| Last commit          | `322ea10` — Codex (style: redesign GFE popup)                                                                                                                                                      |
-| Last build           | BP-025 committed/pushed; Codex toolbar popup smoke 10/10 ✅ · GFE tests 127/127 ✅ · TFE tests 191/191 ✅                                                                                          |
-| Lint / format        | ✅ clean                                                                                                                                                                                           |
-| Uncommitted          | `git-file-explainer/src/utils/storage.ts` has partial BP-026 cache metadata work; `tf-diff-explainer/src/content/aiSummary.ts` has unrelated TFE fixes; do not commit either without user approval |
-| Next action (Codex)  | Chrome Web Store packaging/submission support if user asks; commit any new docs/assets from other agents                                                                                           |
-| Next action (Gemini) | Optional deeper live smoke for GFE streaming Q&A, copy buttons, token meter, and binary skip with API key                                                                                          |
-| Next action (Claude) | None — awaiting CWS feedback; respond if bugs found in smoke tests                                                                                                                                 |
-| Next action (user)   | (1) CWS submission for TFE; (2) CWS submission for GFE; (3) take 1280×800 screenshots for both store pages                                                                                         |
-| Open bugs            | None                                                                                                                                                                                               |
-| Blocked              | None                                                                                                                                                                                               |
+| Field                | Value                                                                                                                                                                                                                  |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Last active session  | 2026-06-01                                                                                                                                                                                                             |
+| Active phase         | GFE Maintenance / CWS submission (TFE archived)                                                                                                                                                                        |
+| Last commit          | `322ea10` — Codex (style: redesign GFE popup)                                                                                                                                                                          |
+| Last build           | BP-025 committed/pushed; Codex toolbar popup smoke 10/10 ✅ · GFE tests 127/127 ✅ · TFE tests 191/191 ✅                                                                                                              |
+| Lint / format        | ✅ clean                                                                                                                                                                                                               |
+| Uncommitted          | `git-file-explainer/src/content/index.ts` + `src/utils/storage.ts` have partial BP-026 cache/dashboard prep; `tf-diff-explainer/src/content/aiSummary.ts` has unrelated TFE fixes; do not commit without user approval |
+| Next action (Codex)  | Chrome Web Store packaging/submission support if user asks; commit any new docs/assets from other agents                                                                                                               |
+| Next action (Gemini) | Optional deeper live smoke for GFE streaming Q&A, copy buttons, token meter, and binary skip with API key                                                                                                              |
+| Next action (Claude) | None — awaiting CWS feedback; respond if bugs found in smoke tests                                                                                                                                                     |
+| Next action (user)   | (1) CWS submission for TFE; (2) CWS submission for GFE; (3) take 1280×800 screenshots for both store pages                                                                                                             |
+| Open bugs            | None                                                                                                                                                                                                                   |
+| Blocked              | None                                                                                                                                                                                                                   |
 
 ### What was built this session
 
