@@ -190,10 +190,10 @@ New `tests/dashboard.test.ts` covers:
 
 ### Outcome
 
-- **Status:** Pending
+- **Status:** Done + Codex smoke passed
 - **Built by:** Claude
-- **Result:** pending
-- **Test result:** pending
+- **Result:** 11 files. `storage.ts`: CacheEntry extended (url/filePath/language optional), `setCachedSummary` gains meta arg, `getDashboardEntries()` + `clearCache()` added, and dashboard cache byte count now measures only summary-cache keys so Clear Cache reports `0 B`. `content/index.ts`: passes filePath+language. `src/dashboard/dashboard.ts`: stats/file-card/empty-state render, pure utils exported, `init()` guarded. `public/dashboard/dashboard.html` + `dashboard.css`: dark canvas, 700px, 3-stat grid, file cards. `vite.dashboard.config.ts`: IIFE bundle. `package.json`: dashboard step in `build:gfe`. `manifest.json`: `options_page`. `popup.html`: "Dashboard ↗" button. `popup.ts`: wired to `openOptionsPage`. `tests/dashboard.test.ts`: 20 tests. `tests/manifest.test.ts`: dashboard options page assertion. `store/listing.md`: CWS copy/screenshots refreshed for dashboard.
+- **Test result:** GFE 148/148 ✅ · `npm run build:gfe` ✅ · BP-026 dashboard smoke 10/10 ✅
 
 ---
 

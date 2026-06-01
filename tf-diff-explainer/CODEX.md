@@ -113,6 +113,7 @@ PATH="$PWD/.tools/node/bin:$PATH"
 
 ## Current Codex Handoff
 
+- 2026-06-01: BP-026 Repository Dashboard is verified and ready for commit. Codex fixed dashboard cache-size reporting to count only summary-cache keys, then verified `npm run test:gfe` 148/148 ✅, `npm run build:gfe` ✅, and the `Build.md` dashboard smoke 10/10 ✅ on `git-file-explainer/dist` with a real GitHub blob page and mocked Anthropic response. Keep unrelated archived-TFE `tf-diff-explainer/src/content/aiSummary.ts` out of the BP-026 commit.
 - 2026-06-01: BP-025 popup redesign was committed/pushed as `322ea10` and then verified through the real toolbar-icon popup on a live GitHub blob page. Codex attached to the actual action popup target through CDP and the `Build.md` 10-step popup smoke passed 10/10 ✅. GFE baseline remains `npm run test:gfe` 127/127 ✅ and `npm run build:gfe` ✅. A direct `chrome-extension://.../popup/popup.html` page smoke was superseded because it did not model the active-tab toolbar popup context.
 - 2026-05-31: BP-015 was locally stabilized after partial cross-agent edits and committed as `e5ec584`. GFE checks: build ✅, tests 73/73 ✅, lint ✅, format ✅, unsafe HTML scan ✅, apiKey payload scan ✅. TFE regression tests: 129/129 ✅.
 - `web-ext run --source-dir git-file-explainer/dist --target=chromium --start-url https://github.com/Karthikbangari/Git-Extension-/blob/main/package.json` loaded without manifest/CSS errors.

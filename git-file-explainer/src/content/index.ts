@@ -128,7 +128,10 @@ import { buildPrompt, fetchFileSummary, buildQAPrompt, streamQAAnswer } from './
 
     if (result) {
       currentSummaryText = result.summary;
-      void setCachedSummary(location.href, result);
+      void setCachedSummary(location.href, result, {
+        filePath: fileContent.filePath,
+        language: fileContent.language,
+      });
       updateSidebar(
         result,
         onAsk,

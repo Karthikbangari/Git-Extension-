@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Git Repo Genius — Dashboard</title>
+    <link rel="stylesheet" href="./dashboard.css" />
+  </head>
+  <body>
+    <header>
+      <div class="gfe-header-inner">
+        <h1><span class="gfe-logo">◈</span> Git Repo Genius</h1>
+        <span class="gfe-dashboard-badge">Dashboard</span>
+      </div>
+    </header>
+
+    <main>
+      <div id="stats-row" class="gfe-stats-row" aria-label="Usage statistics"></div>
+
+      <section class="gfe-section">
+        <div class="gfe-section-header">
+          <h2>Recently Explained</h2>
+          <button id="clear-cache" class="gfe-clear-btn" aria-label="Clear explanation cache">
+            Clear cache
+          </button>
+        </div>
+        <div id="file-list" class="gfe-file-list" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script src="./dashboard.js"></script>
+  </body>
+</html>

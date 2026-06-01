@@ -191,6 +191,11 @@ async function init(): Promise<void> {
     await chrome.storage.local.set({ gfe_token_usage: { inputTokens: 0, outputTokens: 0 } });
     renderUsage({ inputTokens: 0, outputTokens: 0 });
   });
+
+  // ── Dashboard link ─────────────────────────────────────
+  document.getElementById('open-dashboard')?.addEventListener('click', () => {
+    void chrome.runtime.openOptionsPage();
+  });
 }
 
 init();

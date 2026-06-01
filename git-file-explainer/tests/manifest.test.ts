@@ -11,6 +11,7 @@ describe('manifest', () => {
     content_security_policy?: { extension_pages?: string };
     storage?: { managed_schema?: string };
     content_scripts?: Array<{ matches?: string[] }>;
+    options_page?: string;
   };
 
   it('loads the content script on GitHub and GitLab blob pages', () => {
@@ -29,6 +30,10 @@ describe('manifest', () => {
 
   it('declares managed_schema for enterprise policy support', () => {
     expect(manifest.storage?.managed_schema).toBe('managed_schema.json');
+  });
+
+  it('registers the dashboard as the options page', () => {
+    expect(manifest.options_page).toBe('dashboard/dashboard.html');
   });
 
   it('allows raw GitHub fallback fetches for preview-rendered files', () => {

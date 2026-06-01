@@ -117,6 +117,9 @@ export async function evictLRU(): Promise<void> {
 interface CacheEntry {
   result: FileSummaryResult;
   ts: number;
+  url?: string;
+  filePath?: string;
+  language?: string;
 }
 
 export interface CachedSummaryMeta {
@@ -142,11 +145,15 @@ export async function getCachedSummary(url: string): Promise<FileSummaryResult |
   return meta?.result ?? null;
 }
 
-export async function setCachedSummary(url: string, result: FileSummaryResult): Promise<void> {
+export async function setCachedSummary(
+  url: string,
+  result: FileSummaryResult,
+  meta?: { filePath: string; language: string }
+): Promise<void> {
   try {
     await evictLRU();
     const key = gfeCacheKey(`summary_${normaliseCacheKey(url)}`);
-    const entry: CacheEntry = { result, ts: Date.now() };
+    const entry: CacheEntry = { result, ts: Date.now(), url, ...meta };
     await chrome.storage.local.set({ [key]: entry });
 
     // Update LRU index
@@ -263,5 +270,60 @@ export async function setCustomGitLabDomain(domain: string | null): Promise<void
     await chrome.storage.local.set({ [CUSTOM_GITLAB_KEY]: domain.trim() });
   } else {
     await chrome.storage.local.remove(CUSTOM_GITLAB_KEY);
+  }
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+
+export interface DashboardEntry {
+  cacheKey: string;
+  result: FileSummaryResult;
+  ts: number;
+  url: string;
+  filePath: string;
+  language: string;
+}
+
+export async function getDashboardEntries(): Promise<DashboardEntry[]> {
+  try {
+    const index = await getLruIndex();
+    if (index.length === 0) return [];
+    const res = await chrome.storage.local.get(index);
+    const entries: DashboardEntry[] = [];
+    for (const key of index.slice(0, 20)) {
+      const raw = (res as Record<string, unknown>)[key] as CacheEntry | undefined;
+      if (!raw?.result) continue;
+      entries.push({
+        cacheKey: key,
+        result: raw.result,
+        ts: raw.ts ?? 0,
+        url: raw.url ?? '',
+        filePath: raw.filePath ?? '',
+        language: raw.language ?? 'Unknown',
+      });
+    }
+    return entries;
+  } catch {
+    return [];
+  }
+}
+
+export async function getSummaryCacheBytesInUse(): Promise<number> {
+  try {
+    const index = await getLruIndex();
+    if (index.length === 0) return 0;
+    return await chrome.storage.local.getBytesInUse(index);
+  } catch {
+    return 0;
+  }
+}
+
+export async function clearCache(): Promise<void> {
+  try {
+    const index = await getLruIndex();
+    if (index.length > 0) await chrome.storage.local.remove(index);
+    await chrome.storage.local.remove(LRU_INDEX_KEY);
+  } catch {
+    // best-effort
   }
 }

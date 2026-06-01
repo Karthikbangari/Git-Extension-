@@ -1,0 +1,246 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  color: #e6edf3;
+  background: #0d1117;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, #1b1f27 0%, #0d1117 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.gfe-header-inner {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+h1 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f0f6fc;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.01em;
+}
+
+.gfe-logo {
+  font-size: 10px;
+  color: #34d399;
+}
+
+.gfe-dashboard-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(88, 166, 255, 0.15));
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  border-radius: 20px;
+  color: #34d399;
+  letter-spacing: 0.02em;
+}
+
+/* ── Main ────────────────────────────────────────────────── */
+
+main {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Stats row ───────────────────────────────────────────── */
+
+.gfe-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.gfe-stat-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gfe-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, #34d399 0%, #58a6ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.gfe-stat-label {
+  font-size: 12px;
+  color: #6e7681;
+  font-weight: 400;
+}
+
+/* ── Section ─────────────────────────────────────────────── */
+
+.gfe-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gfe-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+h2 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8b949e;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gfe-clear-btn {
+  font-size: 12px;
+  padding: 4px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #6e7681;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.gfe-clear-btn:hover {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #f87171;
+}
+
+/* ── File list ───────────────────────────────────────────── */
+
+.gfe-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gfe-file-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: border-color 0.15s;
+}
+
+.gfe-file-card:hover {
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+.gfe-file-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gfe-file-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e6edf3;
+  font-family: ui-monospace, 'SFMono-Regular', monospace;
+}
+
+.gfe-lang-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  background: rgba(88, 166, 255, 0.12);
+  border: 1px solid rgba(88, 166, 255, 0.2);
+  border-radius: 20px;
+  color: #58a6ff;
+}
+
+.gfe-time-ago {
+  margin-left: auto;
+  font-size: 11px;
+  color: #484f58;
+  white-space: nowrap;
+}
+
+.gfe-file-repo {
+  font-size: 12px;
+  color: #6e7681;
+  font-family: ui-monospace, 'SFMono-Regular', monospace;
+}
+
+.gfe-file-preview {
+  font-size: 12px;
+  color: #8b949e;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+
+.gfe-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.gfe-empty-icon {
+  font-size: 28px;
+  color: #34d399;
+  opacity: 0.4;
+}
+
+.gfe-empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #484f58;
+}
+
+.gfe-empty-hint {
+  font-size: 12px;
+  color: #30363d;
+}

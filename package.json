@@ -16,7 +16,7 @@
     "dev:ext": "web-ext run --source-dir tf-diff-explainer/dist --target=chromium",
     "test:ext": "vitest run --config tf-diff-explainer/vitest.config.ts",
     "web-ext:run": "web-ext run --source-dir tf-diff-explainer/dist",
-    "build:gfe": "node git-file-explainer/scripts/generate-icons.js && vite build --config git-file-explainer/vite.scripts.config.ts && vite build --config git-file-explainer/vite.background.config.ts && vite build --config git-file-explainer/vite.config.ts",
+    "build:gfe": "node git-file-explainer/scripts/generate-icons.js && vite build --config git-file-explainer/vite.scripts.config.ts && vite build --config git-file-explainer/vite.background.config.ts && vite build --config git-file-explainer/vite.dashboard.config.ts && vite build --config git-file-explainer/vite.config.ts",
     "test:gfe": "vitest run --config git-file-explainer/vitest.config.ts",
     "dev:gfe": "web-ext run --source-dir git-file-explainer/dist --target=chromium",
     "smoke:gfe:filetypes": "node scripts/gfe-realtime-filetype-smoke.mjs",
