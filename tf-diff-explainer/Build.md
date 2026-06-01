@@ -19,6 +19,289 @@
 
 ---
 
+## BP-026 — Git Repo Genius: Repository Dashboard (Screen 1)
+
+### Goal
+
+Add a full-page Repository Dashboard — Screen 1 of the Git Repo Genius three-screen design. The dashboard opens via Chrome's built-in Options page mechanism (`options_page` in manifest) and via a "Dashboard ↗" button in the popup. It shows recently explained files, token usage totals, and cache storage size, all on the same dark-canvas design system as the sidebar (BP-024) and popup (BP-025).
+
+### Motivation
+
+The three Git Repo Genius screens are now: Screen 3 (sidebar, BP-024 ✅), Screen 2 (popup, BP-025 ✅), Screen 1 (dashboard, this BP). The dashboard closes the design system loop and gives users a place to review what the extension has done — useful for CWS listing screenshots and for power users who want to inspect their cache.
+
+### Scope — what changes
+
+| Action | File                                                 | Description                                                                                                                                                                          |
+| ------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| MODIFY | `git-file-explainer/src/utils/storage.ts`            | Extend `CacheEntry` (private) + `setCachedSummary` to also persist `url`, `filePath`, `language`; add `getDashboardEntries()` helper that reads all cache entries from the LRU index |
+| MODIFY | `git-file-explainer/src/content/index.ts`            | Pass `{ filePath, language }` from `FileContent` to `setCachedSummary` (already in scope at call site)                                                                               |
+| CREATE | `git-file-explainer/src/dashboard/dashboard.ts`      | Reads storage; renders stats bar (file count, token totals, bytes used) and recent-files list; wires Clear Cache button                                                              |
+| CREATE | `git-file-explainer/public/dashboard/dashboard.html` | Dashboard page HTML — glass header, 3-stat strip, file grid                                                                                                                          |
+| CREATE | `git-file-explainer/public/dashboard/dashboard.css`  | Dashboard styles — Git Repo Genius tokens, 600px wide page                                                                                                                           |
+| CREATE | `git-file-explainer/vite.dashboard.config.ts`        | New Vite IIFE config for `src/dashboard/dashboard.ts` → `dist/dashboard/dashboard.js`                                                                                                |
+| MODIFY | `package.json` (root)                                | Add `vite build --config git-file-explainer/vite.dashboard.config.ts` to `build:gfe` pipeline (before the popup/cpSync step)                                                         |
+| MODIFY | `git-file-explainer/public/manifest.json`            | Add `"options_page": "dashboard/dashboard.html"`                                                                                                                                     |
+| MODIFY | `git-file-explainer/public/popup/popup.html`         | Add footer `<button id="open-dashboard">Dashboard ↗</button>` above `<script>`                                                                                                       |
+| MODIFY | `git-file-explainer/src/popup/popup.ts`              | Wire `#open-dashboard` click → `chrome.runtime.openOptionsPage()`                                                                                                                    |
+| CREATE | `git-file-explainer/tests/dashboard.test.ts`         | Unit tests for `parseKeyToMeta`, `timeAgo`, `formatBytes`                                                                                                                            |
+
+### Design spec
+
+**Layout** (600px wide page, dark canvas `#0d1117`):
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  ◈  Git Repo Genius                         Dashboard    │  ← glass header (full width)
+└──────────────────────────────────────────────────────────┘
+  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐
+  │  12          │  │  45.2k       │  │  2.1 MB           │  ← 3-stat glass chips
+  │  files       │  │  tokens      │  │  cache            │
+  └──────────────┘  └──────────────┘  └───────────────────┘
+
+  Recently Explained                         [Clear cache]   ← section header row
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  useState.ts          [TypeScript]  ●  2 min ago        │  ← glass file card
+  │  facebook / react · src/hooks/                          │
+  │  "Implements React's useState hook for functional..."   │
+  └─────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────┐
+  │  main.py              [Python]      ●  1 hr ago         │
+  │  octocat / Hello-World                                  │
+  │  "Entry point that prints Hello, World! to stdout."     │
+  └─────────────────────────────────────────────────────────┘
+```
+
+**Design tokens:** same as BP-024/025 (`#0d1117` canvas, `rgba(255,255,255,0.04)` glass cards, `#34d399` green accent, genius gradient, system font stack).
+
+**Empty state:** when no files have been explained yet, show a centred sparkle tile: `◈` + "No files explained yet" + hint "Open a GitHub or GitLab file to get started."
+
+**File card fields** (from extended `CacheEntry`):
+
+- Filename (last path segment of `filePath`, e.g. `useState.ts`)
+- Repo hint (first two `/`-separated segments of `filePath`, e.g. `facebook/react`) — falls back to empty if `filePath` missing (old entries)
+- Sub-path (remaining path segments after repo)
+- Language badge (from `language`)
+- Time ago (from `ts` — `timeAgo(ts)`)
+- Summary first sentence (first 80 chars of `result.summary`)
+
+### storage.ts changes (detail)
+
+```ts
+// CacheEntry gains three optional fields (backwards-compatible):
+interface CacheEntry {
+  result: FileSummaryResult;
+  ts: number;
+  url?: string;
+  filePath?: string;
+  language?: string;
+}
+
+// setCachedSummary gets optional third arg:
+export async function setCachedSummary(
+  url: string,
+  result: FileSummaryResult,
+  meta?: { filePath: string; language: string }
+): Promise<void>;
+
+// New export for dashboard:
+export interface DashboardEntry {
+  cacheKey: string;
+  result: FileSummaryResult;
+  ts: number;
+  url: string;
+  filePath: string;
+  language: string;
+}
+export async function getDashboardEntries(): Promise<DashboardEntry[]>;
+// reads LRU index, fetches each entry, returns array newest-first (max 20)
+```
+
+Old cache entries that lack `url`/`filePath`/`language` are displayed with fallback values (empty repo, key-derived filename, `'Unknown'` language) — no migration needed.
+
+### vite.dashboard.config.ts
+
+Mirrors `vite.config.ts` (lib mode, IIFE, `inlineDynamicImports: true`). Does **not** include `copyPublic` plugin — the existing `vite.config.ts` cpSync handles all of `public/` including `public/dashboard/`.
+
+### build:gfe pipeline (updated)
+
+```
+icons → vite.scripts.config.ts → vite.background.config.ts → vite.dashboard.config.ts → vite.config.ts (popup + cpSync)
+```
+
+### Manifest change
+
+```json
+"options_page": "dashboard/dashboard.html"
+```
+
+`options_page` is standard MV3; no new permission required. `chrome.runtime.openOptionsPage()` in the popup is always available.
+
+### Approach
+
+`dashboard.ts` runs in a regular extension page — full `chrome.storage` access, no content-script restrictions. Calls `chrome.storage.local.getBytesInUse()` (already used in `evictLRU`), `getDashboardEntries()`, and `getTokenUsage()`. Renders DOM directly (same pattern as `popup.ts`). Clear Cache button calls `chrome.storage.local.remove(keys)` on all `gfe_summary_*` keys then re-renders. Pure utility functions (`timeAgo`, `formatBytes`, `parseKeyToMeta`) are exported for testability.
+
+### MV3 compliance
+
+- No remote code, no eval, no inline scripts ✅
+- No new permissions — `storage` already declared; `chrome.runtime.openOptionsPage()` needs none ✅
+- No new `host_permissions` ✅
+- `options_page` is standard MV3 mechanism ✅
+- CSP unaffected (extension pages CSP already covers `'self'` scripts) ✅
+
+### Dependencies / Prerequisites
+
+- BP-025 committed (popup HTML updated with `#open-dashboard` button)
+
+### Risk
+
+- **Level:** Low–Medium
+- **Notes:** `setCachedSummary` signature change is additive (optional third arg) — all existing callers still compile. Old cache entries missing new fields degrade gracefully. The only integration risk is the `options_page` registration path being wrong — mitigated by the manifest test in `tests/manifest.test.ts` (will add assertion).
+
+### Tests
+
+New `tests/dashboard.test.ts` covers:
+
+- `timeAgo`: 30s → "just now", 90s → "1 min ago", 3700s → "1 hr ago", 25h → "1 day ago"
+- `formatBytes`: 512 → "512 B", 1500 → "1.5 KB", 2_100_000 → "2.1 MB"
+- `parseKeyToMeta`: `gfe_summary_facebook_react_main_src_hooks_useState.ts` → `{ filename: 'useState.ts', repoHint: 'facebook/react' }`
+- `getDashboardEntries` signature / return shape (mock `chrome.storage`)
+
+### Smoke checklist (for Codex)
+
+1. Load `dist/` in Chrome → open popup → "Dashboard ↗" button visible at bottom
+2. Click "Dashboard ↗" → new tab opens at `chrome-extension://…/dashboard/dashboard.html`
+3. Dark canvas renders, glass header shows `◈ Git Repo Genius` + "Dashboard" badge
+4. Stats row: 3 chips visible (files count, token total, cache size)
+5. Empty state: no files listed → "No files explained yet" sparkle tile shown
+6. Navigate to a GitHub file, let GFE explain it → return to dashboard tab → refresh → file card appears
+7. File card: filename, language badge, time-ago, 1-line summary preview all visible
+8. Click "Clear cache" → file cards disappear, empty state returns, cache stat drops to "0 B"
+9. Popup "Dashboard ↗" opens same dashboard on a second click (idempotent — no duplicate tabs)
+10. All 127/127 GFE tests still pass
+
+### Review
+
+| Reviewer | Input | Approved? |
+| -------- | ----- | --------- |
+| User     |       | ⬜        |
+| Codex    |       | ⬜        |
+| Gemini   |       | ⬜        |
+
+### Outcome
+
+- **Status:** Pending
+- **Built by:** Claude
+- **Result:** pending
+- **Test result:** pending
+
+---
+
+## BP-025 — Git Repo Genius: Popup Visual Redesign (Screen 2)
+
+### Goal
+
+Apply the Git Repo Genius dark design system (introduced in BP-024 for the sidebar) to the extension popup so both surfaces share a consistent visual identity. No functional changes — all storage logic, IDs, and event wiring in `popup.ts` remain untouched.
+
+### Motivation
+
+BP-024 shipped a dark-canvas, glass-card sidebar. The popup still uses the old flat-white GitHub-style theme. This visual mismatch is the biggest blocker to CWS screenshots looking polished. Fixing it now, before submission, avoids a second design iteration post-launch.
+
+### Scope — what changes
+
+| Action | File                                         | Description                                                                                             |
+| ------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| MODIFY | `git-file-explainer/public/popup/popup.html` | Wrap logical sections in `.gfe-card` divs; update header markup to match sidebar (sparkle mark + title) |
+| MODIFY | `git-file-explainer/public/popup/popup.css`  | Full retheme: dark canvas, glass cards, gradient accents, redesigned toggles and segmented control      |
+
+**Zero changes to `popup.ts`.** All element IDs stay identical. The `.active` class on `#mode-dev`/`#mode-nontech` and `.hint.success`/`.hint.error` are preserved.
+
+### Design spec
+
+| Token            | Value                                                      |
+| ---------------- | ---------------------------------------------------------- |
+| Body background  | `#0d1117`                                                  |
+| Card background  | `rgba(255,255,255,0.04)`                                   |
+| Card border      | `rgba(255,255,255,0.08)`                                   |
+| Primary text     | `#e6edf3`                                                  |
+| Secondary text   | `#8b949e`                                                  |
+| Input background | `#161b22`                                                  |
+| Input border     | `rgba(255,255,255,0.12)`                                   |
+| Accent green     | `#34d399`                                                  |
+| Accent blue      | `#58a6ff`                                                  |
+| Genius gradient  | `135deg, #34d399 → #58a6ff → #a78bfa`                      |
+| Font stack       | `-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui` |
+| Popup width      | 300px (unchanged)                                          |
+
+**Header:** Dark gradient strip (`#1b1f27 → #0d1117`), sparkle mark `◈` in green, "Git File Explainer" in `#f0f6fc`, 1px gradient underline.
+
+**Cards:** Each logical group (API key, site toggle + repo toggle, mode + auto-trigger, GitLab domain, token usage) wraps in a `.gfe-card` with `border-radius: 10px`, glass background, and `rgba` border. `<hr class="divider">` elements are removed; card spacing provides visual separation.
+
+**Inputs:** Dark bg (`#161b22`), `rgba` border, green focus ring (`#34d399` at 20% opacity).
+
+**Save buttons:** Green solid fill (`#34d399` text dark, or reverse — whichever passes contrast) replacing the old blue.
+
+**Toggles:** Track uses `#34d399` when active (matching sidebar's green accent).
+
+**Segmented control (audience):** Dark inactive tab, genius-gradient active tab (matching sidebar's mode toggle pill).
+
+**Onboarding banner:** Dark-tinted emerald card (`rgba(52,211,153,0.08)` bg, `rgba(52,211,153,0.2)` border) instead of the light-green card.
+
+**Hint text:** `.hint.success` → `#34d399`; `.hint.error` → `#f87171` (unchanged hue, dark-mode brightness).
+
+### Approach
+
+HTML changes are purely structural (card wrapper divs, header span). CSS is a complete replacement of `popup.css` — no shared selectors with the sidebar so there is no risk of bleed. `popup.ts` references only element IDs and the `.active`/`.hint.*` class names, all of which are preserved exactly.
+
+### MV3 compliance
+
+- No remote fonts, no inline scripts, no `eval`. System font stack only.
+- No new permissions, no manifest changes.
+- CSP unaffected (popup page has its own CSP scope, no external resources added).
+
+### Dependencies / Prerequisites
+
+- BP-024 committed (sidebar CSS already has the design tokens as reference — no shared file dependency).
+
+### Risk
+
+- **Level:** Low
+- **Notes:** Purely visual — `popup.ts` is untouched. Only risk is a colour-contrast accessibility miss; mitigated by choosing `#34d399` (green) against `#0d1117` (dark), which passes WCAG AA at 12px+.
+
+### Tests
+
+No new tests. Existing `tests/popup.test.ts` verifies popup.ts logic against DOM IDs — those IDs are unchanged so all existing tests continue to pass. Run `npm run test:gfe` to confirm after build.
+
+### Smoke checklist (for Codex)
+
+1. Load `dist/` in Chrome → click extension icon → popup opens
+2. Header: dark strip, `◈` sparkle green, "Git File Explainer" title white
+3. API key card: dark background, input styled dark with placeholder visible
+4. Type valid `sk-ant-...` key → Save → hint shows in green "Key saved."
+5. Type invalid key → Save → hint shows in red error
+6. Site toggle card: toggle flips green when checked
+7. Audience mode card: Developer pill lights up with gradient; click Non-technical → Non-technical lights up
+8. Auto-explain toggle: flips green when checked
+9. GitLab domain card: input accepts text, Save shows green status
+10. Token meter card: shows `—` by default; after reset shows `0`
+
+### Review
+
+| Reviewer | Input                                                                                                                                                                            | Approved? |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| User     |                                                                                                                                                                                  | ✅ (go)   |
+| Codex    | Toolbar-icon popup smoke passed on a real GitHub blob page using `git-file-explainer/dist`; direct popup-page smoke was superseded by real action-popup CDP target verification. | ✅        |
+| Gemini   |                                                                                                                                                                                  | ⬜        |
+
+### Outcome
+
+- **Status:** Done + Codex toolbar smoke passed
+- **Built by:** Claude
+- **Result:** `public/popup/popup.html` wrapped in 5 `.gfe-card` sections, glass header with `◈` sparkle, `<hr>` dividers removed. `public/popup/popup.css` fully rethemed: dark canvas, green toggles, genius-gradient segmented control, dark inputs, glass token meter, green-tinted onboarding banner. `popup.ts` untouched.
+- **Test result:** GFE 127/127 ✅ · TFE 191/191 ✅ · BP-025 toolbar popup smoke 10/10 ✅
+
+---
+
 ## BP-024 — Git Repo Genius: Side Panel Visual Redesign (Screen 3)
 
 ### What & Why

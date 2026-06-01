@@ -15,24 +15,25 @@ No exceptions.
 
 > New Claude session? Start here. Every other section is reference.
 
-| Field                | Value                                                                                                      |
-| -------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Last active session  | 2026-05-31                                                                                                 |
-| Active phase         | GFE Maintenance / CWS submission (TFE archived)                                                            |
-| Last commit          | `a5a82b3` — Codex (docs: update GFE auto trigger verification)                                             |
-| Last build           | BP-024 committed/pushed; Codex smoke 10/10 ✅ · GFE tests 127/127 ✅ · TFE tests 191/191 ✅                |
-| Lint / format        | ✅ clean                                                                                                   |
-| Uncommitted          | None — working tree clean                                                                                  |
-| Next action (Codex)  | Chrome Web Store packaging/submission support if user asks; commit any new docs/assets from other agents   |
-| Next action (Gemini) | Optional deeper live smoke for GFE streaming Q&A, copy buttons, token meter, and binary skip with API key  |
-| Next action (Claude) | None — awaiting CWS feedback; respond if bugs found in smoke tests                                         |
-| Next action (user)   | (1) CWS submission for TFE; (2) CWS submission for GFE; (3) take 1280×800 screenshots for both store pages |
-| Open bugs            | None                                                                                                       |
-| Blocked              | None                                                                                                       |
+| Field                | Value                                                                                                                                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Last active session  | 2026-06-01                                                                                                                                                                                         |
+| Active phase         | GFE Maintenance / CWS submission (TFE archived)                                                                                                                                                    |
+| Last commit          | `322ea10` — Codex (style: redesign GFE popup)                                                                                                                                                      |
+| Last build           | BP-025 committed/pushed; Codex toolbar popup smoke 10/10 ✅ · GFE tests 127/127 ✅ · TFE tests 191/191 ✅                                                                                          |
+| Lint / format        | ✅ clean                                                                                                                                                                                           |
+| Uncommitted          | `git-file-explainer/src/utils/storage.ts` has partial BP-026 cache metadata work; `tf-diff-explainer/src/content/aiSummary.ts` has unrelated TFE fixes; do not commit either without user approval |
+| Next action (Codex)  | Chrome Web Store packaging/submission support if user asks; commit any new docs/assets from other agents                                                                                           |
+| Next action (Gemini) | Optional deeper live smoke for GFE streaming Q&A, copy buttons, token meter, and binary skip with API key                                                                                          |
+| Next action (Claude) | None — awaiting CWS feedback; respond if bugs found in smoke tests                                                                                                                                 |
+| Next action (user)   | (1) CWS submission for TFE; (2) CWS submission for GFE; (3) take 1280×800 screenshots for both store pages                                                                                         |
+| Open bugs            | None                                                                                                                                                                                               |
+| Blocked              | None                                                                                                                                                                                               |
 
 ### What was built this session
 
 - **GFE Project Pivot (2026-05-31) ✅**: Git File Explainer (GFE) is now the sole primary extension; TF Diff Explainer (TFE) is archived.
+- **BP-025 built, committed, pushed, and toolbar-smoke-tested ✅**: Git Repo Genius popup visual redesign for GFE. `public/popup/popup.html` and `public/popup/popup.css` now match the BP-024 dark/glass design system with five `.gfe-card` sections, green sparkle header, dark inputs, green toggles, gradient mode control, GitLab card, and token meter. `popup.ts` remained untouched. Codex committed/pushed `322ea10` and verified the actual toolbar-icon popup on a real GitHub blob page through the extension action popup target: BP-025 smoke 10/10 ✅, GFE tests 127/127 ✅, GFE build ✅.
 - **BP-024 built, committed, pushed, and smoke-tested ✅**: Git Repo Genius side-panel visual redesign for GFE. Dark canvas/glass header, 480px panel, mode toggle, single-open accordion explanation sections, quick actions that submit Q&A, chat-bubble Q&A styling, and handler wiring. Google Fonts remote import was removed; system fonts are used. Codex fixed smoke findings for quick-action submit, single-open accordion behavior, and binary preview raw fallback. Final verification: GFE tests 127/127 ✅, TFE tests 191/191 ✅, GFE build ✅, lint ✅, format ✅, BP-024 browser smoke 10/10 ✅.
 - **GFE realtime file-type screenshots verified ✅**: Codex opened all 22 real GitHub sample blob URLs with `git-file-explainer/dist` loaded, captured screenshots into `git-file-explainer/realtime-screenshots/supported-file-types/`, and fixed Markdown preview pages via raw GitHub fallback. Result: 22 pass, 0 warn, 0 fail. GFE tests 113/113 before BP-024.
 - **BP-023 built and tested ✅**: GFE Final Gaps. Token estimate chip (`~N tokens`) in sidebar; "↗ Open in Claude.ai" share button copies prompt and opens Claude.ai via `window.open` (addressing Codex security feedback).
