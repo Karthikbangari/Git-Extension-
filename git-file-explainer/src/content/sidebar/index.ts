@@ -8,36 +8,10 @@ export interface CacheMeta {
   ts?: number;
 }
 
-type Audience = 'developer' | 'non-technical';
-type ModeChangeHandler = (audience: Audience) => void;
-
-let _onModeChange: ModeChangeHandler | null = null;
 let _onRerun: (() => void) | null = null;
-
-export function setModeChangeHandler(cb: ModeChangeHandler): void {
-  _onModeChange = cb;
-}
 
 export function setRerunHandler(cb: () => void): void {
   _onRerun = cb;
-}
-
-export function setSidebarModeToggle(audience: Audience): void {
-  const sidebar = document.getElementById(SIDEBAR_ID);
-  if (!sidebar) return;
-  const toggle = sidebar.querySelector<HTMLElement>('.gfe-mode-toggle');
-  const devBtn = sidebar.querySelector<HTMLElement>('.gfe-mode-dev');
-  const bizBtn = sidebar.querySelector<HTMLElement>('.gfe-mode-biz');
-  if (!toggle || !devBtn || !bizBtn) return;
-  if (audience === 'non-technical') {
-    devBtn.classList.remove('gfe-mode-active');
-    bizBtn.classList.add('gfe-mode-active');
-    toggle.classList.add('gfe-mode-biz-active');
-  } else {
-    devBtn.classList.add('gfe-mode-active');
-    bizBtn.classList.remove('gfe-mode-active');
-    toggle.classList.remove('gfe-mode-biz-active');
-  }
 }
 
 function relativeTime(ts: number): string {
@@ -252,13 +226,9 @@ export function injectSidebar(filePath?: string, language?: string): void {
   headerRow.appendChild(expandBtn);
   header.appendChild(headerRow);
 
-  // ── Mode toggle ──
-  const modeToggle = buildModeToggle();
-
   // ── Body ──
   const body = document.createElement('div');
   body.className = 'gfe-body';
-  body.appendChild(modeToggle);
   appendSkeleton(body);
 
   sidebar.appendChild(header);
@@ -269,44 +239,6 @@ export function injectSidebar(filePath?: string, language?: string): void {
   expandBtn.addEventListener('click', () => sidebar.classList.remove('gfe-collapsed'));
 }
 
-function buildModeToggle(): HTMLElement {
-  const toggle = document.createElement('div');
-  toggle.className = 'gfe-mode-toggle';
-
-  const thumb = document.createElement('div');
-  thumb.className = 'gfe-mode-thumb';
-
-  const devBtn = document.createElement('button');
-  devBtn.className = 'gfe-mode-btn gfe-mode-dev gfe-mode-active';
-  devBtn.setAttribute('aria-label', 'Developer mode');
-  devBtn.innerHTML = `${ICONS.code} Developer`;
-
-  const bizBtn = document.createElement('button');
-  bizBtn.className = 'gfe-mode-btn gfe-mode-biz';
-  bizBtn.setAttribute('aria-label', 'Business mode');
-  bizBtn.innerHTML = `${ICONS.globe} Business`;
-
-  devBtn.addEventListener('click', () => {
-    if (devBtn.classList.contains('gfe-mode-active')) return;
-    devBtn.classList.add('gfe-mode-active');
-    bizBtn.classList.remove('gfe-mode-active');
-    toggle.classList.remove('gfe-mode-biz-active');
-    _onModeChange?.('developer');
-  });
-
-  bizBtn.addEventListener('click', () => {
-    if (bizBtn.classList.contains('gfe-mode-active')) return;
-    bizBtn.classList.add('gfe-mode-active');
-    devBtn.classList.remove('gfe-mode-active');
-    toggle.classList.add('gfe-mode-biz-active');
-    _onModeChange?.('non-technical');
-  });
-
-  toggle.appendChild(thumb);
-  toggle.appendChild(devBtn);
-  toggle.appendChild(bizBtn);
-  return toggle;
-}
 
 function appendSkeleton(parent: HTMLElement): void {
   const skeleton = document.createElement('div');
@@ -335,10 +267,7 @@ export function updateSidebar(
   const body = sidebar.querySelector<HTMLElement>('.gfe-body');
   if (!body) return;
 
-  // Preserve the mode toggle across state changes
-  const modeToggle = body.querySelector<HTMLElement>('.gfe-mode-toggle');
   body.textContent = '';
-  if (modeToggle) body.appendChild(modeToggle);
 
   if (state === 'loading') {
     appendSkeleton(body);
@@ -484,9 +413,6 @@ export function updateSidebar(
   // ── Q&A section ───────────────────────────────────────────────────────────
   body.appendChild(buildQASection(state, onAsk));
 
-  // ── Copy + Share ──────────────────────────────────────────────────────────
-  appendCopyButtons(body, state);
-  appendShareButton(body, state);
 }
 
 // ── No-key card ──────────────────────────────────────────────────────────────
@@ -696,124 +622,6 @@ function appendTruncatedNotice(
   }
   notice.textContent = text;
   parent.appendChild(notice);
-}
-
-// ── Copy + share ──────────────────────────────────────────────────────────────
-
-function appendCopyButtons(parent: HTMLElement, result: FileSummaryResult): void {
-  const row = document.createElement('div');
-  row.className = 'gfe-copy-row';
-
-  const plainBtn = document.createElement('button');
-  plainBtn.className = 'gfe-copy-btn';
-  plainBtn.setAttribute('aria-label', 'Copy summary as plain text');
-  plainBtn.textContent = 'Copy';
-  plainBtn.addEventListener('click', () => {
-    void navigator.clipboard.writeText(buildPlainText(result)).then(() => {
-      plainBtn.textContent = 'Copied ✓';
-      setTimeout(() => (plainBtn.textContent = 'Copy'), 1500);
-    });
-  });
-
-  const mdBtn = document.createElement('button');
-  mdBtn.className = 'gfe-copy-btn';
-  mdBtn.setAttribute('aria-label', 'Copy summary as Markdown');
-  mdBtn.textContent = 'Copy as Markdown';
-  mdBtn.addEventListener('click', () => {
-    void navigator.clipboard.writeText(buildMarkdown(result)).then(() => {
-      mdBtn.textContent = 'Copied ✓';
-      setTimeout(() => (mdBtn.textContent = 'Copy as Markdown'), 1500);
-    });
-  });
-
-  row.appendChild(plainBtn);
-  row.appendChild(mdBtn);
-  parent.appendChild(row);
-}
-
-function buildPlainText(result: FileSummaryResult): string {
-  const lines: string[] = [result.summary, ''];
-  if (result.analogy) lines.push(result.analogy, '');
-  if (result.keyPoints.length > 0) {
-    lines.push('Key Points:');
-    result.keyPoints.forEach((p) => lines.push(`  • ${p}`));
-    lines.push('');
-  }
-  if ((result.connections?.length ?? 0) > 0) {
-    lines.push('How It Connects:');
-    result.connections!.forEach((c) => lines.push(`  • ${c}`));
-    lines.push('');
-  }
-  if ((result.watchOutFor?.length ?? 0) > 0) {
-    lines.push('Watch Out For:');
-    result.watchOutFor!.forEach((w) => lines.push(`  • ${w}`));
-  }
-  return lines.join('\n').trim();
-}
-
-function buildMarkdown(result: FileSummaryResult): string {
-  const lines: string[] = ['## Summary', '', result.summary, ''];
-  if (result.analogy) lines.push(`> ${result.analogy}`, '');
-  if (result.keyPoints.length > 0) {
-    lines.push('## Key Points');
-    result.keyPoints.forEach((p) => lines.push(`- ${p}`));
-    lines.push('');
-  }
-  if ((result.connections?.length ?? 0) > 0) {
-    lines.push('## How It Connects');
-    result.connections!.forEach((c) => lines.push(`- ${c}`));
-    lines.push('');
-  }
-  if ((result.watchOutFor?.length ?? 0) > 0) {
-    lines.push('## Watch Out For');
-    result.watchOutFor!.forEach((w) => lines.push(`- ${w}`));
-  }
-  return lines.join('\n').trim();
-}
-
-function buildClaudePrompt(result: FileSummaryResult, filePath: string, language: string): string {
-  const lines: string[] = [];
-  if (filePath) lines.push(`File: ${filePath}`);
-  if (language) lines.push(`Language: ${language}`);
-  lines.push('', 'Summary:', result.summary, '');
-  if (result.keyPoints.length > 0) {
-    lines.push('Key Points:');
-    result.keyPoints.forEach((p) => lines.push(`• ${p}`));
-    lines.push('');
-  }
-  lines.push('Ask me anything about this file.');
-  return lines.join('\n').trim();
-}
-
-function showToast(): void {
-  const sidebar = document.getElementById(SIDEBAR_ID);
-  if (!sidebar) return;
-  const existing = sidebar.querySelector('.gfe-toast');
-  if (existing) existing.remove();
-  const toast = document.createElement('div');
-  toast.className = 'gfe-toast';
-  toast.textContent = 'Copied! Paste into Claude.ai ↗';
-  sidebar.appendChild(toast);
-  setTimeout(() => toast.remove(), 2000);
-}
-
-function appendShareButton(parent: HTMLElement, result: FileSummaryResult): void {
-  const sidebar = document.getElementById(SIDEBAR_ID);
-  const filePath = sidebar?.querySelector<HTMLElement>('.gfe-filename')?.textContent ?? '';
-  const language = sidebar?.querySelector<HTMLElement>('.gfe-lang-badge')?.textContent ?? '';
-
-  const btn = document.createElement('button');
-  btn.className = 'gfe-share-btn';
-  btn.setAttribute('aria-label', 'Open in Claude.ai');
-  btn.textContent = '↗ Open in Claude.ai';
-  btn.addEventListener('click', () => {
-    const prompt = buildClaudePrompt(result, filePath, language);
-    void navigator.clipboard.writeText(prompt).then(() => {
-      showToast();
-      window.open('https://claude.ai', '_blank', 'noopener');
-    });
-  });
-  parent.appendChild(btn);
 }
 
 // ── Q&A answer updates ────────────────────────────────────────────────────────

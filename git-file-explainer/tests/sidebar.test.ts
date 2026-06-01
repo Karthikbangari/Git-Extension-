@@ -2,8 +2,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   injectSidebar,
   removeSidebar,
-  setModeChangeHandler,
-  setSidebarModeToggle,
   updateQAAnswer,
   updateSidebar,
 } from '../src/content/sidebar';
@@ -102,88 +100,8 @@ describe('sidebar Q&A UI', () => {
     expect(notice?.textContent).toContain('3,000 tokens sent');
   });
 
-  it('renders share button after summary result', () => {
-    injectSidebar();
-    updateSidebar(
-      { summary: 'Does routing.', keyPoints: ['Defines routes'], complexity: 'low' },
-      noop
-    );
-    const btn = document.querySelector('.gfe-share-btn');
-    expect(btn).not.toBeNull();
-    expect(btn?.textContent).toBe('↗ Open in Claude.ai');
-  });
-
-  it('does not render share button for no-key state', () => {
-    injectSidebar();
-    updateSidebar('no-key');
-    expect(document.querySelector('.gfe-share-btn')).toBeNull();
-  });
 });
 
-describe('sidebar mode toggle', () => {
-  beforeEach(() => {
-    document.body.innerHTML = '';
-  });
-
-  it('renders Developer button as active by default', () => {
-    injectSidebar();
-    const devBtn = document.querySelector('.gfe-mode-dev');
-    const bizBtn = document.querySelector('.gfe-mode-biz');
-    expect(devBtn?.classList.contains('gfe-mode-active')).toBe(true);
-    expect(bizBtn?.classList.contains('gfe-mode-active')).toBe(false);
-  });
-
-  it('clicking Business button makes it active and deactivates Developer', () => {
-    injectSidebar();
-    document.querySelector<HTMLElement>('.gfe-mode-biz')!.click();
-    expect(document.querySelector('.gfe-mode-biz')?.classList.contains('gfe-mode-active')).toBe(
-      true
-    );
-    expect(document.querySelector('.gfe-mode-dev')?.classList.contains('gfe-mode-active')).toBe(
-      false
-    );
-    expect(
-      document.querySelector('.gfe-mode-toggle')?.classList.contains('gfe-mode-biz-active')
-    ).toBe(true);
-  });
-
-  it('fires the registered mode-change handler with the new audience', () => {
-    injectSidebar();
-    let fired: string | null = null;
-    setModeChangeHandler((aud) => {
-      fired = aud;
-    });
-    document.querySelector<HTMLElement>('.gfe-mode-biz')!.click();
-    expect(fired).toBe('non-technical');
-  });
-
-  it('setSidebarModeToggle reflects stored audience in the toggle', () => {
-    injectSidebar();
-    setSidebarModeToggle('non-technical');
-    expect(document.querySelector('.gfe-mode-biz')?.classList.contains('gfe-mode-active')).toBe(
-      true
-    );
-    expect(
-      document.querySelector('.gfe-mode-toggle')?.classList.contains('gfe-mode-biz-active')
-    ).toBe(true);
-    setSidebarModeToggle('developer');
-    expect(document.querySelector('.gfe-mode-dev')?.classList.contains('gfe-mode-active')).toBe(
-      true
-    );
-    expect(
-      document.querySelector('.gfe-mode-toggle')?.classList.contains('gfe-mode-biz-active')
-    ).toBe(false);
-  });
-
-  it('mode toggle persists across updateSidebar calls', () => {
-    injectSidebar();
-    document.querySelector<HTMLElement>('.gfe-mode-biz')!.click();
-    updateSidebar({ summary: 'x', keyPoints: [], complexity: 'low' }, () => {});
-    expect(document.querySelector('.gfe-mode-biz')?.classList.contains('gfe-mode-active')).toBe(
-      true
-    );
-  });
-});
 
 describe('sidebar accordion', () => {
   const noop = () => {};
